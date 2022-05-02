@@ -1,0 +1,6 @@
+- name: Secure kube config file
+  ansible.builtin.file:
+    path: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    mode: '0600'
+  tags:
+    - install

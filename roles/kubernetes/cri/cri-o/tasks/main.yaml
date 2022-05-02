@@ -1,0 +1,155 @@
+---
+# Task to remove all cri-o artifacts
+- name: Remove all cri-o container, volumes, networks
+  command: crictl system prune -af --volumes
+  ignore_errors: true
+  tags:
+    - uninstall
+
+# Install required packages for cri-o
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - apt-transport-https # Also needed for kubeadm tooling
+    - ca-certificates     # Also needed for kubeadm tooling
+    - curl                # Also needed for kubeadm tooling
+    - gnupg2
+    - lsb-release
+    - software-properties-common
+  tags:
+    - install
+    - update
+
+- name: Setting cri-o facts
+  set_fact:
+    k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Set kubernetes version part facts for crictl
+  set_fact:
+    os: xUbuntu_20.04
+    k8s_major_version: "{% if k8s_version_semantic_parts|length > 0 %}{{ k8s_version_semantic_parts.0 }}{% endif %}"
+    k8s_minor_version: "{% if k8s_version_semantic_parts|length > 1 %}{{ k8s_version_semantic_parts.1 }}{% endif %}"
+    k8s_patch_version: "{% if k8s_version_semantic_parts|length > 2 %}{{ k8s_version_semantic_parts.2 }}{% else %}0{% endif %}"
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+  
+- name: Installing the cri-o libcontainers-archive-keyring key
+  ansible.builtin.apt_key:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/Release.key
+    keyring: /usr/share/keyrings/libcontainers-archive-keyring.gpg
+    state: present
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Installing the cri-o libcontainers-crio-archive-keyring key
+  ansible.builtin.apt_key:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version}}.{{ k8s_minor_version }}/{{ os }}/Release.key
+    keyring: /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
+    state: present
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+# Installing the repo
+- name: Installing the repo
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+  with_items:
+      - deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /
+      - deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/ /
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+# 
+# cri-o - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o
+#
+- name: Add module load file for cri-o
+  ansible.builtin.copy:
+    dest: "/etc/modules-load.d/cri-o.conf"
+    content: |
+      overlay
+      br_netfilter
+  tags:
+    - install
+    - update
+
+- name: Add modules to running system for cri-o
+  ansible.builtin.shell: |
+    modprobe overlay
+    modprobe br_netfilter
+  tags:
+    - install
+    - update
+
+# NOTE: Added net.ipv4.conf.all.rp_filter for Calico CNI
+- name: IP Table - File Update
+  ansible.builtin.copy:
+    dest: "/etc/sysctl.d/99-kubernetes-cri.conf"
+    content: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.ipv4.ip_forward                 = 1
+      net.ipv4.conf.all.rp_filter         = 1
+  tags:
+    - install
+    - update
+
+- name: IP Table - System Enable
+  ansible.builtin.command: /sbin/sysctl --system
+  tags:
+    - install
+    - update
+
+# Installing cri-o
+- name: Installing cri-o
+  ansible.builtin.package:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - cri-o
+    - cri-o-runc
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Remove default network config files for cri-o
+  ansible.builtin.shell: |
+    rm -rf /etc/cni/net.d/*.conf
+  tags:
+    - install
+    - update
+
+- name: Create the ipv4 crio network bridge config file
+  ansible.builtin.copy:
+    src: files/10-cri-ipv4-bridge.conf
+    dest: /etc/cni/net.d/10-cri-ipv4-bridge.conf
+    mode: '0644'
+  tags:
+    - install
+    - update
+
+- name: Enabling and starting cri-o to start now and on boot
+  ansible.builtin.systemd:
+    name: cri-o.service
+    enabled: yes
+    state: restarted
+  tags:
+    - install
+    - update

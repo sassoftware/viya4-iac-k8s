@@ -1,0 +1,99 @@
+---
+- name: Install nfs server software
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nfs-kernel-server
+    - rpcbind
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Setting up /export nfs mount point
+  block:
+    - name: Create nfs mount point
+      ansible.builtin.file:
+        path: /export
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: 0777
+      when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+
+    - name: Test for export mount point
+      ansible.builtin.shell: grep -c "^/export" /etc/exports || true
+      register: exports_file_rc
+
+    # TODO - Determine access CIDR for /export mount and cluster. * is for POC
+    # TODO - Verify these are the correct nfs options needed
+    - name: Add exported mount point to /etc/exports file - New entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: /export    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: exports_file_rc.stdout == "0"
+
+    - name: Add exported mount point to /etc/exports file - Update entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        regexp: '^/export'
+        line: /export    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: exports_file_rc.stdout != "0"
+  tags:
+    - install
+    - update
+
+- name: Setting up /nfs/kubernetes/sc/default nfs mount point
+  block:
+    - name: Create nfs mount point
+      ansible.builtin.file:
+        path: /nfs/kubernetes/sc/default
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: 0777
+      when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+
+    - name: Test for export mount point
+      ansible.builtin.shell: grep -c "^/nfs/kubernetes/sc/default" /etc/exports || true
+      register: kubernetes_sc_default_file_rc
+
+    # TODO - Determine access CIDR for /export mount and cluster. * is for POC
+    # TODO - Verify these are the correct nfs options needed
+    - name: Add exported mount point to /etc/exports file - New entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: /nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: kubernetes_sc_default_file_rc.stdout == "0"
+
+    - name: Add exported mount point to /etc/exports file - Update entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        regexp: '^/nfs/kubernetes/sc/default'
+        line: /nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: kubernetes_sc_default_file_rc.stdout != "0"
+  tags:
+    - install
+    - update
+
+- name: Export file system
+  ansible.builtin.shell: exportfs -a
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Start the nfs_kernel_server, portmap, and rpc-statd
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  with_items:
+    - nfs-server
+    - portmap
+    - rpc-statd
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update

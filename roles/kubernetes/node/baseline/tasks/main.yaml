@@ -1,0 +1,21 @@
+---
+# TODO: Might need rpcbind here for NFS 3.x Version 4.x does not need this
+- name: Install nfs-common for nfs-subdir-external-provisioner
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - nfs-common
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Start rpc-statd
+  ansible.builtin.systemd:
+    name: rpc-statd.service
+    enabled: yes
+    state: started
+  tags:
+    - install
+    - update

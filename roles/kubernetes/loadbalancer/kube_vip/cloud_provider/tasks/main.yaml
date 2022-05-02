@@ -1,0 +1,25 @@
+---
+- name: Install kube-vip Cloud Provider
+  ansible.builtin.shell: |
+    kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+  tags:
+    - install
+    - update
+
+- name: Create kube-vip Cloud Provider config map
+  ansible.builtin.template:
+    src: "templates/{{ item }}.tmpl"
+    dest: "/tmp/{{ item }}.yaml"
+    mode: '0600'
+  with_items:
+    - kube-vip-cm
+  tags:
+    - install
+    - update
+
+- name: Apply kube-vip Cloud Provider config map
+  ansible.builtin.shell: |
+    kubectl apply -f /tmp/kube-vip-cm.yaml
+  tags:
+    - install
+    - update

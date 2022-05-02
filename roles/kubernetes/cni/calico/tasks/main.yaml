@@ -1,0 +1,22 @@
+---
+#
+# TODO: Add user variables to the calico manifest to
+#       adjust items needed when working on bare metal
+#       vm type systems.
+#
+#       Original manifest here is: https://docs.projectcalico.org/manifests/calico.yaml
+#
+- name: Copy file
+  ansible.builtin.copy:
+    src: files/calico.yaml
+    dest: /tmp/calico.yaml
+  tags:
+    - install
+    - update
+
+- name: Apply calico-config.yaml
+  ansible.builtin.shell: |
+    kubectl apply -f /tmp/calico.yaml
+  tags:
+    - install
+    - update

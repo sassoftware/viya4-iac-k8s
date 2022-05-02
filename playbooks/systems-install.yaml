@@ -1,0 +1,43 @@
+---
+# Tasks that run on all nodes for initialization and common tasks
+- hosts: all
+  become: true
+  become_user: root
+  roles:
+    - { role: "systems/{{ deployment_type }}/init" }
+    - { role: systems/common }
+
+# NFS Server
+- hosts: nfs
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/nfs_server }
+
+# Jump Server
+- hosts: jump
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/jump_server }
+
+# Postgres Server
+- hosts: postgres
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/postgres }
+
+# Kubernetes - Control Plane
+- hosts: k8s_control_plane
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/control_plane }
+
+# Kubernetes - Compute nodes
+- hosts: k8s_node
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/node }

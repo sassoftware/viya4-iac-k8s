@@ -1,0 +1,30 @@
+# TODO: Check for supported operating systems
+#       Currently supported operating systems:
+#
+#       - Ubuntu 20.04 LTS
+#
+---
+- name: Configure partition for Ubuntu 20.04 LTS Operating System
+  ansible.builtin.set_fact:
+    partition_number: 2
+  when:
+    - ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+    
+- name: Expand Root Partition - growpart
+  ansible.builtin.shell: "growpart /dev/sda {{ partition_number }}" # CentOS - 1 # Ubuntu - 2
+  register: grow_result
+  failed_when: grow_result.rc >= 2
+  tags:
+    - install
+
+#
+# NOTE: This command must match the disk type of your system when
+#       using vSphere or any virtual vm's
+#
+- name: Expand Root File System - xfs_grow
+  ansible.builtin.shell: "xfs_growfs -d /"
+  tags:
+    - install

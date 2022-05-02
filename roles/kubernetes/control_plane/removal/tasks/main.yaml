@@ -1,0 +1,5 @@
+- name: Cleaning up the control plane
+  ansible.builtin.shell: |
+    kubeadm reset --force
+  tags:
+    uninstall

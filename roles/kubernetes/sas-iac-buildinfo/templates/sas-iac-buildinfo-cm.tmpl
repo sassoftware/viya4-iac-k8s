@@ -1,0 +1,18 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: sas-iac-buildinfo
+  namespace: kube-system
+  creationTimestamp: {{ ansible_date_time.iso8601 }}
+data:
+  git-hash: {{ git_hash.stdout | from_json | json_query('git_hash') }}
+{% if iac_tooling|length > 0 %}
+  iac-tooling: {{ iac_tooling }}
+{% else %}
+  iac_tooling: terraform
+{% endif %}
+  terraform: |
+    version: {{ iac_tooling_version.stdout | from_json | json_query('terraform_version') | regex_replace('^\"|\"$', "") }}
+    revision: {{ iac_tooling_version.stdout | from_json | json_query('terraform_revision') }}
+    provider-selections: {{ iac_tooling_version.stdout | from_json | json_query('provider_selections') }}
+    outdated: {{ iac_tooling_version.stdout | from_json | json_query('terraform_outdated') }}

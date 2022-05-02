@@ -1,0 +1,103 @@
+---
+#
+# Kubernetes Playbook - Installs all elements needed for a stable
+#                       kubernetes cluster for use with Viya 4
+#
+
+# All systems
+- hosts: all
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/common }
+
+# All kubernetes nodes
+- hosts: k8s
+  become: true
+  become_user: root
+  roles:
+    - { role: "kubernetes/cri/{{ kubernetes_cri }}" } # Selection will be made based on the value of kubernetes_cri in your ansible-vars.yaml file
+    - { role: kubernetes/toolbox }
+
+# Primary control plane node
+- hosts: k8s_control_plane[0]
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/loadbalancer/kube_vip/primary } # kube-vip : https://kube-vip.chipzoller.dev/docs/installation/static/
+    - { role: kubernetes/control_plane/init/primary }
+    - { role: "kubernetes/cni/{{ kubernetes_cni }}" }     # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
+
+# Secure kubernetes items
+- hosts: localhost
+  roles:
+    - { role: kubernetes/misc }
+
+# Secondary control plane nodes
+- hosts: k8s_control_plane[1:]
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/control_plane/init/secondary }
+    - { role: kubernetes/loadbalancer/kube_vip/secondary }
+
+# Compute nodes
+- hosts: k8s_node
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/baseline }
+    - { role: kubernetes/node/init }
+
+# Cloud load balancer - kube-vip
+- hosts: k8s_control_plane[0]
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/loadbalancer/kube_vip/cloud_provider }
+
+# Label/Taint System/Default nodes
+- hosts: k8s_node[0]
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/labels_taints/system }
+
+# Label/Taint CAS nodes
+- hosts: k8s_node[1]
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/labels_taints/cas }
+
+# Label/Taint General nodes
+- hosts: k8s_node[2:]
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/labels_taints/general }
+
+# Alter PostgreSQL server and add PostgreSQL databases
+- hosts: postgres
+  become: true
+  become_user: postgres 
+  roles:
+    - { role: kubernetes/database/postgres/alter_server_settings }
+    - { role: kubernetes/database/postgres/create_databases }
+
+# Restart PostgreSQL server
+- hosts: postgres
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/database/postgres/restart_server }
+
+# Setup default storage class for cluster
+- hosts: localhost
+  roles:
+    - { role: kubernetes/storage/nfs-subdir-external-provisioner }
+
+# Misc cluster related items
+- hosts: localhost
+  roles:
+    - { role: kubernetes/sas-iac-buildinfo }

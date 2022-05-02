@@ -1,0 +1,8 @@
+---
+- name: Label/Taints for System/Default node
+  ansible.builtin.shell: |
+    kubectl label nodes {{ ansible_nodename }} kubernetes.azure.com/mode=system --overwrite
+  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  tags:
+    - install
+    - update

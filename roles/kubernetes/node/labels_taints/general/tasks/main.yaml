@@ -1,0 +1,9 @@
+---
+- name: Label/Taints for General nodes
+  ansible.builtin.shell: |
+    kubectl label nodes {{ ansible_nodename }} workload.sas.com/class=compute --overwrite
+    kubectl label nodes {{ ansible_nodename }} launcher.sas.com/prepullimage=sas-programming-environment --overwrite
+  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  tags:
+    - install
+    - update
