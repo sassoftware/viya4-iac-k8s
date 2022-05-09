@@ -66,26 +66,3 @@ postgres_administrator_password="<postgres_server_administrator_password>"
 # NOTE: Add entries here for each postgres server listed above
 [postgres:children]
 <postgres_server_name>
-
-# Variables used for interaction with the viya4-iac-k8s repo
-# 
-# NOTE: All variable values are quoted
-#
-[all:vars]
-# Ansible related items
-ansible_user="<system_user>"
-ansible_password="<system_user_password>"
-
-# Kubernetes items
-cluster_name="<cluster_name>"
-
-# VIP related items
-kube_vip_dns="<kubernetes_cluster_vip_fqdn>"
-kube_vip_ip="<kuberentes_kube_vip_ip>"
-kube_vip_interface="<system_vip>" # NOTE: Cannot be a loopback interface. Must be the same on all machines
-
-# Jump server related items - NOTE: if this section is empty you did not provide IPs above
-jump_ip="<jump_server_ip>" # NOTE: Can be private/pubic ip depending on system setup
-
-# NFS server related items - NOTE: if this section is empty you did not provide IPs above
-nfs_ip="<nfs_server_ip>" # NOTE: Can be private/pubic ip depending on system setup
