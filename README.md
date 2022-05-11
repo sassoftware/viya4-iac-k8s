@@ -92,8 +92,8 @@ For more information, see [Docker Usage](./docs/user/DockerUsage.md). Using Dock
 
 This section has links to tooling needed to run the tooling here on your local system. If you are using the Dockerfile you only need docker installed. That link is also included below
 
-- [Terraform](https://www.terraform.io/downloads) - v.1.1.7
-- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - v2.12.4
+- [Terraform](https://www.terraform.io/downloads) - v.1.1.9
+- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - v2.12.5
 - [Docker](https://docs.docker.com/engine/install/) - v4.6.1
 - [Helm](https://helm.sh/docs/intro/install/) - v3.8.2
 

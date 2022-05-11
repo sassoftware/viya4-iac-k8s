@@ -37,6 +37,7 @@ FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
 k8s_control_plane
 k8s_node
 
+%{ if length(jump_ip) != 0 ~}
 #
 # Jump Server
 #
@@ -48,7 +49,9 @@ ${jump_ip}
 #
 [jump:children]
 jump_server
+%{ endif ~}
 
+%{ if length(nfs_ip) != 0 ~}
 #
 # NFS Server
 #
@@ -60,11 +63,12 @@ ${nfs_ip}
 #
 [nfs:children]
 nfs_server
+%{ endif ~}
 
+%{ if length(postgres_servers) != 0 ~}
 #
 # Postgres Servers
 #
-%{ if length(postgres_servers) != 0 ~}
 %{ for server_name, server_data in postgres_servers ~}
 [${prefix}_${server_name}_pgsql]
 ${server_data.server_ip}
@@ -76,15 +80,9 @@ postgres_administrator_login=${server_data.administrator_login} # NOTE: Do not c
 postgres_administrator_password=${server_data.administrator_password}
 
 %{ endfor ~}
-%{ if length(postgres_servers) != 0 ~}
 [postgres:children]
 %{ for server_name, server_data in postgres_servers ~}
 ${prefix}_${server_name}_pgsql
 %{ endfor ~}
-%{ else ~}
-FIXME - ENTER YOUR POSTGRES SERVERS ENTRY FROM ABOVE HERE!
-%{ endif ~}
 
-%{ else ~}
-FIXME - ENTER YOUR POSTGRES SERVER IP/FQDN HERE!
 %{ endif ~}

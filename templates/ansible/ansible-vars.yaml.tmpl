@@ -42,10 +42,12 @@ control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
 
 # Kubernetes - Compute Nodes
 
+%{ if length(jump_ip) != 0 ~}
 # Jump Server
 jump_ip : "${jump_ip}"
+%{ endif ~}
 
+%{ if length(nfs_ip) != 0 ~}
 # NFS Server
 nfs_ip  : "${nfs_ip}"
-
-# Postgres Servers
+%{ endif ~}

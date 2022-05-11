@@ -47,5 +47,3 @@ jump_ip : ""
 
 # NFS Server
 nfs_ip  : ""
-
-# Postgres Servers
