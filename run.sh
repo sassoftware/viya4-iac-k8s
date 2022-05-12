@@ -115,9 +115,12 @@ if [ "$#" -eq 0 ]; then
   help
 fi
 
-while [ "$#" -gt 0 ]
-do
+while [ "$#" -gt 0 ]; do
   case "$1" in
+    -h|--help)
+      help
+      break
+      ;;
     install )
       if [[ "$2" == "vsphere" ]]; then
         export SYSTEM="$2"
@@ -139,7 +142,7 @@ do
         exit 1
       fi
       break
-    ;;
+      ;;
     update )
       echo "Updating cluster"
       ansible_up
@@ -147,12 +150,12 @@ do
       echo ""
       terraform output -state $TFSTATE 
       break
-    ;;
+      ;;
     uninstall )
       echo "Uninstalling cluster"
       ansible_down
       break
-    ;;
+      ;;
     destroy )
       # Only works if the system type was vsphere which creates a tfstate file
       if [[ -e $TFSTATE ]]; then
@@ -173,22 +176,22 @@ do
         exit 0
       fi
       break
-    ;;
+      ;;
     helm )
       helm ${@:2}
       break
-    ;;
-    k )
+      ;;
+    k|kubtctl )
       kubectl ${@:2}
       break
-    ;;
-    tf )
+      ;;
+    tf|terraform )
       terraform $2 -state $TFSTATE ${@:3}
       break
-    ;;
+      ;;
     * )
       echo "Please enter the correct arguments."
       break
-    ;;
+      ;;
   esac
 done
