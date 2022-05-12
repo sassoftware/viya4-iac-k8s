@@ -7,7 +7,7 @@ NFS_CLIENT_CHART_VERSION: 4.0.15
 NFS_CLIENT_CONFIG:
   nfs:
     server: "{{ nfs_ip }}"
-    path: /nfs/kubernetes/sc/default
+    path: /srv/nfs/kubernetes/sc/default
     mountOptions: 
       - noatime
       - nodiratime
