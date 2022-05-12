@@ -12,7 +12,7 @@ This project contains Terraform scripts to provision cloud infrastructure resour
 >- Nodes with required labels taints
 >- Infrastructure to deploy the SAS Viya CAS server in SMP or MPP mode
 
-[<img src="./docs/images/viya4-iac-oss-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-oss-diag.png?raw=true)
+[<img src="./docs/images/viya4-iac-k8s-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-k8s-diag.png?raw=true)
 
 This project helps you to automate the cluster-provisioning phase of SAS Viya deployment. To learn about all phases and options of the SAS Viya deployment process, see [Getting Started with SAS Viya and Open Source (OSS) Kubernetes Service]() in _SAS&reg; Viya&reg; Operations_.
 
