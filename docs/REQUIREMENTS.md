@@ -18,7 +18,8 @@ Table of Contents
 * 4. [Examples](#Examples)
 	* 4.1. [vCenter/vSphere Sample `tfvars` file](#vCentervSphereSampletfvarsfile)
 	* 4.2. [Bare Metal Sample `inventory` file](#BareMetalSampleinventoryfile)
-* 5. [Tooling](#Tooling)
+* 5. [Deployment](#Deployment)
+* 6. [Tooling](#Tooling)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -367,7 +368,41 @@ nfs_ip  : ""
 # Postgres Servers
 ```
 
-##  5. <a name='Tooling'></a>Tooling
+##  5. <a name='Deployment'></a>Deployment
+
+You'll need to add the following items to your `ansible-vars.yaml` if using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repo.
+
+```yaml
+## 3rd Party
+
+### Ingress Controller
+INGRESS_NGINX_CHART_VERSION: 3.40.0
+INGRESS_NGINX_CONFIG:
+
+### Metrics Server
+METRICS_SERVER_CHART_VERSION: 5.10.14
+METRICS_SERVER_CONFIG:
+  apiService:
+    create: true
+  extraArgs:
+    kubelet-insecure-tls: true
+    kubelet-preferred-address-types: InternalIP,ExternalIP,Hostname,InternalDNS,ExternalDNS
+    kubelet-use-node-status-port: true
+    requestheader-allowed-names: aggregator
+    metric-resolution: 15s
+    cert-dir: /tmp
+  service:
+    labels:
+      kubernetes.io/cluster-service: "true"
+      kubernetes.io/name: "Metrics-server"
+
+### NFS Subdir External Provisioner - SAS default storage class
+# Updates to support OSS Kubernetes 
+NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
+NFS_CLIENT_CHART_VERSION: 4.0.15
+```
+
+##  6. <a name='Tooling'></a>Tooling
 
 | Tooling | Minimal Version |
 | ---: | ---: |
