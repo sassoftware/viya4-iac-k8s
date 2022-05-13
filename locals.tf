@@ -8,12 +8,6 @@ locals {
   cluster_name = "${var.prefix}-oss"
 
   # PostgreSQL
-  #
-  # TODO: Align with actual cloud providers to take user input
-  #       to create n number of database servers at the infrastructure
-  #       level for use.
-  #
-
   postgres_servers = var.postgres_servers == null ? {} : { for k, v in var.postgres_servers : k => merge(var.postgres_server_defaults, v, ) }
 
   postgres_outputs = length(local.postgres_servers) != 0 ? { for k, v in local.postgres_servers :
