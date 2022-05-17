@@ -31,7 +31,7 @@ kubernetes_pod_subnet      : ""
 #   VIP IP : https://kube-vip.chipzoller.dev/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.chipzoller.dev/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "0.4.3"
+kubernetes_vip_version              : "0.4.4"
 kubernetes_vip_interface            : "ens160"
 kubernetes_vip_ip                   : ""
 kubernetes_vip_loadbalanced_dns     : ""

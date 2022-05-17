@@ -26,7 +26,7 @@ cluster_pod_subnet     = "" # Kubernetes Pod Subnet
 cluster_domain         = "" # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP and Cloud Provider
-kube_vip_version   = "0.4.3"  # kube-vip version
+kube_vip_version   = "0.4.4"  # kube-vip version
 kube_vip_interface = "ens160" # kube-vip interface
 kube_vip_ip        = ""       # kube-vip ip
 kube_vip_dns       = ""       # kube-vip dns
