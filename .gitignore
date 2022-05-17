@@ -1,6 +1,6 @@
 .terraform*
 terraform.tfstate*
-terraform.tfvars
+/terraform.tfvars
 /inventory
 /ansible-vars.yaml
 /*-oss-kubeconfig.conf

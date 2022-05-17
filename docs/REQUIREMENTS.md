@@ -119,7 +119,7 @@ VIP IP           : 10.18.0.175
 LoadBalanced IPs : 10.18.0.100-10.18.0.125
 ```
 
-Link to the file [`terraform-oss.tfvars`](../examples/vsphere/terraform-oss.tfvars)
+Link to the file [`terraform.tfvars`](../examples/vsphere/terraform.tfvars)
 
 ```yaml
 # Generic items
