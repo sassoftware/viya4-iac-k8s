@@ -42,10 +42,21 @@
     - install
     - update
 
+- name: Download crictl
+  ansible.builtin.get_url:
+    url: https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ k8s_major_version }}.{{ k8s_minor_version }}.0/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
+    dest: /tmp/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
+    mode: '0755'
+  when: kubernetes_cri|lower != 'docker'
+  tags:
+    - install
+    - update
+
 - name: Install crictl
-  ansible.builtin.shell: |
-    wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ k8s_major_version }}.{{ k8s_minor_version }}.0/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
-    tar zxvf crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz -C /usr/local/bin
+  ansible.builtin.unarchive:
+    src: /tmp/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
   when: kubernetes_cri|lower != 'docker'
   tags:
     - install

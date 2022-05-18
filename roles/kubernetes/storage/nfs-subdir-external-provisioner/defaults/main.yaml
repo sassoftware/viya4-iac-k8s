@@ -3,7 +3,7 @@ NFS_CLIENT_NAME: nfs-subdir-external-provisioner-default
 NFS_CLIENT_NAMESPACE: kube-system
 NFS_CLIENT_CHART_NAME: nfs-subdir-external-provisioner
 NFS_CLIENT_CHART_URL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-NFS_CLIENT_CHART_VERSION: 4.0.15
+NFS_CLIENT_CHART_VERSION: 4.0.16
 NFS_CLIENT_CONFIG:
   nfs:
     server: "{{ nfs_ip }}"
