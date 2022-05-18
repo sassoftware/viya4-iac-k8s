@@ -17,7 +17,7 @@ Supported configuration variables are listed in the table below.  All variables 
 
 ## vSphere/vCenter
 
-### Terraform vars
+### Terraform `terraform.tfvars` file
 
 Terraform input variables can be set in the following ways:
 - Individually, with the [-var command line option](https://www.terraform.io/docs/configuration/variables.html#variables-on-the-command-line).
@@ -205,7 +205,7 @@ postgres_servers = {
 
 ## Bare Metal
 
-### Ansible vars
+### Ansible `ansible-vars.yaml` file
 
 ## General
 
