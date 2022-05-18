@@ -179,7 +179,7 @@ nfs_ip        = ""    # Assigned values for static IPs
 | server_num_cpu | # of CPUs | number | 8 | |
 | server_ram | Size of RAM in MB | number | 16385 | |
 | server_disk_size | Size of Disk in GB | number | 250 | |
-| server_ip | Static IP for postgres server | string | | |
+| server_ip | Static IP for postgres server | string | | This is a required field |
 | server_version | PostgreSQL version | number | 12 | |
 | server_ssl | Turn on/off SSL | string | "off" | |
 | administrator_login | Admin User | string | "postgres" | |
@@ -194,7 +194,7 @@ postgres_servers = {
     server_num_cpu         = 8                       # 8 CPUs
     server_ram             = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = ""                      # Assigned values for static IPs
+    server_ip              = ""                      # Assigned values for static IPs - REQUIRED
     server_version         = 12                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED

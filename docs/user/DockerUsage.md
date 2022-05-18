@@ -61,9 +61,9 @@ docker run --rm -it \
 
 This command can take a few minutes to complete. Once complete, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` and the `kubeconfig` file for the cluster stored here `[prefix]-oss-kubeconfig.conf` are written in the current directory, `$(pwd)`.
 
-### Create your kubernetes cluster using systems - `bare-metal`
+### Create your kubernetes cluster using systems - `bare_metal`
 
-To create your kubernetes cluster run the `viya4-iac-k8s` Docker image with the `install` command and the `bare-metal` option:
+To create your kubernetes cluster run the `viya4-iac-k8s` Docker image with the `install` command and the `bare_metal` option:
 
 ```bash
 docker run --rm -it \
@@ -71,7 +71,7 @@ docker run --rm -it \
   --user $(id -u):$(id -g) \
   --env-file $HOME/.bare_metal_docker_creds.env \
   --volume $(pwd):/workspace \
-  viya4-iac-k8s install bare-metal
+  viya4-iac-k8s install bare_metal
 ```
 
 ### Display Terraform Outputs - `vSphere`

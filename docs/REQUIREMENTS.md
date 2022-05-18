@@ -312,7 +312,7 @@ postgres_administrator_password="Un33d2ChgM3n0W!"
 viya4_oss_default_pgsql
 ```
 
-Link to the file [`./examples/ansbile-vars-bare-metal.yaml`](../examples/bare-metal/ansible-vars.yaml)
+Link to the file [`./examples/bare-metal/ansible-vars.yaml`](../examples/bare-metal/ansible-vars.yaml)
 
 ```yaml
 # Ansible items
