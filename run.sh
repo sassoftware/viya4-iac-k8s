@@ -83,9 +83,8 @@ ansible_prep() {
     ansible-galaxy collection install -r "$BASEDIR/requirements.yaml" -f
 }
 
-# TODO: Not implemented
 ansible_down() {
-    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" $BASEDIR/playbooks/systems-uninstall.yaml --flush-cache --tags uninstall
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-uninstall.yaml --flush-cache --tags uninstall
 }
 
 baseline_up() {
@@ -154,6 +153,9 @@ while [ "$#" -gt 0 ]; do
     uninstall )
       echo "Uninstalling cluster"
       ansible_down
+      echo "Outputs:"
+      echo ""
+      terraform output -state $TFSTATE
       break
       ;;
     destroy )
