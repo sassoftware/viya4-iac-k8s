@@ -153,9 +153,6 @@ while [ "$#" -gt 0 ]; do
     uninstall )
       echo "Uninstalling cluster"
       ansible_down
-      echo "Outputs:"
-      echo ""
-      terraform output -state $TFSTATE
       break
       ;;
     destroy )
