@@ -138,6 +138,7 @@ resource "local_file" "ansible_vars" {
     ansible_password           = var.ansible_password
     deployment_type            = var.deployment_type
     iac_tooling                = var.iac_tooling
+    prefix                     = var.prefix
     cluster_name               = local.cluster_name
     cluster_version            = var.cluster_version
     cluster_cni                = var.cluster_cni
