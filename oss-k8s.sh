@@ -287,7 +287,8 @@ for item in "${arguments[@]}"; do
       exit 0
     fi
     # Clean up
-    rm -rf "$TFSTATE*" 2>&1 > /dev/null
+    rm -rf "$TFSTATE" 2>&1 > /dev/null
+    rm -rf "$TFSTATE.backup" 2>&1 > /dev/null
     break
   fi
 done
