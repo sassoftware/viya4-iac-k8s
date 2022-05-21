@@ -97,6 +97,7 @@ clean_up() {
 }
 
 help() {
+  echo ""
   echo "Usage: $0 [apply|setup|install|update|uninstall|cleanup|destroy]"
   echo ""
   echo "  Actions - Items and there meanings."
@@ -115,6 +116,7 @@ help() {
   echo "  creation items    - [apply setup install]"
   echo "  update items      - [update]"
   echo "  destruction items - [uninstall cleanup destroy]"
+  echo ""
   exit 1
 }
 
