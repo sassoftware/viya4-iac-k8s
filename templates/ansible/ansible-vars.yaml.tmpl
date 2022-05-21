@@ -12,13 +12,14 @@ system_ssh_keys_dir : "${ system_ssh_keys_dir }" # Directory holding public keys
 
 # Generic items
 prefix : "${ prefix }"
+deployment_type: "${ deployment_type }"
 
 # Kubernetes - Common
 #
 # TODO: kubernetes_upgrade_allowed needs to be implemented to either
 #       add or remove locks on the kubeadm, kubelet, kubectl packages
 #
-kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value here
+kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value above
 kubernetes_version         : "${ cluster_version }"
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
