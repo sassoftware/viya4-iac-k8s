@@ -277,12 +277,10 @@ for item in "${arguments[@]}"; do
         if [[ "$CONFIRMATION" == "y" || "$CONFIRMATION" == "yes" ]]; then
           echo "Destorying cluster and infra"
           terraform_down
-          break
         fi
       else
         echo "Destorying cluster and infra"
         terraform_down
-        break
       fi
     else
       echo "No infrastructure to destroy. Thanks for playing ;)"
