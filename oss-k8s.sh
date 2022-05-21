@@ -255,16 +255,18 @@ for item in "${arguments[@]}"; do
   fi
   # update- Update systems and/or kubernetes
   if [[ "$item" == "update" ]]; then
-    echo "update"
+    echo "TODO: update"
   fi
   # uninstall - Uninstall kubernetes
   if [[ "$item" == "uninstall" ]]; then
     ansible_prep
     ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-uninstall.yaml --flush-cache --tags uninstall
+    rm -rf *-oss-kubeconfig.conf 2>&1 > /dev/null
+    rm -rf sas-iac-buildinfo-cm.yaml 2>&1 > /dev/null
   fi
   # cleanup - 
   if [[ "$item" == "cleanup" ]]; then
-    echo "cleanup"
+    echo "TODO: cleanup"
   fi
   # destroy - Destroy infrastructure
   if [[ "$item" == "destroy" ]]; then
@@ -286,6 +288,11 @@ for item in "${arguments[@]}"; do
       echo "No infrastructure to destroy. Thanks for playing ;)"
       exit 0
     fi
+    # Clean up
+    rm -rf ./terraform.tfvars 2>&1 > /dev/null
+    rm -rf .terraform* 2>&1 > /dev/null
+    rm -rf terraform.tfstate* 2>&1 > /dev/null
+    break
   fi
 done
 
