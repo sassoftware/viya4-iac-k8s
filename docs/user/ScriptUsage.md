@@ -4,7 +4,7 @@
 
 ### Bring your own (BYO) systems
 
-# Using the `run.sh` Script
+# Using the `oss-k8s.sh` Script
 
 ## Prerequisites
 
@@ -34,56 +34,69 @@ Prepare your `terraform.tfvars` file, as described in [Customize Input Values](.
 
 This script offers options for both vSphere/vCenter and bare-metal. Each section below describes what is needed for each option.
 
-The script has the following commands and options:
+The script has the following commands:
 
 ```bash
-./run.sh install [bare_metal,vsphere] - This installs the OSS Kubernetes cluster
-./run.sh destroy                      - This destroys the vSphere infrastructure and anything running that infrastructure
-./run.sh tf [tf commands]             - This runs `terraform`
-./run.sh helm [helm commands]         - This runs `helm`
-./run.sh k [kubectl commands]         - This runs `kubectl`
+Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy]
+
+  Actions - Items and there meanings.
+
+    apply     - IAC Creation                     : vSphere/vCenter
+    setup     - System and software setup        : systems
+    install   - Kubernetes install               : systems
+    update    - System and/or Kubernetes updates : systems
+    uninstall - Kubernetes uninstall             : systems
+    cleanup   - Systems and software cleanup     : systems
+    destroy   - IAC Destruction                  : vSphere/vCenter
+
+  Action groupings  - These items can be run together.
+                      Alternate combinations are not allowed.
+
+  creation items    - [apply setup install]
+  update items      - [update]
+  destruction items - [uninstall cleanup destroy]
 ```
 
 ### Create your infrastructure and kubernetes cluster - `vsphere`
 
-To create your system resources run the `viya4-iac-k8s` Docker image with the `install` command and the `vsphere` option:
+To create your system resources run the `viya4-iac-k8s` script with the `apply setup install` commands:
 
 ```bash
-./run.sh install vsphere
+./oss-k8s.sh apply setup install
 ```
 
 This command can take a few minutes to complete. Once complete, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` and the `kubeconfig` file for the cluster stored here `[prefix]-oss-kubeconfig.conf` are written in the current directory, `$(pwd)`.
 
 ### Create your kubernetes cluster using systems - `bare_metal`
 
-To create your kubernetes cluster run the `viya4-iac-k8s` Docker image with the `install` command and the `bare_metal` option:
+To create your kubernetes cluster run the `viya4-iac-k8s` script with the `setup install` commands:
 
 ```bash
-./run.sh install bare_metal
+./oss-k8s.sh setup install
 ```
 
 ### Display Terraform Outputs - `vSphere`
 
-Once your resources have been created using the `run.sh` command, you can display Terraform output values by running the `viya4-iac-k8s` Docker image using the `output` command:
+Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the `viya4-iac-k8s` script using the `output` command:
 
 ```bash
-./run.sh tf output -state /workspace/terraform.tfstate
+./oss-k8s.sh tf output -state /workspace/terraform.tfstate
 ```
 
 To display complex or hidden items in the output pass those values to the output command:
 
 ```bash
-./run.sh tf output postgres_servers
+./oss-k8s.sh tf output postgres_servers
 ```
 
 **NOTE**: The `-state` flag is only optional if you have set the `KUBECONFIG` environment variable in your current shell.
 
 ### Tear Down Kubernetes Resources - vSphere/vCenter
 
-To destroy all the resources created with the previous commands, run the Docker image viya4-iac-k8s with the destroy command.
+To destroy all the resources created with the previous commands, run the using the `oss-k8s.sh` script `destroy` command.
 
 ```bash
-./run.sh destroy
+./oss-k8s.sh destroy
 ```
 
 **NOTE**: The 'destroy' action is irreversible.
@@ -97,5 +110,5 @@ To destroy all the resources created with the previous commands, run the Docker 
 To run kubectl get nodes command with the Docker image viya4-iac-k8s to list cluster nodes, switch entrypoint to kubectl (--entrypoint kubectl), provide 'KUBECONFIG' file (--env=KUBECONFIG=/workspace/<your prefix>-aks-kubeconfig.conf) and pass kubectl subcommands(get nodes). For e.g., to run `k get nodes`
 
 ```bash
-./run.sh k get nodes
+./oss-k8s.sh k get nodes
 ```

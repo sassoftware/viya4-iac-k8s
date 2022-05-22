@@ -108,7 +108,7 @@ help() {
   echo "    update    - System and/or Kubernetes updates : systems"
   echo "    uninstall - Kubernetes uninstall             : systems"
   echo "    cleanup   - Systems and software cleanup     : systems"
-  echo "    destroy   - IAC descrution                   : vSphere/vCenter"
+  echo "    destroy   - IAC Destruction                  : vSphere/vCenter"
   echo ""
   echo "  Action groupings  - These items can be run together."
   echo "                      Alternate combinations are not allowed."
