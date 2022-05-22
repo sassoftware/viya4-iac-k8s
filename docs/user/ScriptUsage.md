@@ -37,17 +37,17 @@ This script offers options for both vSphere/vCenter and bare-metal. Each section
 The script has the following commands:
 
 ```bash
-Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy]
+Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]
 
-  Actions - Items and there meanings.
+  Actions           - Items and there meanings
 
-    apply     - IAC Creation                     : vSphere/vCenter
-    setup     - System and software setup        : systems
-    install   - Kubernetes install               : systems
-    update    - System and/or Kubernetes updates : systems
-    uninstall - Kubernetes uninstall             : systems
-    cleanup   - Systems and software cleanup     : systems
-    destroy   - IAC Destruction                  : vSphere/vCenter
+    apply           - IAC Creation                     : vSphere/vCenter
+    setup           - System and software setup        : systems
+    install         - Kubernetes install               : systems
+    update          - System and/or Kubernetes updates : systems
+    uninstall       - Kubernetes uninstall             : systems
+    cleanup         - Systems and software cleanup     : systems
+    destroy         - IAC Destruction                  : vSphere/vCenter
 
   Action groupings  - These items can be run together.
                       Alternate combinations are not allowed.
@@ -55,6 +55,12 @@ Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy]
   creation items    - [apply setup install]
   update items      - [update]
   destruction items - [uninstall cleanup destroy]
+
+  Tooling - Integrated tools
+
+    helm            - Helm                             : kubernetes
+    k               - kubectl                          : kubernetes
+    tf              - Terraform                        : vSphere/vCenter
 ```
 
 ### Create your infrastructure and kubernetes cluster - `vsphere`
@@ -107,7 +113,7 @@ To destroy all the resources created with the previous commands, run the using t
 
 ### Example Using kubectl
 
-To run kubectl get nodes command with the Docker image viya4-iac-k8s to list cluster nodes, switch entrypoint to kubectl (--entrypoint kubectl), provide 'KUBECONFIG' file (--env=KUBECONFIG=/workspace/<your prefix>-aks-kubeconfig.conf) and pass kubectl subcommands(get nodes). For e.g., to run `k get nodes`
+To run kubectl get nodes command with the script to list cluster nodes, switch entrypoint to kubectl (--entrypoint kubectl), provide 'KUBECONFIG' file (--env=KUBECONFIG=/workspace/<your prefix>-aks-kubeconfig.conf) and pass kubectl subcommands(get nodes). For e.g., to run `k get nodes`
 
 ```bash
 ./oss-k8s.sh k get nodes

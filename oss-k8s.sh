@@ -98,17 +98,17 @@ clean_up() {
 
 help() {
   echo ""
-  echo "Usage: $0 [apply|setup|install|update|uninstall|cleanup|destroy]"
+  echo "Usage: $0 [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]"
   echo ""
-  echo "  Actions - Items and there meanings."
+  echo "  Actions           - Items and there meanings"
   echo ""
-  echo "    apply     - IAC Creation                     : vSphere/vCenter"
-  echo "    setup     - System and software setup        : systems"
-  echo "    install   - Kubernetes install               : systems"
-  echo "    update    - System and/or Kubernetes updates : systems"
-  echo "    uninstall - Kubernetes uninstall             : systems"
-  echo "    cleanup   - Systems and software cleanup     : systems"
-  echo "    destroy   - IAC Destruction                  : vSphere/vCenter"
+  echo "    apply           - IAC Creation                     : vSphere/vCenter"
+  echo "    setup           - System and software setup        : systems"
+  echo "    install         - Kubernetes install               : systems"
+  echo "    update          - System and/or Kubernetes updates : systems"
+  echo "    uninstall       - Kubernetes uninstall             : systems"
+  echo "    cleanup         - Systems and software cleanup     : systems"
+  echo "    destroy         - IAC Destruction                  : vSphere/vCenter"
   echo ""
   echo "  Action groupings  - These items can be run together."
   echo "                      Alternate combinations are not allowed."
@@ -116,6 +116,12 @@ help() {
   echo "  creation items    - [apply setup install]"
   echo "  update items      - [update]"
   echo "  destruction items - [uninstall cleanup destroy]"
+  echo ""
+  echo "  Tooling - Integrated tools"
+  echo ""
+  echo "    helm            - Helm                             : kubernetes"
+  echo "    k               - kubectl                          : kubernetes"
+  echo "    tf              - Terraform                        : vSphere/vCenter"
   echo ""
   exit 1
 }
@@ -233,6 +239,26 @@ if [ "$validated_args" != true ]; then
   echo "The arguments and/or combination of arguments is invalid: $ARGS"
   echo ""
   help
+fi
+
+if [ "$external_flag" = true ] && [ "$validated_args" = true ]; then
+  # Check to see if the request if for tooling help
+  while [ "${#ARGS[@]}" -gt 0 ]; do
+    case "$1" in
+      helm )
+        helm ${@:2}
+        exit "$?"
+        ;;
+      k|kubtctl )
+        kubectl ${@:2}
+        exit "$?"
+        ;;
+      tf|terraform )
+        terraform $2 -state $TFSTATE ${@:3}
+        exit "$?"
+        ;;
+    esac
+  done    
 fi
 
 # Process the arguments
