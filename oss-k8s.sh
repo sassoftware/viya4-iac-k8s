@@ -69,7 +69,6 @@ terraform_up() {
 terraform_down() {
     terraform_prep
     terraform destroy -parallelism=15 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
-    clean_up
 }
 
 # bare_metal items (ansible)
@@ -305,7 +304,7 @@ for item in "${arguments[@]}"; do
           terraform_down
         else
           echo "You did not opt to run destroy"
-          exit 0
+          exit 1
         fi
       else
         echo "Destorying cluster and infra"
@@ -316,6 +315,7 @@ for item in "${arguments[@]}"; do
       exit 0
     fi
     # Clean up
+    clean_up
     rm -rf "$TFSTATE" 2>&1 > /dev/null
     rm -rf "$TFSTATE.backup" 2>&1 > /dev/null
     break
