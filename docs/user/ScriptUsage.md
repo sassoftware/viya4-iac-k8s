@@ -10,9 +10,11 @@
 
 - After satisfying all of the perquisite items listed in the [README.md](../../README.md#script-requirements) doc for this repo you're ready to begin.
 
-### Environment File for vSphere/vCenter Authentication
+### vSphere/vCenter Environment File for Authentication
 
-Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.vsphere_creds.env. Protect that file with vSphere/vCenter credentials so only you have read access to it. NOTE: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
+Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.vsphere_creds.env. Protect that file with vSphere/vCenter credentials so only you have read access to it.
+
+**NOTE**: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
 
 Now each time you invoke the container, specify the file with the --env-file option to pass on Azure credentials to the container.
 
@@ -20,7 +22,9 @@ An example of this file can be found in the `examples` directory [here](./../../
 
 ### Bare Metal Environment File for Authentication
 
-Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.bare_metal_creds.env. Protect that file with bare-metal credentials so only you have read access to it. NOTE: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
+Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.bare_metal_creds.env. Protect that file with bare-metal credentials so only you have read access to it
+
+**NOTE**: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
 
 Now each time you invoke the container, specify the file with the --env-file option to pass on Azure credentials to the container.
 
@@ -34,7 +38,7 @@ Prepare your `terraform.tfvars` file, as described in [Customize Input Values](.
 
 This script offers options for both vSphere/vCenter and bare-metal. Each section below describes what is needed for each option.
 
-The script has the following commands:
+The script has the following options. These options include both actions for infrastructure and cluster creation along with encapsulated tooling.
 
 ```bash
 Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]
@@ -65,7 +69,7 @@ Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k
 
 ### Create your infrastructure and kubernetes cluster - `vsphere`
 
-To create your system resources run the `viya4-iac-k8s` script with the `apply setup install` commands:
+To create your system resources run the `oss-k8s.sh` script with the `apply setup install` commands:
 
 ```bash
 ./oss-k8s.sh apply setup install
@@ -75,7 +79,7 @@ This command can take a few minutes to complete. Once complete, Terraform output
 
 ### Create your kubernetes cluster using systems - `bare_metal`
 
-To create your kubernetes cluster run the `viya4-iac-k8s` script with the `setup install` commands:
+To create your kubernetes cluster run the `oss-k8s.sh` script with the `setup install` options:
 
 ```bash
 ./oss-k8s.sh setup install
@@ -83,7 +87,7 @@ To create your kubernetes cluster run the `viya4-iac-k8s` script with the `setup
 
 ### Display Terraform Outputs - `vSphere`
 
-Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the `viya4-iac-k8s` script using the `output` command:
+Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the `oss-k8s.sh` script using the `tf` option:
 
 ```bash
 ./oss-k8s.sh tf output -state /workspace/terraform.tfstate
@@ -95,7 +99,7 @@ To display complex or hidden items in the output pass those values to the output
 ./oss-k8s.sh tf output postgres_servers
 ```
 
-**NOTE**: The `-state` flag is only optional if you have set the `KUBECONFIG` environment variable in your current shell.
+**NOTE**: The `-state` flag is only optional if the `terraform.tfstate` file is not in the current directory.
 
 ### Tear Down Kubernetes Resources - vSphere/vCenter
 
@@ -113,8 +117,8 @@ To destroy all the resources created with the previous commands, run the using t
 
 ### Example Using kubectl
 
-To run kubectl get nodes command with the script to list cluster nodes, switch entrypoint to kubectl (--entrypoint kubectl), provide 'KUBECONFIG' file (--env=KUBECONFIG=/workspace/<your prefix>-aks-kubeconfig.conf) and pass kubectl subcommands(get nodes). For e.g., to run `k get nodes`
+To run the kubectl command with the `oss-k8s.sh` script to list cluster nodes, be sure to set your `KUBECONFIG` environment variable so that it references the kube config file created for your cluster. This example shows how you can get node information:
 
 ```bash
-./oss-k8s.sh k get nodes
+./oss-k8s.sh k get nodes -o wide
 ```
