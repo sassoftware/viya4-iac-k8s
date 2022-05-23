@@ -276,7 +276,7 @@ for item in "${arguments[@]}"; do
   # install - Install kubernetes
   if [[ "$item" == "install" ]]; then
     ansible_prep
-    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-install.yaml --flush-cache --tags install
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-install.yaml --flush-cache --tags install
   fi
   # update- Update systems and/or kubernetes
   if [[ "$item" == "update" ]]; then
@@ -285,7 +285,7 @@ for item in "${arguments[@]}"; do
   # uninstall - Uninstall kubernetes
   if [[ "$item" == "uninstall" ]]; then
     ansible_prep
-    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-uninstall.yaml --flush-cache --tags uninstall
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-uninstall.yaml --flush-cache --tags uninstall
     rm -rf *-oss-kubeconfig.conf 2>&1 > /dev/null
     rm -rf sas-iac-buildinfo-cm.yaml 2>&1 > /dev/null
   fi
