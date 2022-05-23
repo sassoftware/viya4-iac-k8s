@@ -122,7 +122,7 @@ LoadBalanced IPs : 10.18.0.100-10.18.0.125
 Link to the file [`terraform.tfvars`](../examples/vsphere/terraform.tfvars)
 
 ```yaml
-# Generic items
+# General items
 ansible_user     = "ansadmin"
 ansible_password = "!Th!sSh0uldNotBUrP@ssw0rd#"
 prefix           = "vm-dev" # Infra prefix
@@ -141,7 +141,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each system
 
 # Kubernetes - Cluster
-cluster_version        = "1.21.11"                       # Kubernetes Version
+cluster_version        = "1.22.9"                       # Kubernetes Version
 cluster_cni            = "calico"                        # Kuberentes Container Network Interface (CNI)
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes Service Subnet
@@ -168,7 +168,6 @@ control_plane_ips = [           # Assigned values For static IPs - for HA you ne
   "10.18.0.2",                  # Primary control plane node
   "10.18.0.3",                  # Secondary control plane node
   "10.18.0.4"                   # Secondary control plane node
-
 ]
 
 # Compute node specs
@@ -323,24 +322,29 @@ ansible_password : ""
 vm_os   : "ubuntu" # Choices : [ubuntu|rhel] - Ubuntu 20.04 LTS / RHEL ???
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
-# Misc. items
+# System items
 enable_cgroup_v2    : true     # TODO - If needed hookup or remove flag
 system_ssh_keys_dir : "~/.ssh" # Directory holding public keys to be used on each system
+
+# Generic items
+prefix : "${ prefix }"
+deployment_type: "${ deployment_type }"
 
 # Kubernetes - Common
 #
 # TODO: kubernetes_upgrade_allowed needs to be implemented to either
 #       add or remove locks on the kubeadm, kubelet, kubectl packages
 #
-kubernetes_cluster_name    : ""
+kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value above
 kubernetes_version         : ""
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
-kubernetes_cni             : "calico"        # Choices : [calico]
-kubernetes_cri             : "containerd"    # Choices : [containerd|docker|cri-o] NOTE: cri-o is not currently functional
+kubernetes_cni             : "calico"           # Choices : [calico]
+kubernetes_cri             : "containerd"       # Choices : [containerd|docker|cri-o] NOTE: cri-o is not currently functional
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
+#
 # Kubernetes - VIP : https://kube-vip.io
 # 
 # Useful links:
@@ -349,7 +353,7 @@ kubernetes_pod_subnet      : ""
 #   VIP Cloud Provider IP Range : https://kube-vip.chipzoller.dev/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
 kubernetes_vip_version              : "0.4.4"
-kubernetes_vip_interface            : "ens160"
+kubernetes_vip_interface            : ""
 kubernetes_vip_ip                   : ""
 kubernetes_vip_loadbalanced_dns     : ""
 kubernetes_vip_cloud_provider_range : ""
@@ -376,7 +380,6 @@ You'll need to add the following items to your `ansible-vars.yaml` if using the 
 ## 3rd Party
 
 ### Ingress Controller
-INGRESS_NGINX_CHART_VERSION: 3.40.0
 INGRESS_NGINX_CONFIG:
 
 ### Metrics Server
@@ -407,6 +410,6 @@ NFS_CLIENT_CHART_VERSION: 4.0.16
 | Tooling | Minimal Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.12.2 |
-| [Terraform](https://www.terraform.io/) | 1.1.0 |
+| [Terraform](https://www.terraform.io/) | 1.1.9 |
 | [Docker](https://www.docker.com/) | 20.10.12 |
 | [Helm](https://helm.sh/) | v3.8.2 |

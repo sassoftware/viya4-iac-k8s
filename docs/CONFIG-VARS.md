@@ -211,7 +211,7 @@ postgres_servers = {
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
-| kubernetes_version | The Machine cluster K8S version | string | "1.21" | Valid values are list here [Kubernetes Releases](https://kubernetes.io/releases/) |
+| kubernetes_version | The Machine cluster K8S version | string | "1.22.9" | Valid values are list here [Kubernetes Releases](https://kubernetes.io/releases/) |
 | create_static_kubeconfig | Allows the user to create a provider / service account based kube config file | bool | false | A value of `false` will default to using the cloud providers mechanism for generating the kubeconfig file. A value of `true` will create a static kubeconfig which utilizes a `Service Account` and `Cluster Role Binding` to provide credentials. |
 | jump_vm_admin | OS Admin User for the Jump VM | string | "jumpuser" | | |
 | jump_rwx_filestore_path | File store mount point on Jump server | string | "/viya-share" | |
