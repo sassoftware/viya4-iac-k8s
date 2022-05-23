@@ -303,6 +303,9 @@ for item in "${arguments[@]}"; do
         if [[ "$CONFIRMATION" == "y" || "$CONFIRMATION" == "yes" ]]; then
           echo "Destorying cluster and infra"
           terraform_down
+        else
+          echo "You did not opt to run destroy"
+          exit 0
         fi
       else
         echo "Destorying cluster and infra"
