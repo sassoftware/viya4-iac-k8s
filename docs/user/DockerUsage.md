@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Docker must be [installed on your workstation](../../README.md#docker-requirements).
+- After satisfying all of the perquisite items listed in the [README.md](../../README.md#docker-requirements) doc for this repo you're ready to begin.
 
 ### Create the Docker Image
 
@@ -12,9 +12,11 @@ docker build -t viya4-iac-k8s .
 
 The Docker image, `viya4-iac-k8s`, contains Ansible, Terraform, Helm and kubectl executables. The entrypoint for the Docker image is `run.sh`. The entrypoint will be run with subcommands in the subsequent steps.
 
-### Docker Environment File for vSphere/vCenter Authentication
+### vSphere/vCenter Environment File for Authentication
 
-Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.vsphere_creds.env. Protect that file with vSphere/vCenter credentials so only you have read access to it. NOTE: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
+Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.vsphere_creds.env. Protect that file with vSphere/vCenter credentials so only you have read access to it.
+
+**NOTE**: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
 
 Now each time you invoke the container, specify the file with the --env-file option to pass on Azure credentials to the container.
 
@@ -22,7 +24,9 @@ An example of this file can be found in the `examples` directory [here](./../../
 
 ### Bare Metal Environment File for Authentication
 
-Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.bare_metal_creds.env. Protect that file with bare-metal credentials so only you have read access to it. NOTE: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
+Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.bare_metal_creds.env. Protect that file with bare-metal credentials so only you have read access to it.
+
+**NOTE**: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
 
 Now each time you invoke the container, specify the file with the --env-file option to pass on Azure credentials to the container.
 
@@ -32,11 +36,13 @@ An example of this file can be found in the `examples` directory [here](./../../
 
 Add volume mounts to the `docker run` command for all files and directories that must be accessible from inside the container:
 
-- `--volume=$(pwd):/workspace` for a local directory where the `terraform.tfvars`, the `ansible-vars.yaml`, and the `inventory` files resides and where the `terraform.tfstate`, the `inventory` and the *kube config* file will be written.
+| Volume | Description |
+| :--- | :--- |
+| `--volume=$(pwd):/workspace` | Where `$(pwd)` is used to store the `terraform.tfvars`, the `ansible-vars.yaml`, and the `inventory` files and where the `terraform.tfstate`, the `inventory` and the *kube config* file will be written. |
 
-To grant Docker permission to write to the local directory, use the [`--user` option](https://docs.docker.com/engine/reference/run/#user).
+To grant Docker permission to write to the local directory, use the [`--user` option](https://docs.docker.com/engine/reference/run/#user) and the `--group-add root` option.
 
-**NOTE:** Local references to `$HOME` (or "`~`") need to map to the root directory `/viya4-iac-k8s` in the container.
+**NOTE:** Local references to `$HOME` (or "`~`") are mapped to the home directory `/viya4-iac-k8s` in the container.
 
 ### Variable Definitions (.tfvars) File
 
@@ -44,7 +50,36 @@ Prepare your `terraform.tfvars` file, as described in [Customize Input Values](.
 
 ## Running the configuration script
 
-This script offers options for both vSphere/vCenter and bare-metal. Each section below describes what is needed for each option.
+This docker image offers options for both vSphere/vCenter and bare-metal. Each section below describes what is needed for each option.
+
+The encapsulated script as the following options. These options include both actions for infrastructure and cluster creation along with encapsulated tooling.
+
+```bash
+Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]
+
+  Actions           - Items and there meanings
+
+    apply           - IAC Creation                     : vSphere/vCenter
+    setup           - System and software setup        : systems
+    install         - Kubernetes install               : systems
+    update          - System and/or Kubernetes updates : systems
+    uninstall       - Kubernetes uninstall             : systems
+    cleanup         - Systems and software cleanup     : systems
+    destroy         - IAC Destruction                  : vSphere/vCenter
+
+  Action groupings  - These items can be run together.
+                      Alternate combinations are not allowed.
+
+  creation items    - [apply setup install]
+  update items      - [update]
+  destruction items - [uninstall cleanup destroy]
+
+  Tooling - Integrated tools
+
+    helm            - Helm                             : kubernetes
+    k               - kubectl                          : kubernetes
+    tf              - Terraform                        : vSphere/vCenter
+```
 
 ### Create your infrastructure and kubernetes cluster - `vsphere`
 
@@ -56,10 +91,10 @@ docker run --rm -it \
   --user $(id -u):$(id -g) \
   --env-file $HOME/.vsphere_docker_creds.env \
   --volume $(pwd):/workspace \
-  viya4-iac-k8s install vsphere
+  viya4-iac-k8s apply setup install
 ```
 
-This command can take a few minutes to complete. Once complete, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` and the `kubeconfig` file for the cluster stored here `[prefix]-oss-kubeconfig.conf` are written in the current directory, `$(pwd)`.
+This command can take a few minutes to complete. Once complete, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` and the `kubeconfig` file for the cluster, stored here `[prefix]-oss-kubeconfig.conf`, are written in the current directory, `$(pwd)`.
 
 ### Create your kubernetes cluster using systems - `bare_metal`
 
@@ -71,7 +106,7 @@ docker run --rm -it \
   --user $(id -u):$(id -g) \
   --env-file $HOME/.bare_metal_docker_creds.env \
   --volume $(pwd):/workspace \
-  viya4-iac-k8s install bare_metal
+  viya4-iac-k8s setup install
 ```
 
 ### Display Terraform Outputs - `vSphere`
@@ -119,7 +154,7 @@ docker run --rm -it \
 
 ### Example Using kubectl
 
-To run kubectl get nodes command with the Docker image viya4-iac-k8s to list cluster nodes, switch entrypoint to kubectl (--entrypoint kubectl), provide 'KUBECONFIG' file (--env=KUBECONFIG=/workspace/<your prefix>-aks-kubeconfig.conf) and pass kubectl subcommands(get nodes). For e.g., to run `k get nodes`
+To run the kubectl command to list cluster nodes, be sure to mount your kube config file variable so that it references the kube config file created for your cluster. This example shows how you can get node information:
 
 ```bash
 docker run --rm \
