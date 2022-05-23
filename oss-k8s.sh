@@ -271,7 +271,7 @@ for item in "${arguments[@]}"; do
   # setup - Baseline systems
   if [[ "$item" == "setup" ]]; then
     ansible_prep
-    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/systems-install.yaml --flush-cache --tags install
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/systems-install.yaml --flush-cache --tags install
   fi
   # install - Install kubernetes
   if [[ "$item" == "install" ]]; then
