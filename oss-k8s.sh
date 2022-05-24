@@ -19,20 +19,17 @@ validated_args=null
 
 # Determine how the script is being run native or inside a docker container
 if [[ "$IAC_TOOLING" == "docker" ]]; then
-  TFVARS="/workspace/terraform.tfvars"
-  TFSTATE="/workspace/terraform.tfstate"
-  ANSIBLE_INVENTORY_DIR="/workspace"
-  ANSIBLE_INVENTORY="$ANSIBLE_INVENTORY_DIR/inventory"
-  ANSIBLE_VARS="@/workspace/ansible-vars.yaml"
+  WORKDIR="/workspace"
   K8S_TOOL_BASE="/viya4-iac-k8s"
 else
-  TFVARS="$BASEDIR/terraform.tfvars"
-  TFSTATE="$BASEDIR/terraform.tfstate"
-  ANSIBLE_INVENTORY_DIR="$BASEDIR"
-  ANSIBLE_INVENTORY="$ANSIBLE_INVENTORY_DIR/inventory"
-  ANSIBLE_VARS="@$BASEDIR/ansible-vars.yaml"
-  K8S_TOOL_BASE="$BASEDIR"
+  WORKDIR="$BASEDIR"
+  K8S_TOOL_BASE="$WORKDIR"
 fi
+
+TFVARS="$WORKDIR/terraform.tfvars"
+TFSTATE="$WORKDIR/terraform.tfstate"
+ANSIBLE_INVENTORY="$WORKDIR/inventory"
+ANSIBLE_VARS="@$WORKDIR/ansible-vars.yaml"
 
 # Functions
 
@@ -91,8 +88,8 @@ ansible_prep() {
 }
 
 clean_up() {
-    rm -rf $ANSIBLE_INVENTORY_DIR/*-oss-kubeconfig.conf
-    rm -rf $ANSIBLE_INVENTORY_DIR/sas-iac-buildinfo-cm.yaml
+    rm -rf $WORKDIR/*-oss-kubeconfig.conf
+    rm -rf $WORKDIR/sas-iac-buildinfo-cm.yaml
 }
 
 help() {
@@ -276,7 +273,7 @@ for item in "${arguments[@]}"; do
   # install - Install kubernetes
   if [[ "$item" == "install" ]]; then
     ansible_prep
-    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-install.yaml --flush-cache --tags install
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$WORKDIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-install.yaml --flush-cache --tags install
   fi
   # update- Update systems and/or kubernetes
   if [[ "$item" == "update" ]]; then
@@ -285,7 +282,7 @@ for item in "${arguments[@]}"; do
   # uninstall - Uninstall kubernetes
   if [[ "$item" == "uninstall" ]]; then
     ansible_prep
-    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$ANSIBLE_INVENTORY_DIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-uninstall.yaml --flush-cache --tags uninstall
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$WORKDIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-uninstall.yaml --flush-cache --tags uninstall
     rm -rf *-oss-kubeconfig.conf 2>&1 > /dev/null
     rm -rf sas-iac-buildinfo-cm.yaml 2>&1 > /dev/null
   fi
