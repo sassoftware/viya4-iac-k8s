@@ -76,6 +76,7 @@
   become_user: root
   roles:
     - { role: kubernetes/node/labels_taints/general }
+    - { role: kubernetes/node/labels_taints/roles }
 
 # Alter PostgreSQL server and add PostgreSQL databases
 - hosts: postgres
