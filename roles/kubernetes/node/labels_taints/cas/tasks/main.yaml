@@ -3,6 +3,7 @@
   ansible.builtin.shell: |
     kubectl taint nodes {{ ansible_nodename }} workload.sas.com/class=cas:NoSchedule --overwrite
     kubectl label nodes {{ ansible_nodename }} workload.sas.com/class=cas --overwrite
+    kubectl label nodes {{ ansible_nodename }} node-role.kubernetes.io/node= --overwrite
   delegate_to: "{{groups['k8s_control_plane'][0]}}"
   tags:
     - install
