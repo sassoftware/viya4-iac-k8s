@@ -26,11 +26,11 @@ cluster_pod_subnet     = "" # Kubernetes Pod Subnet
 cluster_domain         = "" # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP and Cloud Provider
-kube_vip_version   = "0.4.4"  # kube-vip version
-kube_vip_interface = ""       # kube-vip interface
-kube_vip_ip        = ""       # kube-vip ip
-kube_vip_dns       = ""       # kube-vip dns
-kube_vip_range     = ""       # kube-vip ip range
+kube_vip_version   = "0.4.4" # kube-vip version
+kube_vip_interface = ""      # kube-vip interface
+kube_vip_ip        = ""      # kube-vip ip
+kube_vip_dns       = ""      # kube-vip dns
+kube_vip_range     = ""      # kube-vip ip range
 
 # Control plane node specs
 #   kube-vip - requires you have 3/5/7/9/... nodes for HA
