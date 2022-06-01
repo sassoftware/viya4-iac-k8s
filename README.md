@@ -6,7 +6,7 @@ This project contains Terraform scripts to provision cloud infrastructure resour
 
 >- An open source [Kubernetes](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) cluster with the following components:
   >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
-  >>- Cluster Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
+  >>- Container Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
   >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.chipzoller.dev/)
   >>- Cloud controller manager: [kube-vip](https://kube-vip.chipzoller.dev/docs/usage/cloud-provider/)
 >- Nodes with required labels and taints
