@@ -1,6 +1,6 @@
-# List of valid configuration variables
+# Valid Configuration Variables
 
-Supported configuration variables are listed in the table below.  All variables can also be specified on the command line.  Values specified on the command line will override all values in configuration defaults files.
+Supported configuration variables are listed in the tables below.  All variables can also be specified on the command line.  Values specified on the command line will override values in configuration defaults files.
 
 ## Table of Contents
 
@@ -9,9 +9,9 @@ Supported configuration variables are listed in the table below.  All variables 
   - [Networking](#networking)
       - [Use Existing](#use-existing)
   - [General](#general)
-  - [Nodepools](#nodepools)
-    - [Default Nodepool](#default-nodepool)
-    - [Additional Nodepools](#additional-nodepools)
+  - [Node Pools](#nodepools)
+    - [Default Node Pool](#default-nodepool)
+    - [Additional Node Pools](#additional-nodepools)
   - [Storage](#storage)
   - [Postgres](#postgres)
 
@@ -28,9 +28,9 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| ansible_user | user id on your systems ansible uses to perform its tasks | string | | Must have password-less sudo privileges |
-| ansible_password | user password on your systems ansible uses to perform its tasks | string | | |
-| prefix | A prefix used in the name of all the resources created by this script. | string | | |
+| ansible_user | The user ID on your systems that Ansible uses to perform its tasks | string | | Must have password-less sudo privileges |
+| ansible_password | The user account password on your systems that Ansible uses to perform its tasks | string | | |
+| prefix | A prefix used in the names of all the resources created by this script | string | | |
 | gateway | DNS gateway for vSphere/vCenter | string | | |
 
 #### vSphere
@@ -42,7 +42,7 @@ Terraform input variables can be set in the following ways:
 | vsphere_datacenter    | Name of the vSphere data center | string | | |
 | vsphere_datastore     | Name of the vSphere data store to use for the VMs | string | | |
 | vsphere_resource_pool | Name of the vSphere resource pool to use for the VMs | string | | |
-| vsphere_folder        | Name of the vSphere folder to store the vms | string | | |
+| vsphere_folder        | Name of the vSphere folder to store the VMs | string | | |
 | vsphere_template      | Name of the VM template to clone to create VMs for the cluster | string | | |
 | vsphere_network       | Name of the network to to use for the VMs | string | | |
 
@@ -56,11 +56,11 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-cluster_version        | Kubernetes Version | string | | |
+cluster_version        | Kubernetes version | string | | |
 cluster_cni            | Kubernetes Container Network Interface (CNI) | string | | |
 cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | | |
-cluster_service_subnet | Kubernetes Service Subnet | string | | |
-cluster_pod_subnet     | Kubernetes Pod Subnet | string | | |
+cluster_service_subnet | Kubernetes service subnet | string | | |
+cluster_pod_subnet     | Kubernetes Pod subnet | string | | |
 cluster_domain         | Cluster domain suffix for DNS | string | | |
 
 #### Kubernetes Cluster VIP and Cloud Provider
@@ -69,9 +69,9 @@ cluster_domain         | Cluster domain suffix for DNS | string | | |
 | :--- | :--- | :--- | :--- | :--- |
 kube_vip_version   | kube-vip version | string | "0.4.4" | |
 kube_vip_interface | kube-vip interface | string | "ens160" | |
-kube_vip_ip        | kube-vip ip | string | | |
-kube_vip_dns       | kube-vip dns | string | | |
-kube_vip_range     | kube-vip ip range | string | | |
+kube_vip_ip        | kube-vip IP address | string | | |
+kube_vip_dns       | kube-vip DNS | string | | |
+kube_vip_range     | kube-vip IP address range | string | | |
 
 #### Control Plan Node Specs
 
@@ -79,10 +79,10 @@ kube_vip_range     | kube-vip ip range | string | | |
 | :--- | :--- | :--- | :--- | :--- |
 | control_plane_num_cpu | # of CPUs | number | 2 | |
 | control_plane_ram | Size of RAM in MB | number | 4096 | |
-| control_plane_disk_size | Size of Disk in GB | number | 40 | |
-| control_plane_ips | List of static IPs used in creating control_plane nodes. | list(string) | | Cannot be used if `control_plane_count` is being used. |
-| control_plane_count | Number of control plane nodes to create with DHCP IP assignment | number | | Cannot be used if `control_plane_ips` is being used. |
-| control_plane_ssh_key_name | Name for generated control plane ssh key | string | "cp_ssh" | |
+| control_plane_disk_size | Size of disk in GB | number | 40 | |
+| control_plane_ips | List of static IP addresses used in creating control_plane nodes | list(string) | | Cannot be used if `control_plane_count` is being used. |
+| control_plane_count | Number of control plane nodes to create with DHCP IP address assignment | number | | Cannot be used if `control_plane_ips` is being used. |
+| control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 
 Sample:
 
@@ -93,23 +93,23 @@ Sample:
 control_plane_num_cpu   = 8     # 8 CPUs
 control_plane_ram       = 16384 # 16 GB 
 control_plane_disk_size = 100   # 100 GB
-control_plane_ips = [           # Assigned values For static IPs - for HA you need 3/5/7/9/... IPs
+control_plane_ips = [           # Assigned values for static IP addresses - for HA you need 3/5/7/9/... IPs
   "",
   "",
   ""
 ]
-control_plane_ssh_key_name = "" # Name for generated control plane ssh key
+control_plane_ssh_key_name = "" # Name for generated control plane SSH key
 ```
 
 #### Node Specs
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| node_num_cpu | # of CPUs | number | 2 | |
+| node_num_cpu | Number of CPUs | number | 2 | |
 | node_ram | Size of RAM in MB | number | 4096 | |
-| node_disk_size | Size of Disk in GB | number | 40 | |
-| node_ips | List of static IPs used in creating control_plane nodes. | list(string) | | Cannot be used if `node_count` is being used. |
-| node_count | Number of control plane nodes to create with DHCP IP assignment | number | | Cannot be used if `node_ips` is being used. |
+| node_disk_size | Size of disk in GB | number | 40 | |
+| node_ips | List of static IP addresses used in creating control_plane nodes | list(string) | | Cannot be used if `node_count` is being used. |
+| node_count | Number of control plane nodes to create with DHCP IP address assignment | number | | Cannot be used if `node_ips` is being used. |
 
 Sample:
 
@@ -137,8 +137,8 @@ node_ips = [            # Assigned values for static IPs
 | create_jump | Creation flag | bool | false | |
 | jump_num_cpu | # of CPUs | number | 4 | |
 | jump_ram | Size of RAM in MB | number | 8092 | |
-| jump_disk_size | Size of Disk in GB | number | 100 | |
-| jump_ip | Static IP for jump server | string | | |
+| jump_disk_size | Size of disk in GB | number | 100 | |
+| jump_ip | Static IP address for jump server | string | | |
 
 Sample:
 
@@ -158,7 +158,7 @@ jump_ip        = ""   # Assigned values for static IPs
 | create_nfs | Creation flag | bool | false | |
 | nfs_num_cpu | # of CPUs | number | 4 | |
 | nfs_ram | Size of RAM in MB | number | 8092 | |
-| nfs_disk_size | Size of Disk in GB | number | 250 | |
+| nfs_disk_size | Size of disk in GB | number | 250 | |
 | nfs_ip | Static IP for jump server | string | | |
 
 Sample:
@@ -169,21 +169,21 @@ create_nfs    = true  # Creation flag
 nfs_num_cpu   = 8     # 8 CPUs
 nfs_ram       = 16384 # 16 GB
 nfs_disk_size = 500   # 500 GB
-nfs_ip        = ""    # Assigned values for static IPs
+nfs_ip        = ""    # Assigned values for static IP addresses
 ```
 
-#### Postgres Server
+#### PostgreSQL Server
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | server_num_cpu | # of CPUs | number | 8 | |
 | server_ram | Size of RAM in MB | number | 16385 | |
-| server_disk_size | Size of Disk in GB | number | 250 | |
-| server_ip | Static IP for postgres server | string | | This is a required field |
+| server_disk_size | Size of disk in GB | number | 250 | |
+| server_ip | Static IP address for PostgreSQL server | string | | This is a required field |
 | server_version | PostgreSQL version | number | 12 | |
-| server_ssl | Turn on/off SSL | string | "off" | |
-| administrator_login | Admin User | string | "postgres" | |
-| administrator_password | Admin Password | string | "my$up3rS3cretPassw0rd" | |
+| server_ssl | Enable/disable SSL | string | "off" | |
+| administrator_login | Admin user | string | "postgres" | |
+| administrator_password | Admin password | string | "my$up3rS3cretPassw0rd" | |
 
 Sample:
 
@@ -194,7 +194,7 @@ postgres_servers = {
     server_num_cpu         = 8                       # 8 CPUs
     server_ram             = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = ""                      # Assigned values for static IPs - REQUIRED
+    server_ip              = ""                      # Assigned values for static IP addresses - REQUIRED
     server_version         = 12                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
@@ -211,29 +211,29 @@ postgres_servers = {
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
-| kubernetes_version | The Machine cluster K8S version | string | "1.22.9" | Valid values are list here [Kubernetes Releases](https://kubernetes.io/releases/) |
-| create_static_kubeconfig | Allows the user to create a provider / service account based kube config file | bool | false | A value of `false` will default to using the cloud providers mechanism for generating the kubeconfig file. A value of `true` will create a static kubeconfig which utilizes a `Service Account` and `Cluster Role Binding` to provide credentials. |
-| jump_vm_admin | OS Admin User for the Jump VM | string | "jumpuser" | | |
-| jump_rwx_filestore_path | File store mount point on Jump server | string | "/viya-share" | |
-| tags | Map of common tags to be placed on all GCP resources created by this script | map | {} | |
+| kubernetes_version | Cluster Kubernetes version | string | "1.22.9" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
+| create_static_kubeconfig | Allows the user to create a provider or service account based kubeconfig file | bool | false | A value of `false` defaults to using the cloud provider's mechanism for generating the kubeconfig file. A value of `true` creates a static kubeconfig file, which uses a service account and cluster role binding to provide credentials. |
+| jump_vm_admin | OS Admin User for the Jump Server | string | "jumpuser" | | |
+| jump_rwx_filestore_path | File store mount point on Jump Server | string | "/viya-share" | |
+| tags | Map of common tags to be placed on all resources created by this script | map | {} | |
 
-## Nodepools
+## Node Pools
 
-### Default Nodepool
+### Default Node Pool
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
-| default_nodepool_taints | Taints for the default nodepool VMs | list of strings | [] | |
-| default_nodepool_labels | Labels to add to the default nodepool VMs | map | {} | |
+| default_nodepool_taints | Taints for the default node pool VMs | list of strings | [] | |
+| default_nodepool_labels | Labels to add to the default node pool VMs | map | {} | |
 
-### Additional Nodepools
+### Additional Node Pools
 
-Additional node pools can be created separate from the default nodepool. This is done with the `node_pools` variable which is a map of objects. Each nodepool requires the following variables:
+Additional node pools can be created separate from the default node pool. This is done with the `node_pools` variable, which is a map of objects. Each node pool requires the following variables:
 
 | Name | Description | Type | Notes |
 | :--- | ---: | ---: | ---: |
-| node_taints | Taints for the nodepool VMs | list of strings | |
-| node_labels | Labels to add to the nodepool VMs | map | |
+| node_taints | Taints for the node pool VMs | list of strings | |
+| node_labels | Labels to add to the node pool VMs | map | |
 
 The default values for the `node_pools` variable are:
 
@@ -281,7 +281,7 @@ stateful = {
 
 [TODO - Need to determine NFS Server and or Alternative]
 
-## Postgres Servers
+## PostgreSQL Servers
 
 When setting up ***external database servers***, you must provide information about those servers in the `postgres_servers` variable block. Each entry in the variable block represents a ***single database server***.
 
@@ -296,18 +296,18 @@ postgres_servers = {
 }
 ```
 
-**NOTE**: The `default = {}` elements is always required when creating external databases. This is the systems default database server.
+**NOTE**: The `default = {}` element is always required when creating external databases. This is the system's default database server.
 
 Each server element, like `foo = {}`, can contain none, some, or all of the parameters listed below:
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
-| administrator_login | The Administrator Login for the PostgreSQL Server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
-| administrator_password | The Password associated with the administrator_login for the PostgreSQL Server | string | "my$up3rS3cretPassw0rd" |  |
+| administrator_login | The administrator login for the PostgreSQL server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
+| administrator_password | The password associated with the administrator_login for the PostgreSQL server | string | "my$up3rS3cretPassw0rd" |  |
 | server_version | The version of the  PostgreSQL server instance | string | "11" | Supported values are 11 and 12 |
-| ssl_enforcement_enabled | Enforce SSL on connection to the PostgreSQL database | bool | true | |
+| ssl_enforcement_enabled | Enforce SSL on connections to the PostgreSQL database | bool | true | |
 
-Here is a sample of the `postgres_servers` variable with the `default` entry only overriding the `administrator_password` parameter and the `cps` entry overriding all of the parameters:
+Here is an example of the `postgres_servers` variable with the `default` entry only overriding the `administrator_password` parameter and the `cps` entry overriding all of the parameters:
 
 ```terraform
 postgres_servers = {
