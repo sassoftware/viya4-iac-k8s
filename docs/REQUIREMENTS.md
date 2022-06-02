@@ -1,25 +1,25 @@
-# Open Source Infrastructure Requirements
+# Open Source Kubernetes Infrastructure Requirements for High Availability
 
-The items listed below are designed to create a Highly Available (HA) infrastructure when creating your cluster on bare-metal or in a vCenter/vSphere environment. All of these items are REQUIRED as listed.
+The items listed below are designed to create a Highly Available (HA) infrastructure when creating your cluster on bare-metal machines or in a vCenter/vSphere environment. All of these items are REQUIRED as listed.
 
 Table of Contents
 
 <!-- vscode-markdown-toc -->
 * 1. [Operating Systems](#OperatingSystems)
 * 2. [Machines](#Machines)
-	* 2.1. [vSphere](#vSphere)
+	* 2.1. [VMware vSphere Requirements](#vSphere)
 		* 2.1.1. [Resources](#Resources)
 		* 2.1.2. [Machine Template Requirements](#MachineTemplateRequirements)
-	* 2.2. [Bare-Metal](#Bare-Metal)
+	* 2.2. [Bare-Metal Requirements](#Bare-Metal)
 * 3. [Network](#Network)
 	* 3.1. [CIDR Block](#CIDRBlock)
-	* 3.2. [Static IPs](#StaticIPs)
-	* 3.3. [Floating IPs](#FloatingIPs)
+	* 3.2. [Static IP Addresses](#StaticIPs)
+	* 3.3. [Floating IP Addresses](#FloatingIPs)
 * 4. [Examples](#Examples)
 	* 4.1. [vCenter/vSphere Sample `tfvars` file](#vCentervSphereSampletfvarsfile)
 	* 4.2. [Bare Metal Sample `inventory` file](#BareMetalSampleinventoryfile)
 * 5. [Deployment](#Deployment)
-* 6. [Tooling](#Tooling)
+* 6. [Third-Party Tools](#Tooling)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -27,32 +27,32 @@ Table of Contents
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
 
-##  1. <a name='OperatingSystems'></a>Operating Systems
+##  1. <a name='OperatingSystems'></a>Operating System
 
-Supported operation systems that can be used in standing up infrastructure using this repo.
+An Ubuntu Linux operating system is required for the tasks associated with standing up infrastructure using the tools in this repository.
 
 | OS | Description |
 | --- | --- |
-| [Ubuntu 20.04 LTS](https://releases.ubuntu.com/20.04/) | You must have a user with a password capable of unprompted `sudo` and have a shared `private/public` ssh key pair to use with each system. These are required for the Ansible tooling listed below |
+| [Ubuntu 20.04 LTS](https://releases.ubuntu.com/20.04/) | You must have a user account and password with privileges that enable unprompted `sudo`. You must also have a shared "private/public" SSH key pair to use with each system. These are required for the Ansible tools that are described below. |
 
 ##  2. <a name='Machines'></a>Machines
 
-The following table lists the minimal machine requirements needed to support a kubernetes cluster and supporting elements for Viya 4 Software Installation. These machines will all need to be on the same network and each should have a DNS entry associated with it's assigned IP; however, this is not necessary, but does make setup easier.
+The following table lists the minimum machine requirements that are needed to support a Kubernetes cluster and supporting elements for a SAS Viya 4 software installation. These machines must all be on the same network. Each machine should have a DNS entry associated with its assigned IP address; this is not required, but it makes setup easier.
 
-**NOTE**: The PostgreSQL Server below is listed as 1 machine. If you are going to be using the internal PostgreSQL server of Viya this is not needed, but you will need to adjust your compute nodes capacity to ensure they can handle the needs of the postgres processes.
+**NOTE**: The PostgreSQL server described in the following table is listed as 1 machine. If you plan to use the internal PostgreSQL server for SAS Viya, this server is not required, but you will need to adjust the capacity of your compute nodes in order to ensure that they can handle the resource requirements of the postgres processes.
 
 | Machine | CPU | Memory | Disk | IPs | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| **Control Plane Node** | 8 | 16GiB | 100GiB | 1 | You must have an odd number of nodes here > 3 in order to provide High Availability (HA) for the cluster | 3 |
-| **Compute Nodes** | 16 | 128GiB | 250GiB | 1 | Compute nodes in the kubernetes cluster | 6 |
-| **Jump Server** | 4 | 8GiB | 100GiB | 1 | Bastian box used to access NFS mounts, share data, etc. | 1 |
-| **NFS Server** | 8 | 16GiB | 500GiB | 1 | Server used to store Persistent Volumes for the cluster | 1 |
-| **Postgres Servers** | 8 | 16GiB | 250GiB | 1 | PostgreSQL servers one may use with your Viya deployment. | 1..n |
-| **TOTAL MINIMAL SYSTEM CAPACITY** | 140 | 856GiB | 2650GiB | 12 | | **12** |
+| **Control Plane Node** | 8 | 16 GiB | 100 GiB | 1 | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 3 |
+| **Compute Nodes** | 16 | 128 GiB | 250 GiB | 1 | Compute nodes in the Kubernetes cluster | 6 |
+| **Jump Server** | 4 | 8 GiB | 100 GiB | 1 | Bastion box used to access NFS mounts, share data, etc. | 1 |
+| **NFS Server** | 8 | 16 GiB | 500 GiB | 1 | Server used to store persistent volumes for the cluster | 1 |
+| **PostgreSQL Servers** | 8 | 16 GiB | 250 GiB | 1 | PostgreSQL servers for your SAS Viya deployment | 1..n |
+| **TOTAL MINIMAL SYSTEM CAPACITY** | 140 | 856 GiB | 2650 GiB | 12 | | **12** |
 
-###  2.1. <a name='vSphere'></a>vSphere
+###  2.1. <a name='vSphere'></a>VMware vSphere
 
-In order to leverage vSphere you'll need to have the following items for use in your tfvars file and `Administrator` access on vSphere.
+In order to leverage vSphere, the following items are required for use in your tfvars file. You also need Administrator access on vSphere.
 
 ####  2.1.1. <a name='Resources'></a>Resources
 
@@ -62,64 +62,64 @@ In order to leverage vSphere you'll need to have the following items for use in 
 |vsphere_datacenter | Name of the vSphere data center |
 |vsphere_datastore | Name of the vSphere data store to use for the VMs |
 |vsphere_resource_pool | Name of the vSphere resource pool to use for the VMs |
-|vsphere_folder | Name of the vSphere folder to store the vms |
+|vsphere_folder | Name of the vSphere folder to store the VMs |
 |vsphere_template | Name of the VM template to clone to create VMs for the cluster |
 |vsphere_network | Name of the vSphere network |
 
 ####  2.1.2. <a name='MachineTemplateRequirements'></a>Machine Template Requirements
 
-The current repo supports the setup of vSphere VMs if the following are true
+The current repository supports the provisioning of vSphere VMs if all the following are true:
 
 | Requirement | Description |
 | --- | --- |
 | Disk | The `root` partition `/` must be on `/dev/sd2` |
-| Hard Disk | `Thin Provision` as the code here will adjust the size of the disk to match the machine requirement information above |
+| Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements listed previously |
 
 ###  2.2. <a name='Bare-Metal'></a>Bare-Metal
 
-For bare-metal provisioning you must set ALL systems with the required elements above. These systems must have full network access to one another.
+For bare-metal provisioning, you must set up ALL systems with the required elements listed previously. These systems must have full network access to each other.
 
 ##  3. <a name='Network'></a>Network
 
-All systems need routable connectivity to one another.
+All systems need routable connectivity to each other.
 
 ###  3.1. <a name='CIDRBlock'></a>CIDR Block
 
-CIDR block for your infrastructure it must be able to handle at least the 12 node machines outlined above, as well as the Virtual IP (VIP) used for the cluster entrypoint, and the cloud provider IP source range needed to support `LoadBalancer` services created.
+The CIDR block for your infrastructure must be able to handle at least the 12 machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created.
 
-###  3.2. <a name='StaticIPs'></a>Static IPs
+###  3.2. <a name='StaticIPs'></a>Static IP Addresses
 
-These IPs are part of your network and will be assigned to the elements in this deployment.
+These IP addresses are part of your network and will be assigned to the elements in this deployment.
 
-* Control Plane Nodes
-* Compute Nodes (Optional)
-* LoadBalancer IP
+* Control plane nodes
+* Compute nodes (optional)
+* LoadBalancer IP address
 
-###  3.3. <a name='FloatingIPs'></a>Floating IPs
+###  3.3. <a name='FloatingIPs'></a>Floating IP Addresses
 
-These IPs are part of your network but are not assigned. The following items are needed.
+These IP addresses are part of your network but are not assigned. The following items are required:
 
-* Compute Nodes
-* Kubernetes Cluster Virtual IP (VIP)
-* Floating LoadBalancer IPs for use with extra load balancers created.
+* Compute nodes
+* Kubernetes cluster virtual IP address
+* Floating LoadBalancer IP addressess for use with additional load balancers that are created
 
 ##  4. <a name='Examples'></a>Examples
 
-This section provides a `sample` configurations based on the bare-metal inventory and vsphere sample provided in this repo.
+This section provides an example configuration based on the bare-metal inventory and vSphere example provided in this repository.
 
-###  4.1. <a name='vCentervSphereSampletfvarsfile'></a>vCenter/vSphere Sample `tfvars` file
+###  4.1. <a name='vCentervSphereSampletfvarsfile'></a>vCenter/vSphere Sample `tfvars` File
 
-If you're creating virtual machines with vCenter/vSphere the `terraform.tfvars` file you create will generate the `inventory` and `ansible-vars.yaml` file needed for this repo.
+If you are creating virtual machines with vCenter or vSphere, the `terraform.tfvars` file that you create will generate the `inventory` and `ansible-vars.yaml` files that are needed for this repository.
 
-For this example, the network setup for this sample are as follows:
+For this example, the network setup is as follows:
 
 ```text
 CIDR Range       : 10.18.0.0/16
-VIP IP           : 10.18.0.175
+Virtual IP       : 10.18.0.175
 LoadBalanced IPs : 10.18.0.100-10.18.0.125
 ```
 
-Link to the file [`terraform.tfvars`](../examples/vsphere/terraform.tfvars)
+Refer to the file [terraform.tfvars](../examples/vsphere/terraform.tfvars) for more information.
 
 ```yaml
 # General items
@@ -133,22 +133,22 @@ vsphere_cluster       = "" # Name of the vSphere cluster
 vsphere_datacenter    = "" # Name of the vSphere data center
 vsphere_datastore     = "" # Name of the vSphere data store to use for the VMs
 vsphere_resource_pool = "" # Name of the vSphere resource pool to use for the VMs
-vsphere_folder        = "" # Name of the vSphere folder to store the vms
+vsphere_folder        = "" # Name of the vSphere folder to store the VMs
 vsphere_template      = "" # Name of the VM template to clone to create VMs for the cluster
 vsphere_network       = "" # Name of the network to to use for the VMs
 
 # Systems
-system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each system
+system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.22.9"                       # Kubernetes Version
-cluster_cni            = "calico"                        # Kuberentes Container Network Interface (CNI)
+cluster_version        = "1.22.9"                        # Kubernetes version
+cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
-cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes Service Subnet
-cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod Subnet
+cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
+cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
-# Kubernetes - Cluster VIP and Cloud Provider
+# Kubernetes - Cluster Virtual IP Address and Cloud Provider
 kube_vip_version   = "0.4.4"
 kube_vip_interface = "ens160"
 kube_vip_ip        = "10.18.0.175"
@@ -156,22 +156,22 @@ kube_vip_dns       = "vm-dev-oss-vip.sample.domain.foo.com"
 kube_vip_range     = "10.18.0.100-10.18.0.125"
 
 # Control plane node specs
-#   kube-vip - requires you have 3/5/7/9/... nodes for HA
+#   kube-vip - requires you to have 3/5/7/9/... nodes for HA
 #
 #   Suggested node specs shown below. Entries for 3
-#   IPs to support HA control plane
+#   IP addresses to support HA control plane
 #
 control_plane_num_cpu   = 8     # 8 CPUs
 control_plane_ram       = 16384 # 16 GB 
 control_plane_disk_size = 100   # 100 GB
-control_plane_ips = [           # Assigned values For static IPs - for HA you need 3/5/7/9/... IPs
+control_plane_ips = [           # Assigned values for static IP addresses - for HA you need 3/5/7/9/... IPs
   "10.18.0.2",                  # Primary control plane node
   "10.18.0.3",                  # Secondary control plane node
   "10.18.0.4"                   # Secondary control plane node
 ]
 
 # Compute node specs
-#   node_count is used for dhcp and ips are used for static
+#   node_count is used for DHCP and IP addresses are used for static
 #
 #   Suggested node specs shown below. Entries for 6
 #   IPs to support SAS Viya 4 deployment
@@ -190,7 +190,7 @@ node_ips = [            # Assigned values for static IPs
 
 # Jump server
 #
-#   Suggested server specs shown below.
+#   Suggested server specs are shown below:
 #
 create_jump    = true         # Creation flag
 jump_num_cpu   = 4            # 4 CPUs
@@ -217,7 +217,7 @@ postgres_servers = {
     server_num_cpu         = 8                       # 8 CPUs
     server_ram             = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = "10.18.0.13"          # Assigned values for static IPs
+    server_ip              = "10.18.0.13"            # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
@@ -226,13 +226,13 @@ postgres_servers = {
 }
 ```
 
-###  4.2. <a name='BareMetalSampleinventoryfile'></a>Bare Metal Sample `inventory` file
+###  4.2. <a name='BareMetalSampleinventoryfile'></a>Bare Metal Sample `inventory` File
 
-With this example since you're utilizing bare-metal machines or pre-configured virtual machines (VMs) you'll need to populate the `inventory` file along with the `ansible-vars.yaml` file for you setup using the examples provided.
+With this example, because you are using bare-metal machines or pre-configured VMs, you will need to populate the `inventory` file along with the `ansible-vars.yaml` file for your environment using the example settings provided below.
 
-This example is using the `192.168.0.0/16` CIDR block for the cluster. The cluster's prefix is `viya4-oss`. The cluster VIP has been assigned IP `192.168.0.1`.
+This example is using the `192.168.0.0/16` CIDR block for the cluster. The cluster's prefix is `viya4-oss`. The cluster virtual IP address is `192.168.0.1`.
 
-Link to the file [`inventory`](../examples/bare-metal/inventory)
+Refer to the [inventory](../examples/bare-metal/inventory) file for more information.
 
 ```yaml
 #
@@ -294,9 +294,9 @@ jump_server
 nfs_server
 
 #
-# Postgres Servers
+# PostgreSQL Servers
 #
-# NOTE: You MUST have an entry for each postgres server
+# NOTE: You MUST have an entry for each PostgreSQL server
 #
 [viya4_oss_default_pgsql]
 192.168.5.0
@@ -306,12 +306,12 @@ postgres_server_ssl=off                 # NOTE: Values - [on,off]
 postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
 postgres_administrator_password="Un33d2ChgM3n0W!"
 
-# NOTE: Add entries here for each postgres server listed above
+# NOTE: Add entries here for each postgres server listed previously
 [postgres:children]
 viya4_oss_default_pgsql
 ```
 
-Link to the file [`./examples/bare-metal/ansible-vars.yaml`](../examples/bare-metal/ansible-vars.yaml)
+Refer to the [ansible-vars.yaml](../examples/bare-metal/ansible-vars.yaml) file for more information.
 
 ```yaml
 # Ansible items
@@ -319,7 +319,7 @@ ansible_user     : ""
 ansible_password : ""
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu|rhel] - Ubuntu 20.04 LTS / RHEL ???
+vm_os   : "ubuntu" # Choices : [ubuntu|rhel] - Ubuntu 20.04 LTS / Red Hat Enterprise Linux ???
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
@@ -369,12 +369,12 @@ jump_ip : ""
 # NFS Server
 nfs_ip  : ""
 
-# Postgres Servers
+# PostgreSQL Servers
 ```
 
 ##  5. <a name='Deployment'></a>Deployment
 
-You'll need to add the following items to your `ansible-vars.yaml` if using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repo.
+Add the following items to your `ansible-vars.yaml` file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository.
 
 ```yaml
 ## 3rd Party
@@ -400,14 +400,14 @@ METRICS_SERVER_CONFIG:
       kubernetes.io/name: "Metrics-server"
 
 ### NFS Subdir External Provisioner - SAS default storage class
-# Updates to support OSS Kubernetes 
+# Updates to support open source Kubernetes 
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 NFS_CLIENT_CHART_VERSION: 4.0.16
 ```
 
-##  6. <a name='Tooling'></a>Tooling
+##  6. <a name='Tooling'></a>Third-Party Tools
 
-| Tooling | Minimal Version |
+| Tool | Minimum Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.12.2 |
 | [Terraform](https://www.terraform.io/) | 1.1.9 |
