@@ -17,7 +17,7 @@ destruction_flag=false
 external_flag=false
 validated_args=null
 
-# Determine how the script is being run native or inside a docker container
+# Determine how the script is being run -- natively or inside a Docker container
 if [[ "$IAC_TOOLING" == "docker" ]]; then
   WORKDIR="/workspace"
   K8S_TOOL_BASE="/viya4-iac-k8s"
@@ -96,15 +96,15 @@ help() {
   echo ""
   echo "Usage: $0 [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]"
   echo ""
-  echo "  Actions           - Items and there meanings"
+  echo "  Actions           - Items and their meanings"
   echo ""
-  echo "    apply           - IAC Creation                     : vSphere/vCenter"
+  echo "    apply           - IaC creation                     : vSphere/vCenter"
   echo "    setup           - System and software setup        : systems"
   echo "    install         - Kubernetes install               : systems"
   echo "    update          - System and/or Kubernetes updates : systems"
   echo "    uninstall       - Kubernetes uninstall             : systems"
-  echo "    cleanup         - Systems and software cleanup     : systems"
-  echo "    destroy         - IAC Destruction                  : vSphere/vCenter"
+  echo "    cleanup         - System and software cleanup      : systems"
+  echo "    destroy         - IaC destruction                  : vSphere/vCenter"
   echo ""
   echo "  Action groupings  - These items can be run together."
   echo "                      Alternate combinations are not allowed."
@@ -131,13 +131,13 @@ fi
 #
 # Actions are:
 #
-#   apply     - IAC creation
+#   apply     - IaC creation
 #   setup     - System and software setup
 #   install   - Kubernetes install
 #   update    - System and/or Kubernetes update
 #   uninstall - Kubernetes uninstall
 #   cleanup   - System and software cleanup
-#   destroy   - IAC Destruction
+#   destroy   - IaC Destruction
 #
 
 # Determine what arguments have been passed and store
@@ -238,7 +238,7 @@ if [ "$validated_args" != true ]; then
 fi
 
 if [ "$external_flag" = true ] && [ "$validated_args" = true ]; then
-  # Check to see if the request if for tooling help
+  # Check to see if the request is for tooling help
   while [ "${#ARGS[@]}" -gt 0 ]; do
     case "$1" in
       helm )
@@ -297,14 +297,14 @@ for item in "${arguments[@]}"; do
       if [[ "$IAC_TOOLING" != "docker" ]]; then
         read -p 'Are you absolutely sure: ' CONFIRMATION
         if [[ "$CONFIRMATION" == "y" || "$CONFIRMATION" == "yes" ]]; then
-          echo "Destorying cluster and infra"
+          echo "Destroying cluster and infra"
           terraform_down
         else
           echo "You did not opt to run destroy"
           exit 1
         fi
       else
-        echo "Destorying cluster and infra"
+        echo "Destroying cluster and infra"
         terraform_down
       fi
     else

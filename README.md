@@ -5,8 +5,8 @@
 This project contains Terraform scripts to provision cloud infrastructure resources for VMware, and it contains Ansible files to apply the elements of a Kubernetes cluster that are required to deploy SAS Viya 4 product offerings. Here is a list of resources that this project can create:
 
 >- An open source [Kubernetes](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) cluster with the following components:
-  >>- Container runtime interfaces: [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
-  >>- Cluster network interfaces: [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
+  >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
+  >>- Container Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
   >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.chipzoller.dev/)
   >>- Cloud controller manager: [kube-vip](https://kube-vip.chipzoller.dev/docs/usage/cloud-provider/)
 >- Nodes with required labels and taints
@@ -18,7 +18,7 @@ This project helps you to automate the cluster-provisioning phase of SAS Viya de
 
 Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya 4 in your cloud environment. For more information about SAS Viya 4 requirements and documentation for the deployment process, refer to the [SAS&reg; Viya&reg; IT Operations Guide](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswlcm/home.htm).
 
-This project supports infrastructure that is built on **bare metal** (physical machines) or on **VMware vSphere/vCenter** systems. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
+This project supports infrastructure that is built on **bare metal** (physical machines) or on **VMware vSphere/vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
 
 ## Prerequisites
 
@@ -48,7 +48,7 @@ Regardless of which method you choose, the systems must meet the minimal require
 - 1 machine to serve as an NFS server
 - At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component)
 
-**NOTE**: Remember that these machines are not managed by a provider or by automated tooling. The nodes that you add here dictate the capacity of the cluster. If you need the number of nodes in the cluster to increase or decrease, you must perform the task manually. There is **NO AUTOSCALING** with this setup.
+> **NOTE**: Remember that these machines are not managed by a provider or by automated tooling. The nodes that you add here dictate the capacity of the cluster. If you need the number of nodes in the cluster to increase or decrease, you must perform the task manually. There is **NO AUTOSCALING** with this setup.
 
 #### vSphere
 
@@ -121,7 +121,7 @@ cd viya4-iac-k8s
 
 ### Customizing Input Values
 
-#### vSphere/vCenter Systems
+#### vSphere/vCenter Machines
 
 Terraform scripts require variable definitions as input. Review and modify default values to meet your requirements. 
 
@@ -150,7 +150,7 @@ Create and manage the required cluster resources for your SAS Viya 4 deployment.
 
 > This project is licensed under the [Apache 2.0 License](LICENSE).
 
-## Additional resources
+## Additional Resources
 
 - [Terraform](https://www.terraform.io/)
 - [Ansible](https://docs.ansible.com/ansible/2.9/index.html)
