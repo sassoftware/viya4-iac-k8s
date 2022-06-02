@@ -32,6 +32,7 @@ Terraform input variables can be set in the following ways:
 | ansible_password | user password on your systems ansible uses to perform its tasks | string | | |
 | prefix | A prefix used in the name of all the resources created by this script. | string | | |
 | gateway | DNS gateway for vSphere/vCenter | string | | |
+| netmask | Netmask for your network | number | 16 | The value must provide access from your machine's IP to the gateway provided |
 
 #### vSphere
 

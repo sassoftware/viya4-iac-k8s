@@ -87,7 +87,7 @@ variable "nat_ip" {
 
 variable "netmask" {
   description = "Netmask (if using static ips)"
-  default     = 24
+  default     = 16
 }
 
 variable "dns_servers" {

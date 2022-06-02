@@ -3,6 +3,7 @@ ansible_user     = ""
 ansible_password = ""
 prefix           = "" # Infra prefix
 gateway          = "" # Gateway for servers
+netmask          = "" # Netmask providing access to the gateway
 
 # vSphere
 vsphere_server        = "" # Name of the vSphere server
