@@ -86,3 +86,9 @@ ${prefix}_${server_name}_pgsql
 %{ endfor ~}
 
 %{ endif ~}
+# All systems
+[all:children]
+k8s
+jump
+nfs
+postgres
