@@ -66,3 +66,12 @@ postgres_administrator_password="<postgres_server_administrator_password>"
 # NOTE: Add entries here for each postgres server listed above
 [postgres:children]
 <postgres_server_name>
+
+#
+# All systems
+#
+[all:children]
+k8s
+jump
+nfs
+postgres
