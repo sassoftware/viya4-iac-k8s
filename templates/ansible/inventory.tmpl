@@ -91,6 +91,10 @@ ${prefix}_${server_name}_pgsql
 #
 [all:children]
 k8s
+%{ if lenght(jump_ip) != 0 ~}
 jump
+%{ endif ~}
 nfs
+%{ if length(postgres_servers) != 0 ~}
 postgres
+%{ endif ~}
