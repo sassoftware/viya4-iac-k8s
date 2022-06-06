@@ -92,7 +92,7 @@ This project supports the following options for running:
 
 The following software is required to run the SAS Viya IaC tooling here on your local system:
 
-- [Terraform](https://www.terraform.io/downloads) - v.1.1.9
+- [Terraform](https://www.terraform.io/downloads) - v.1.2.0
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - v2.12.5
 - [Docker](https://docs.docker.com/engine/install/) - v4.6.1
 - [Helm](https://helm.sh/docs/intro/install/) - v3.8.2

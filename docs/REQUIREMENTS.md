@@ -141,7 +141,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.22.9"                        # Kubernetes version
+cluster_version        = "1.22.10"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
@@ -410,6 +410,6 @@ NFS_CLIENT_CHART_VERSION: 4.0.16
 | Tool | Minimum Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.12.2 |
-| [Terraform](https://www.terraform.io/) | 1.1.9 |
+| [Terraform](https://www.terraform.io/) |1.2.0 |
 | [Docker](https://www.docker.com/) | 20.10.12 |
 | [Helm](https://helm.sh/) | v3.8.2 |
