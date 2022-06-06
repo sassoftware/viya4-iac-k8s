@@ -91,7 +91,7 @@ ${prefix}_${server_name}_pgsql
 #
 [all:children]
 k8s
-%{ if lenght(jump_ip) != 0 ~}
+%{ if length(jump_ip) != 0 ~}
 jump
 %{ endif ~}
 nfs
