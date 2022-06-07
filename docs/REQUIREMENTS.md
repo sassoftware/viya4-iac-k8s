@@ -5,21 +5,21 @@ The items listed below are designed to create a Highly Available (HA) infrastruc
 Table of Contents
 
 <!-- vscode-markdown-toc -->
-* 1. [Operating Systems](#OperatingSystems)
+* 1. [Operating System](#OperatingSystem)
 * 2. [Machines](#Machines)
-	* 2.1. [VMware vSphere Requirements](#vSphere)
+	* 2.1. [VMware vSphere](#VMwarevSphere)
 		* 2.1.1. [Resources](#Resources)
 		* 2.1.2. [Machine Template Requirements](#MachineTemplateRequirements)
-	* 2.2. [Bare-Metal Requirements](#Bare-Metal)
+	* 2.2. [Bare-Metal](#Bare-Metal)
 * 3. [Network](#Network)
 	* 3.1. [CIDR Block](#CIDRBlock)
-	* 3.2. [Static IP Addresses](#StaticIPs)
-	* 3.3. [Floating IP Addresses](#FloatingIPs)
+	* 3.2. [Static IP Addresses](#StaticIPAddresses)
+	* 3.3. [Floating IP Addresses](#FloatingIPAddresses)
 * 4. [Examples](#Examples)
-	* 4.1. [vCenter/vSphere Sample `tfvars` file](#vCentervSphereSampletfvarsfile)
-	* 4.2. [Bare Metal Sample `inventory` file](#BareMetalSampleinventoryfile)
+	* 4.1. [vCenter/vSphere Sample `tfvars` File](#vCentervSphereSampletfvarsFile)
+	* 4.2. [Bare Metal Sample `inventory` File](#BareMetalSampleinventoryFile)
 * 5. [Deployment](#Deployment)
-* 6. [Third-Party Tools](#Tooling)
+* 6. [Third-Party Tools](#Third-PartyTools)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -27,7 +27,7 @@ Table of Contents
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
 
-##  1. <a name='OperatingSystems'></a>Operating System
+##  1. <a name='OperatingSystem'></a>Operating System
 
 An Ubuntu Linux operating system is required for the tasks associated with standing up infrastructure using the tools in this repository.
 
@@ -43,14 +43,14 @@ The following table lists the minimum machine requirements that are needed to su
 
 | Machine | CPU | Memory | Disk | IPs | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| **Control Plane Node** | 8 | 16 GiB | 100 GiB | 1 | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 3 |
-| **Compute Nodes** | 16 | 128 GiB | 250 GiB | 1 | Compute nodes in the Kubernetes cluster | 6 |
-| **Jump Server** | 4 | 8 GiB | 100 GiB | 1 | Bastion box used to access NFS mounts, share data, etc. | 1 |
-| **NFS Server** | 8 | 16 GiB | 500 GiB | 1 | Server used to store persistent volumes for the cluster | 1 |
-| **PostgreSQL Servers** | 8 | 16 GiB | 250 GiB | 1 | PostgreSQL servers for your SAS Viya deployment | 1..n |
-| **TOTAL MINIMAL SYSTEM CAPACITY** | 140 | 856 GiB | 2650 GiB | 12 | | **12** |
+| **Control Plane Node** | 8 | 16 GB | 100 GB | 1 | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 3 |
+| **Compute Nodes** | 16 | 128 GB | 250 GB | 1 | Compute nodes in the Kubernetes cluster | 6 |
+| **Jump Server** | 4 | 8 GB | 100 GB | 1 | Bastion box used to access NFS mounts, share data, etc. | 1 |
+| **NFS Server** | 8 | 16 GB | 500 GB | 1 | Server used to store persistent volumes for the cluster | 1 |
+| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | 1 | PostgreSQL servers for your SAS Viya deployment | 1..n |
+| **TOTAL MINIMAL SYSTEM CAPACITY** | 140 | 856 GB | 2650 GB | 12 | | **12** |
 
-###  2.1. <a name='vSphere'></a>VMware vSphere
+###  2.1. <a name='VMwarevSphere'></a>VMware vSphere
 
 In order to leverage vSphere, the following items are required for use in your tfvars file. You also need Administrator access on vSphere.
 
@@ -87,7 +87,7 @@ All systems need routable connectivity to each other.
 
 The CIDR block for your infrastructure must be able to handle at least the 12 machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created.
 
-###  3.2. <a name='StaticIPs'></a>Static IP Addresses
+###  3.2. <a name='StaticIPAddresses'></a>Static IP Addresses
 
 These IP addresses are part of your network and will be assigned to the elements in this deployment.
 
@@ -95,7 +95,7 @@ These IP addresses are part of your network and will be assigned to the elements
 * Compute nodes (optional)
 * LoadBalancer IP address
 
-###  3.3. <a name='FloatingIPs'></a>Floating IP Addresses
+###  3.3. <a name='FloatingIPAddresses'></a>Floating IP Addresses
 
 These IP addresses are part of your network but are not assigned. The following items are required:
 
@@ -107,7 +107,7 @@ These IP addresses are part of your network but are not assigned. The following 
 
 This section provides an example configuration based on the bare-metal inventory and vSphere example provided in this repository.
 
-###  4.1. <a name='vCentervSphereSampletfvarsfile'></a>vCenter/vSphere Sample `tfvars` File
+###  4.1. <a name='vCentervSphereSampletfvarsFile'></a>vCenter/vSphere Sample `tfvars` File
 
 If you are creating virtual machines with vCenter or vSphere, the `terraform.tfvars` file that you create will generate the `inventory` and `ansible-vars.yaml` files that are needed for this repository.
 
@@ -125,8 +125,9 @@ Refer to the file [terraform.tfvars](../examples/vsphere/terraform.tfvars) for m
 # General items
 ansible_user     = "ansadmin"
 ansible_password = "!Th!sSh0uldNotBUrP@ssw0rd#"
-prefix           = "vm-dev" # Infra prefix
+prefix           = "vm-dev"    # Infra prefix
 gateway          = "10.18.0.1" # Gateway for servers
+netmask          = "16"        # Netmask providing network access to your gateway
 
 # vSphere
 vsphere_cluster       = "" # Name of the vSphere cluster
@@ -226,7 +227,7 @@ postgres_servers = {
 }
 ```
 
-###  4.2. <a name='BareMetalSampleinventoryfile'></a>Bare Metal Sample `inventory` File
+###  4.2. <a name='BareMetalSampleinventoryFile'></a>Bare Metal Sample `inventory` File
 
 With this example, because you are using bare-metal machines or pre-configured VMs, you will need to populate the `inventory` file along with the `ansible-vars.yaml` file for your environment using the example settings provided below.
 
@@ -309,6 +310,15 @@ postgres_administrator_password="Un33d2ChgM3n0W!"
 # NOTE: Add entries here for each postgres server listed previously
 [postgres:children]
 viya4_oss_default_pgsql
+
+#
+# All systems
+#
+[all:children]
+k8s
+jump
+nfs
+postgres
 ```
 
 Refer to the [ansible-vars.yaml](../examples/bare-metal/ansible-vars.yaml) file for more information.
@@ -327,8 +337,8 @@ enable_cgroup_v2    : true     # TODO - If needed hookup or remove flag
 system_ssh_keys_dir : "~/.ssh" # Directory holding public keys to be used on each system
 
 # Generic items
-prefix : "${ prefix }"
-deployment_type: "${ deployment_type }"
+prefix          : "${ prefix }"
+deployment_type : "${ deployment_type }"
 
 # Kubernetes - Common
 #
@@ -405,7 +415,7 @@ NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 NFS_CLIENT_CHART_VERSION: 4.0.16
 ```
 
-##  6. <a name='Tooling'></a>Third-Party Tools
+##  6. <a name='Third-PartyTools'></a>Third-Party Tools
 
 | Tool | Minimum Version |
 | ---: | ---: |
