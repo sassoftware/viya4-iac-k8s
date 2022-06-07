@@ -293,7 +293,7 @@ variable "cluster_pod_subnet" {
 
 variable "kube_vip_version" {
   type    = string
-  default = "0.4.2"
+  default = "0.4.4"
 }
 
 variable "kube_vip_interface" {

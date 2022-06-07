@@ -419,7 +419,7 @@ NFS_CLIENT_CHART_VERSION: 4.0.16
 
 | Tool | Minimum Version |
 | ---: | ---: |
-| [Ansible](https://www.ansible.com/) | Core 2.12.2 |
+| [Ansible](https://www.ansible.com/) | Core 2.12.5 |
 | [Terraform](https://www.terraform.io/) |1.2.0 |
 | [Docker](https://www.docker.com/) | 20.10.12 |
 | [Helm](https://helm.sh/) | v3.8.2 |
