@@ -283,12 +283,12 @@ variable "cluster_cri" {
 
 variable "cluster_service_subnet" {
   type    = string
-  default = "10.42.0.0/16"
+  default = "10.43.0.0/16"
 }
 
 variable "cluster_pod_subnet" {
   type    = string
-  default = "10.43.0.0/16"
+  default = "10.42.0.0/16"
 }
 
 variable "kube_vip_version" {
