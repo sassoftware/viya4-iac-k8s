@@ -51,7 +51,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | | |
+| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | | These keys are applied to the OS and root users of your machines |
 
 #### Kubernetes Cluster
 
