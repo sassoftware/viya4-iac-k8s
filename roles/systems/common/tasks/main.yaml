@@ -6,9 +6,20 @@
 #
 
 # SSH keys assign to the 'root' user on your systems
-- name: Add ssh keys
+- name: Add ssh keys - root user
   ansible.posix.authorized_key:
     user: root
+    key: "{{ lookup('file', '{{item}}') }}"
+    state: present
+  with_fileglob: "{{ system_ssh_keys_dir }}/*.pub"
+  tags:
+    - install
+    - update
+
+# SSH keys assign to the 'OS' user on your systems
+- name: Add ssh keys - OS user
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
     key: "{{ lookup('file', '{{item}}') }}"
     state: present
   with_fileglob: "{{ system_ssh_keys_dir }}/*.pub"
