@@ -7,48 +7,84 @@ data "vsphere_resource_pool" "pool" {
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
+# Kubernetes - Node setup
+
+## Control Plane Nodes
 module "control_plane" {
   source = "./modules/vm"
 
-  name             = "control-plane" # Must use a - and not a _ or hostname will fail
-  instance_count   = local.control_plane_count
+  for_each = local.control_plane_nodes
+
+  name             = replace(lower(each.key), "_", "-")
+  datacenter_id    = data.vsphere_datacenter.dc.id
   resource_pool_id = data.vsphere_resource_pool.pool.id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
-  ip_addresses     = var.control_plane_ips
-  memory           = var.control_plane_ram
-  num_cpu          = var.control_plane_num_cpu
-  disk_size        = var.control_plane_disk_size
   netmask          = var.netmask
   gateway          = var.gateway
   dns_servers      = var.dns_servers
+  instance_count   = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
+  num_cpu          = each.value.cpus
+  memory           = each.value.memory
+  disk_size        = each.value.disk
+  ip_addresses     = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
+
 }
 
+## System Nodes
+module "system" {
+  source = "./modules/vm"
+
+  for_each = local.system_nodes
+
+  name             = replace(lower(each.key), "_", "-")
+  datacenter_id    = data.vsphere_datacenter.dc.id
+  resource_pool_id = data.vsphere_resource_pool.pool.id
+  folder           = var.vsphere_folder
+  datastore        = var.vsphere_datastore
+  network          = var.vsphere_network
+  template         = var.vsphere_template
+  cluster_domain   = var.cluster_domain
+  cluster_name     = local.cluster_name
+  netmask          = var.netmask
+  gateway          = var.gateway
+  dns_servers      = var.dns_servers
+  instance_count   = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
+  num_cpu          = each.value.cpus
+  memory           = each.value.memory
+  disk_size        = each.value.disk
+  ip_addresses     = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
+
+}
+
+## Nodes
 module "node" {
   source = "./modules/vm"
 
-  name             = "node"
-  instance_count   = local.node_count
+  for_each = local.nodes
+
+  name             = replace(lower(each.key), "_", "-")
+  datacenter_id    = data.vsphere_datacenter.dc.id
   resource_pool_id = data.vsphere_resource_pool.pool.id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
-  ip_addresses     = var.node_ips
-  memory           = var.node_ram
-  num_cpu          = var.node_num_cpu
-  disk_size        = var.node_disk_size
   netmask          = var.netmask
   gateway          = var.gateway
   dns_servers      = var.dns_servers
+  instance_count   = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
+  num_cpu          = each.value.cpus
+  memory           = each.value.memory
+  disk_size        = each.value.disk
+  ip_addresses     = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
+
 }
 
 module "jump" {
@@ -65,7 +101,7 @@ module "jump" {
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
   ip_addresses     = [var.jump_ip]
-  memory           = var.jump_ram
+  memory           = var.jump_memory
   num_cpu          = var.jump_num_cpu
   disk_size        = var.jump_disk_size
   netmask          = var.netmask
@@ -87,7 +123,7 @@ module "nfs" {
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
   ip_addresses     = [var.nfs_ip]
-  memory           = var.nfs_ram
+  memory           = var.nfs_memory
   num_cpu          = var.nfs_num_cpu
   disk_size        = var.nfs_disk_size
   netmask          = var.netmask
@@ -113,7 +149,7 @@ module "postgresql" {
   netmask          = var.netmask
   gateway          = var.gateway
   num_cpu          = each.value.server_num_cpu
-  memory           = each.value.server_ram
+  memory           = each.value.server_memory
   disk_size        = each.value.server_disk_size
   ip_address       = each.value.server_ip
 }
@@ -122,8 +158,8 @@ resource "local_file" "inventory" {
   filename = var.inventory
   content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {
     prefix            = replace(var.prefix, "-", "_") # NOTE: Conversion needed in taking a URL value and using it as an Ansible Inventory value
-    control_plane_ips = local.control_plane_count > 0 ? module.control_plane.ipaddresses : []
-    node_ips          = local.node_count > 0 ? module.node.ipaddresses : []
+    control_plane_ips = length(local.control_plane_ips) > 0 ? local.control_plane_ips : []
+    node_ips          = length(local.node_ips) > 0 ? local.node_ips : []
     nfs_ip            = var.create_nfs ? var.nfs_ip : null
     jump_ip           = var.create_jump ? var.jump_ip : null
     postgres_servers  = local.postgres_servers
@@ -154,6 +190,8 @@ resource "local_file" "ansible_vars" {
     nfs_ip                     = var.create_nfs ? var.nfs_ip : null
     jump_ip                    = var.create_jump ? var.jump_ip : null
     system_ssh_keys_dir        = var.system_ssh_keys_dir
+    node_labels                = local.node_labels
+    node_taints                = local.node_taints
     }
   )
 }

@@ -121,7 +121,7 @@ variable "control_plane_count" {
   default = 0
 }
 
-variable "control_plane_ram" {
+variable "control_plane_memory" {
   type    = number
   default = 4096
 }
@@ -151,7 +151,7 @@ variable "node_count" {
   default = 0
 }
 
-variable "node_ram" {
+variable "node_memory" {
   type    = number
   default = 4096
 }
@@ -166,6 +166,54 @@ variable "node_disk_size" {
   default = 40
 }
 
+# Node Pools
+variable "node_pool_defaults" {
+  description = "Map of kubernetes nodes defaults"
+  type        = any
+  default = {
+    cpus         = 2
+    memory       = 4096
+    disk         = 25
+    count        = 0
+    ip_addresses = []
+    node_taints  = []
+    node_labels  = {}
+  }
+}
+
+variable "node_pools" {
+  description = "Map of kubernetes nodes"
+  type        = any
+  default     = null
+
+  # Nodes defined
+  validation {
+    condition     = var.node_pools != null ? true : false
+    error_message = "ERROR: You have not defined any nodes for your cluster. This is a requirement."
+  }
+
+  # Node type validation - Must have at least one control_plane node, one system node, and one other node
+  validation {
+    condition = var.node_pools != null ? length(var.node_pools) != 0 ? alltrue([
+      length(var.node_pools) >= 3,
+      length(setintersection(keys(var.node_pools), ["control_plane", "system"])) == 2,
+    ]) : false : true
+    error_message = "ERROR: You must have at least one control_plane node, one system node, and one other node."
+  }
+
+  # TODO
+  # Node count and ip_addresses must not both be null
+  validation {
+    condition = var.node_pools != null ? length(var.node_pools) != 0 ? alltrue([
+      for k, v in var.node_pools : alltrue([
+        # lookup(v, "count", false),
+        # lookup(v, "ip_addresses", false)
+      ])
+    ]) : false : true
+    error_message = "ERROR: You need to set either the count or ip_addresses value in your node definition."
+  }
+}
+
 # jump
 variable "create_jump" {
   type    = bool
@@ -176,7 +224,7 @@ variable "jump_ip" {
   default = null
 }
 
-variable "jump_ram" {
+variable "jump_memory" {
   type    = number
   default = 8092
 }
@@ -201,7 +249,7 @@ variable "nfs_ip" {
   default = null
 }
 
-variable "nfs_ram" {
+variable "nfs_memory" {
   type    = number
   default = 8092
 }
@@ -222,7 +270,7 @@ variable "postgres_server_defaults" {
   type        = any
   default = {
     server_num_cpu         = 8                       # 8 CPUs
-    server_ram             = 16384                   # 16 GiB
+    server_memory          = 16384                   # 16 GiB
     server_disk_size       = 250                     # 250 GiB
     server_ip              = ""                      # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version

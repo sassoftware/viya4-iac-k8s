@@ -163,7 +163,7 @@ kube_vip_range     = "10.18.0.100-10.18.0.125"
 #   IP addresses to support HA control plane
 #
 control_plane_num_cpu   = 8     # 8 CPUs
-control_plane_ram       = 16384 # 16 GB 
+control_plane_memory       = 16384 # 16 GB 
 control_plane_disk_size = 100   # 100 GB
 control_plane_ips = [           # Assigned values for static IP addresses - for HA you need 3/5/7/9/... IPs
   "10.18.0.2",                  # Primary control plane node
@@ -178,7 +178,7 @@ control_plane_ips = [           # Assigned values for static IP addresses - for 
 #   IPs to support SAS Viya 4 deployment
 #
 node_num_cpu   = 16     # 16 CPUs
-node_ram       = 131072 # 128 GB
+node_memory       = 131072 # 128 GB
 node_disk_size = 250    # 256 GB
 node_ips = [            # Assigned values for static IPs
   "10.18.0.5",          # Default/System node
@@ -195,7 +195,7 @@ node_ips = [            # Assigned values for static IPs
 #
 create_jump    = true         # Creation flag
 jump_num_cpu   = 4            # 4 CPUs
-jump_ram       = 8092         # 8 GB
+jump_memory       = 8092         # 8 GB
 jump_disk_size = 100          # 100 GB
 jump_ip        = "10.18.0.11" # Assigned values for static IPs
 
@@ -205,7 +205,7 @@ jump_ip        = "10.18.0.11" # Assigned values for static IPs
 #
 create_nfs    = true         # Creation flag
 nfs_num_cpu   = 8            # 8 CPUs
-nfs_ram       = 16384        # 16 GB
+nfs_memory       = 16384        # 16 GB
 nfs_disk_size = 500          # 500 GB
 nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 
@@ -216,7 +216,7 @@ nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 postgres_servers = {
   default = {
     server_num_cpu         = 8                       # 8 CPUs
-    server_ram             = 16384                   # 16 GB
+    server_memory             = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.18.0.13"            # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version

@@ -11,11 +11,11 @@ output "jump_admin_username" {
 }
 
 output "jump_private_ip" {
-  value = var.create_jump ? element(module.jump.ipaddresses, 0) : null
+  value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
 }
 
 output "jump_public_ip" {
-  value = var.create_jump ? element(module.jump.ipaddresses, 0) : null
+  value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
 }
 
 # TODO: Fix this must be a variable
@@ -36,11 +36,11 @@ output "nfs_admin_username" {
 }
 
 output "nfs_private_ip" {
-  value = var.create_nfs ? element(module.nfs.ipaddresses, 0) : null
+  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
 }
 
 output "nfs_public_ip" {
-  value = var.create_nfs ? element(module.nfs.ipaddresses, 0) : null
+  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
 }
 
 output "prefix" {
@@ -56,7 +56,7 @@ output "provder_account" {
 }
 
 output "rwx_filestore_endpoint" {
-  value = var.create_nfs ? element(module.nfs.ipaddresses, 0) : null
+  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
 }
 
 # TODO: Fix this must be a variable

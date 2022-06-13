@@ -1,3 +1,3 @@
-output "ipaddresses" {
-  value = local.ipaddresses
+output "ip_addresses" {
+  value = local.ip_addresses
 }

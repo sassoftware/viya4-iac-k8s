@@ -1,11 +1,26 @@
 locals {
 
   # Systems
-  control_plane_count = length(var.control_plane_ips) > 0 ? length(var.control_plane_ips) : var.control_plane_count
-  node_count          = length(var.node_ips) > 0 ? length(var.node_ips) : var.node_count
 
   # Kubernetes
   cluster_name = "${var.prefix}-oss"
+
+  ## User defined node_pools
+  node_pools  = var.node_pools == null ? {} : { for k, v in var.node_pools : k => merge(var.node_pool_defaults, v, ) }
+  node_labels = var.node_pools == null ? {} : { for k, v in local.node_pools : k => [for lk, lv in v.node_labels : "${lk}=${lv}"] }
+  node_taints = var.node_pools == null ? {} : { for k, v in local.node_pools : k => v.node_taints }
+
+  ## Control plane nodes
+  control_plane_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "control_plane" }
+  control_plane_ips   = flatten(sort(flatten([for item in values(module.control_plane) : values(item)])))
+
+  ## System nodes
+  system_nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
+  system_node_ips = flatten(sort(flatten([for item in values(module.system) : values(item)])))
+
+  ## Nodes
+  nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }
+  node_ips = flatten(sort(flatten([for item in values(merge(module.system, module.node)) : values(item)])))
 
   # PostgreSQL
   postgres_servers = var.postgres_servers == null ? {} : { for k, v in var.postgres_servers : k => merge(var.postgres_server_defaults, v, ) }

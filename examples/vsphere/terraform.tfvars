@@ -40,7 +40,7 @@ kube_vip_range     = ""      # kube-vip ip range
 #   IPs to support HA control plane
 #
 control_plane_num_cpu   = 8     # 8 CPUs
-control_plane_ram       = 16384 # 16 GB 
+control_plane_memory    = 16384 # 16 GB 
 control_plane_disk_size = 100   # 100 GB
 control_plane_ips = [           # Assigned values For static IPs - for HA you need 3/5/7/9/... IPs
   "",
@@ -56,7 +56,7 @@ control_plane_ssh_key_name = "" # Name for generated control plane ssh key
 #   IPs to support SAS Viya 4 deployment
 #
 node_num_cpu   = 16     # 16 CPUs
-node_ram       = 131072 # 128 GB
+node_memory    = 131072 # 128 GB
 node_disk_size = 250    # 250 GB
 node_ips = [            # Assigned values for static IPs
   "",
@@ -70,14 +70,14 @@ node_ips = [            # Assigned values for static IPs
 # Jump server
 create_jump    = true # Creation flag
 jump_num_cpu   = 4    # 4 CPUs
-jump_ram       = 8092 # 8 GB
+jump_memory    = 8092 # 8 GB
 jump_disk_size = 100  # 100 GB
 jump_ip        = ""   # Assigned values for static IPs
 
 # NFS server
 create_nfs    = true  # Creation flag
 nfs_num_cpu   = 8     # 8 CPUs
-nfs_ram       = 16384 # 16 GB
+nfs_memory    = 16384 # 16 GB
 nfs_disk_size = 500   # 500 GB
 nfs_ip        = ""    # Assigned values for static IPs
 
@@ -85,7 +85,7 @@ nfs_ip        = ""    # Assigned values for static IPs
 postgres_servers = {
   default = {
     server_num_cpu         = 8                       # 8 CPUs
-    server_ram             = 16384                   # 16 GB
+    server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = ""                      # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version

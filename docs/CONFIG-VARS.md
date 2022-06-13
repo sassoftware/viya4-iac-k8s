@@ -79,7 +79,7 @@ kube_vip_range     | kube-vip IP address range | string | | |
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | control_plane_num_cpu | # of CPUs | number | 2 | |
-| control_plane_ram | Size of RAM in MB | number | 4096 | |
+| control_plane_memory | Memory in MB | number | 4096 | |
 | control_plane_disk_size | Size of disk in GB | number | 40 | |
 | control_plane_ips | List of static IP addresses used in creating control_plane nodes | list(string) | | Cannot be used if `control_plane_count` is being used. |
 | control_plane_count | Number of control plane nodes to create with DHCP IP address assignment | number | | Cannot be used if `control_plane_ips` is being used. |
@@ -92,7 +92,7 @@ Sample:
 #   IPs to support HA control plane
 #
 control_plane_num_cpu   = 8     # 8 CPUs
-control_plane_ram       = 16384 # 16 GB 
+control_plane_memory       = 16384 # 16 GB 
 control_plane_disk_size = 100   # 100 GB
 control_plane_ips = [           # Assigned values for static IP addresses - for HA you need 3/5/7/9/... IPs
   "",
@@ -107,7 +107,7 @@ control_plane_ssh_key_name = "" # Name for generated control plane SSH key
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | node_num_cpu | Number of CPUs | number | 2 | |
-| node_ram | Size of RAM in MB | number | 4096 | |
+| node_memory | Memory in MB | number | 4096 | |
 | node_disk_size | Size of disk in GB | number | 40 | |
 | node_ips | List of static IP addresses used in creating control_plane nodes | list(string) | | Cannot be used if `node_count` is being used. |
 | node_count | Number of control plane nodes to create with DHCP IP address assignment | number | | Cannot be used if `node_ips` is being used. |
@@ -119,7 +119,7 @@ Sample:
 #   IPs to support SAS Viya 4 deployment
 #
 node_num_cpu   = 16     # 16 CPUs
-node_ram       = 131072 # 128 GB
+node_memory       = 131072 # 128 GB
 node_disk_size = 250    # 250 GB
 node_ips = [            # Assigned values for static IPs
   "",
@@ -137,7 +137,7 @@ node_ips = [            # Assigned values for static IPs
 | :--- | :--- | :--- | :--- | :--- |
 | create_jump | Creation flag | bool | false | |
 | jump_num_cpu | # of CPUs | number | 4 | |
-| jump_ram | Size of RAM in MB | number | 8092 | |
+| jump_memory | Memory in MB | number | 8092 | |
 | jump_disk_size | Size of disk in GB | number | 100 | |
 | jump_ip | Static IP address for jump server | string | | |
 
@@ -147,7 +147,7 @@ Sample:
 # Jump server
 create_jump    = true # Creation flag
 jump_num_cpu   = 4    # 4 CPUs
-jump_ram       = 8092 # 8 GB
+jump_memory       = 8092 # 8 GB
 jump_disk_size = 100  # 100 GB
 jump_ip        = ""   # Assigned values for static IPs
 ```
@@ -158,7 +158,7 @@ jump_ip        = ""   # Assigned values for static IPs
 | :--- | :--- | :--- | :--- | :--- |
 | create_nfs | Creation flag | bool | false | |
 | nfs_num_cpu | # of CPUs | number | 4 | |
-| nfs_ram | Size of RAM in MB | number | 8092 | |
+| nfs_memory | Memory in MB | number | 8092 | |
 | nfs_disk_size | Size of disk in GB | number | 250 | |
 | nfs_ip | Static IP for jump server | string | | |
 
@@ -168,7 +168,7 @@ Sample:
 # NFS server
 create_nfs    = true  # Creation flag
 nfs_num_cpu   = 8     # 8 CPUs
-nfs_ram       = 16384 # 16 GB
+nfs_memory       = 16384 # 16 GB
 nfs_disk_size = 500   # 500 GB
 nfs_ip        = ""    # Assigned values for static IP addresses
 ```
@@ -178,7 +178,7 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | server_num_cpu | # of CPUs | number | 8 | |
-| server_ram | Size of RAM in MB | number | 16385 | |
+| server_memory | Memory in MB | number | 16385 | |
 | server_disk_size | Size of disk in GB | number | 250 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field |
 | server_version | PostgreSQL version | number | 12 | |
@@ -193,7 +193,7 @@ Sample:
 postgres_servers = {
   default = {
     server_num_cpu         = 8                       # 8 CPUs
-    server_ram             = 16384                   # 16 GB
+    server_memory             = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = ""                      # Assigned values for static IP addresses - REQUIRED
     server_version         = 12                      # PostgreSQL version

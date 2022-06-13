@@ -15,7 +15,7 @@ data "vsphere_virtual_machine" "template" {
 
 locals {
   static_config = (length(var.ip_addresses) > 0 ? true : false)
-  ipaddresses   = local.static_config ? var.ip_addresses : vsphere_virtual_machine.dhcp.*.default_ip_address
+  ip_addresses  = local.static_config ? var.ip_addresses : vsphere_virtual_machine.dhcp.*.default_ip_address
 }
 
 resource "vsphere_virtual_machine" "static" {

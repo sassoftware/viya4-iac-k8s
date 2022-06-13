@@ -41,6 +41,30 @@ kubernetes_vip_ip                   : "${ kube_vip_ip }"
 kubernetes_vip_loadbalanced_dns     : "${ kube_vip_dns }"
 kubernetes_vip_cloud_provider_range : "${ kube_vip_range }"
 
+# Kubernetes - Cluster Nodes
+
+## Labels
+%{ if length(node_labels) != 0 ~}
+node_lables:
+%{ for k, v in node_labels ~}
+  ${format("- %s:\n", k)~}
+%{ for lv in v ~}
+      ${format("%s\n", lv)~}
+%{ endfor ~}
+%{ endfor ~}
+%{ endif ~}
+
+## Taints
+%{if length(node_taints) != 0 ~}
+node_taints:
+%{ for k, v in node_taints ~}
+  ${format("- %s:\n", k)~}
+%{ for tv in v ~}
+      ${format("%s\n", tv)~}
+%{ endfor ~}
+%{ endfor ~}
+%{ endif ~}
+
 # Kubernetes - Control Plane
 control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
 
