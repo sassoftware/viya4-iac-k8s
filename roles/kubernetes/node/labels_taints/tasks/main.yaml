@@ -1,0 +1,20 @@
+---
+# Apply labels to all kubernetes nodes
+- name: Adding labels to cluster Nodes
+  include: labels.yaml
+    labels={{ item.value }}
+  with_dict: "{{ node_labels }}"
+  when: ansible_nodename.find(item.key) != -1
+  tags:
+    - install
+    - update
+
+# Apply taints to all kubernetes nodes
+- name: Adding taints to cluster Nodes
+  include: taints.yaml
+    taints={{ item.value }}
+  with_dict: "{{ node_taints }}"
+  when: ansible_nodename.find(item.key) != -1
+  tags:
+    - install
+    - update

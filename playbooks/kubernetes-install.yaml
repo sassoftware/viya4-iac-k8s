@@ -56,27 +56,12 @@
   roles:
     - { role: kubernetes/loadbalancer/kube_vip/cloud_provider }
 
-# Label/Taint System/Default nodes
-- hosts: k8s_node[0]
+# Label/Taint Kubernetes nodes
+- hosts: k8s
   become: true
   become_user: root
   roles:
-    - { role: kubernetes/node/labels_taints/system }
-
-# Label/Taint CAS nodes
-- hosts: k8s_node[1]
-  become: true
-  become_user: root
-  roles:
-    - { role: kubernetes/node/labels_taints/cas }
-
-# Label/Taint General nodes
-- hosts: k8s_node[2:]
-  become: true
-  become_user: root
-  roles:
-    - { role: kubernetes/node/labels_taints/general }
-    - { role: kubernetes/node/labels_taints/roles }
+    - { role: kubernetes/node/labels_taints }
 
 # Alter PostgreSQL server and add PostgreSQL databases
 - hosts: postgres

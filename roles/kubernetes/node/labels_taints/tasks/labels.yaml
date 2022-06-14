@@ -1,0 +1,11 @@
+---
+- name: Applying labels
+  ansible.builtin.shell: |
+    kubectl label nodes {{ ansible_nodename }} {{ label }} --overwrite 
+  with_items: "{{ labels }}"
+  loop_control:
+    loop_var: label
+  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  tags:
+    - install
+    - update
