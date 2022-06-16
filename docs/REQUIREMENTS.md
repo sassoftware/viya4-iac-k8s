@@ -41,14 +41,13 @@ The following table lists the minimum machine requirements that are needed to su
 
 **NOTE**: The PostgreSQL server described in the following table is listed as 1 machine. If you plan to use the internal PostgreSQL server for SAS Viya, this server is not required, but you will need to adjust the capacity of your compute nodes in order to ensure that they can handle the resource requirements of the postgres processes.
 
-| Machine | CPU | Memory | Disk | IPs | Information | Minimum Count |
-| ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| **Control Plane Node** | 8 | 16 GB | 100 GB | 1 | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 3 |
-| **Compute Nodes** | 16 | 128 GB | 250 GB | 1 | Compute nodes in the Kubernetes cluster | 6 |
-| **Jump Server** | 4 | 8 GB | 100 GB | 1 | Bastion box used to access NFS mounts, share data, etc. | 1 |
-| **NFS Server** | 8 | 16 GB | 500 GB | 1 | Server used to store persistent volumes for the cluster | 1 |
-| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | 1 | PostgreSQL servers for your SAS Viya deployment | 1..n |
-| **TOTAL MINIMAL SYSTEM CAPACITY** | 140 | 856 GB | 2650 GB | 12 | | **12** |
+| Machine | CPU | Memory | Disk | Information | Minimum Count |
+| ---: | ---: | ---: | ---: | --- | ---: |
+| **Control Plane Node** | 2 | 4 GB | 100 GB | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 3 |
+| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. This varies and suggested capacities and info can be found in the sample files | 6 |
+| **Jump Server** | 4 | 8 GB | 100 GB | Bastion box used to access NFS mounts, share data, etc. | 1 |
+| **NFS Server** | 8 | 16 GB | 500 GB | Required server used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster | 1 |
+| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment | 1..n |
 
 ###  2.1. <a name='VMwarevSphere'></a>VMware vSphere
 
@@ -91,17 +90,19 @@ The CIDR block for your infrastructure must be able to handle at least the 12 ma
 
 These IP addresses are part of your network and will be assigned to the elements in this deployment.
 
-* Control plane nodes
-* Compute nodes (optional)
+* Kubernetes cluster virtual IP address
 * LoadBalancer IP address
+* Jump Box
+* NFS Server
+* Postgres Server
 
 ###  3.3. <a name='FloatingIPAddresses'></a>Floating IP Addresses
 
 These IP addresses are part of your network but are not assigned. The following items are required:
 
-* Compute nodes
-* Kubernetes cluster virtual IP address
-* Floating LoadBalancer IP addressess for use with additional load balancers that are created
+* Control Plane
+* Nodes
+* Floating LoadBalancer IP addresses for use with additional load balancers that are created
 
 ##  4. <a name='Examples'></a>Examples
 
@@ -321,7 +322,7 @@ nfs
 postgres
 ```
 
-Refer to the [ansible-vars.yaml](../examples/bare-metal/ansible-vars.yaml) file for more information.
+Refer to the [ansible-vars.yaml](../examples/bare-metal/sample-ansible-vars.yaml) file for more information.
 
 ```yaml
 # Ansible items
