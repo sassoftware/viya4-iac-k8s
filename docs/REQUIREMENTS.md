@@ -43,8 +43,8 @@ The following table lists the minimum machine requirements that are needed to su
 
 | Machine | CPU | Memory | Disk | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | --- | ---: |
-| **Control Plane Node** | 2 | 4 GB | 100 GB | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 3 |
-| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. This varies and suggested capacities and info can be found in the sample files | 6 |
+| **Control Plane** | 2 | 4 GB | 100 GB | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 1 |
+| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. This varies and suggested capacities and info can be found in the sample files | 3 |
 | **Jump Server** | 4 | 8 GB | 100 GB | Bastion box used to access NFS mounts, share data, etc. | 1 |
 | **NFS Server** | 8 | 16 GB | 500 GB | Required server used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster | 1 |
 | **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment | 1..n |
@@ -84,7 +84,9 @@ All systems need routable connectivity to each other.
 
 ###  3.1. <a name='CIDRBlock'></a>CIDR Block
 
-The CIDR block for your infrastructure must be able to handle at least the 12 machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created.
+The CIDR block for your infrastructure must be able to handle at least the number machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created. 
+
+The following section outlines recommendations for IP assignments. All machines can have static or floating IPs or a combination.
 
 ###  3.2. <a name='StaticIPAddresses'></a>Static IP Addresses
 
@@ -157,38 +159,93 @@ kube_vip_ip        = "10.18.0.175"
 kube_vip_dns       = "vm-dev-oss-vip.sample.domain.foo.com"
 kube_vip_range     = "10.18.0.100-10.18.0.125"
 
-# Control plane node specs
-#   kube-vip - requires you to have 3/5/7/9/... nodes for HA
-#
-#   Suggested node specs shown below. Entries for 3
-#   IP addresses to support HA control plane
-#
-control_plane_num_cpu   = 8     # 8 CPUs
-control_plane_memory       = 16384 # 16 GB 
-control_plane_disk_size = 100   # 100 GB
-control_plane_ips = [           # Assigned values for static IP addresses - for HA you need 3/5/7/9/... IPs
-  "10.18.0.2",                  # Primary control plane node
-  "10.18.0.3",                  # Secondary control plane node
-  "10.18.0.4"                   # Secondary control plane node
-]
+# Control plane node shared ssh key name
+control_plane_ssh_key_name = "cp-ssh"
 
-# Compute node specs
-#   node_count is used for DHCP and IP addresses are used for static
+# Cluster Node Pools config
 #
-#   Suggested node specs shown below. Entries for 6
-#   IPs to support SAS Viya 4 deployment
+#   Your node pools must contain at least 3 or more nodes.
+#   The required node types are:
 #
-node_num_cpu   = 16     # 16 CPUs
-node_memory       = 131072 # 128 GB
-node_disk_size = 250    # 256 GB
-node_ips = [            # Assigned values for static IPs
-  "10.18.0.5",          # Default/System node
-  "10.18.0.6",          # CAS node
-  "10.18.0.7",          # Generic node
-  "10.18.0.8",          # Generic node
-  "10.18.0.9",          # Generic node
-  "10.18.0.10"          # Generic node
-]
+#   * control_plane - Having an odd number 3/5/7... ensures
+#                     HA while using kube-vip
+#   * system        - System node pool to run misc pods, etc
+#   * cas           - CAS Nodes
+#   * <node type>   - Any number of node types with unique names.
+#                     These are typically: compute, stateful, and
+#                     stateless. 
+#
+
+# NOTE: For this example ALL node pools are using DHCP to obtain their
+#       IP addresses. The assumption here is that these IPs are
+#       addressable via the 10.18.0.0/16 network in this example
+node_pools = {
+  #
+  # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
+  #                      Other variables may be altered
+  control_plane = {
+    count       = 3
+    cpus        = 2
+    memory      = 4096
+    disk        = 100
+    node_taints = []
+    node_labels = {}
+  },
+  #
+  # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
+  #                      Other variables may be altered
+  system = {
+    count       = 1
+    cpus        = 8
+    memory      = 16384
+    disk        = 100
+    node_taints = []
+    node_labels = {
+      "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
+    }
+  },
+  cas = {
+    count       = 3
+    cpus        = 16
+    memory      = 131072
+    disk        = 350
+    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "cas"
+    }
+  },
+  compute = {
+    count       = 1
+    cpus        = 16
+    memory      = 131072
+    disk        = 100
+    node_taints = ["workload.sas.com/class=compute:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class"        = "compute"
+      "launcher.sas.com/prepullImage" = "sas-programming-environment"
+    }
+  },
+  stateful = {
+    count       = 1
+    cpus        = 8
+    memory      = 32768
+    disk        = 100
+    node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateful"
+    }
+  },
+  stateless = {
+    count       = 2
+    cpus        = 8
+    memory      = 32768
+    disk        = 100
+    node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateless"
+    }
+  }
+}
 
 # Jump server
 #
@@ -196,7 +253,7 @@ node_ips = [            # Assigned values for static IPs
 #
 create_jump    = true         # Creation flag
 jump_num_cpu   = 4            # 4 CPUs
-jump_memory       = 8092         # 8 GB
+jump_memory    = 8092         # 8 GB
 jump_disk_size = 100          # 100 GB
 jump_ip        = "10.18.0.11" # Assigned values for static IPs
 
@@ -206,7 +263,7 @@ jump_ip        = "10.18.0.11" # Assigned values for static IPs
 #
 create_nfs    = true         # Creation flag
 nfs_num_cpu   = 8            # 8 CPUs
-nfs_memory       = 16384        # 16 GB
+nfs_memory    = 16384        # 16 GB
 nfs_disk_size = 500          # 500 GB
 nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 
@@ -217,7 +274,7 @@ nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 postgres_servers = {
   default = {
     server_num_cpu         = 8                       # 8 CPUs
-    server_memory             = 16384                   # 16 GB
+    server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.18.0.13"            # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version
@@ -338,8 +395,8 @@ enable_cgroup_v2    : true     # TODO - If needed hookup or remove flag
 system_ssh_keys_dir : "~/.ssh" # Directory holding public keys to be used on each system
 
 # Generic items
-prefix          : "${ prefix }"
-deployment_type : "${ deployment_type }"
+prefix          : ""
+deployment_type : ""
 
 # Kubernetes - Common
 #
@@ -385,7 +442,7 @@ nfs_ip  : ""
 
 ##  5. <a name='Deployment'></a>Deployment
 
-Add the following items to your `ansible-vars.yaml` file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository.
+The following items **MUST** be added to your `ansible-vars.yaml` file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository.
 
 ```yaml
 ## 3rd Party
