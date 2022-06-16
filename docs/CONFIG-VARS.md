@@ -2,46 +2,41 @@
 
 Supported configuration variables are listed in the tables below.  All variables can also be specified on the command line.  Values specified on the command line will override values in configuration defaults files.
 
-##  1. <a name='TableofContents'></a>Table of Contents
+## Table of Contents
 
-<!-- vscode-markdown-toc -->
-* 1. [Table of Contents](#TableofContents)
-* 2. [vSphere/vCenter](#vSpherevCenter)
-	* 2.1. [Terraform `terraform.tfvars` file](#Terraformterraform.tfvarsfile)
-		* 2.1.1. [General Items](#GeneralItems)
-		* 2.1.2. [vSphere](#vSphere)
-		* 2.1.3. [Systems](#Systems)
-		* 2.1.4. [Kubernetes Cluster](#KubernetesCluster)
-		* 2.1.5. [Kubernetes Cluster VIP and Cloud Provider](#KubernetesClusterVIPandCloudProvider)
-		* 2.1.6. [Control Plane](#ControlPlane)
-		* 2.1.7. [Node Pools](#NodePools)
-		* 2.1.8. [Jump Server](#JumpServer)
-		* 2.1.9. [NFS Server](#NFSServer)
-		* 2.1.10. [PostgreSQL Server](#PostgreSQLServer)
-* 3. [Bare Metal](#BareMetal)
-	* 3.1. [Ansible `ansible-vars.yaml` file](#Ansibleansible-vars.yamlfile)
-* 4. [General](#General)
-* 5. [Node Pools](#NodePools-1)
-	* 5.1. [Labels](#Labels)
-	* 5.2. [Taints](#Taints)
-* 6. [Storage](#Storage)
-* 7. [PostgreSQL Servers](#PostgreSQLServers)
+- [Valid Configuration Variables](#valid-configuration-variables)
+  - [Table of Contents](#table-of-contents)
+  - [vSphere/vCenter](#vspherevcenter)
+    - [Terraform `terraform.tfvars` file](#terraform-terraformtfvars-file)
+      - [General Items](#general-items)
+      - [vSphere](#vsphere)
+      - [Systems](#systems)
+      - [Kubernetes Cluster](#kubernetes-cluster)
+      - [Kubernetes Cluster VIP and Cloud Provider](#kubernetes-cluster-vip-and-cloud-provider)
+      - [Control Plane](#control-plane)
+      - [Node Pools](#node-pools)
+      - [Jump Server](#jump-server)
+      - [NFS Server](#nfs-server)
+      - [PostgreSQL Server](#postgresql-server)
+  - [Bare Metal](#bare-metal)
+    - [Ansible `ansible-vars.yaml` file](#ansible-ansible-varsyaml-file)
+  - [General](#general)
+  - [Node Pools](#node-pools-1)
+    - [Labels](#labels)
+    - [Taints](#taints)
+  - [Storage](#storage)
+  - [PostgreSQL Servers](#postgresql-servers)
 
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
-##  2. <a name='vSpherevCenter'></a>vSphere/vCenter
+## vSphere/vCenter
 
-###  2.1. <a name='Terraformterraform.tfvarsfile'></a>Terraform `terraform.tfvars` file
+### Terraform `terraform.tfvars` file
 
 Terraform input variables can be set in the following ways:
 - Individually, with the [-var command line option](https://www.terraform.io/docs/configuration/variables.html#variables-on-the-command-line).
 - In [variable definitions (.tfvars) files](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files). We recommend this way for most variables.
 - As [environment variables](https://www.terraform.io/docs/configuration/variables.html#environment-variables).
 
-####  2.1.1. <a name='GeneralItems'></a>General Items
+#### General Items
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -51,7 +46,7 @@ Terraform input variables can be set in the following ways:
 | gateway | DNS gateway for vSphere/vCenter | string | | |
 | netmask | Netmask for your network | number | 16 | The value must provide access from your machine's IP to the gateway provided |
 
-####  2.1.2. <a name='vSphere'></a>vSphere
+#### vSphere
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -64,13 +59,13 @@ Terraform input variables can be set in the following ways:
 | vsphere_template      | Name of the VM template to clone to create VMs for the cluster | string | | |
 | vsphere_network       | Name of the network to to use for the VMs | string | | |
 
-####  2.1.3. <a name='Systems'></a>Systems
+#### Systems
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | system_ssh_keys_dir | Directory holding public keys to be used on each system | string | | These keys are applied to the OS and root users of your machines |
 
-####  2.1.4. <a name='KubernetesCluster'></a>Kubernetes Cluster
+#### Kubernetes Cluster
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -81,7 +76,7 @@ cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
 cluster_domain         | Cluster domain suffix for DNS | string | | |
 
-####  2.1.5. <a name='KubernetesClusterVIPandCloudProvider'></a>Kubernetes Cluster VIP and Cloud Provider
+#### Kubernetes Cluster VIP and Cloud Provider
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -91,13 +86,13 @@ kube_vip_ip        | kube-vip IP address | string | | |
 kube_vip_dns       | kube-vip DNS | string | | |
 kube_vip_range     | kube-vip IP address range | string | | |
 
-####  2.1.6. <a name='ControlPlane'></a>Control Plane
+#### Control Plane
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 
-####  2.1.7. <a name='NodePools'></a>Node Pools
+#### Node Pools
 
 Node pools are a map of objects. They represent information about each pool type, its physical hardware, along with their labels and taints. Each node pool requires the following variables:
 
@@ -207,7 +202,7 @@ node_pools = {
 }
 ```
 
-####  2.1.8. <a name='JumpServer'></a>Jump Server
+#### Jump Server
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -228,7 +223,7 @@ jump_disk_size = 100  # 100 GB
 jump_ip        = ""   # Assigned values for static IPs
 ```
 
-####  2.1.9. <a name='NFSServer'></a>NFS Server
+#### NFS Server
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -249,7 +244,7 @@ nfs_disk_size = 500   # 500 GB
 nfs_ip        = ""    # Assigned values for static IP addresses
 ```
 
-####  2.1.10. <a name='PostgreSQLServer'></a>PostgreSQL Server
+#### PostgreSQL Server
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -280,11 +275,11 @@ postgres_servers = {
 }
 ```
 
-##  3. <a name='BareMetal'></a>Bare Metal
+## Bare Metal
 
-###  3.1. <a name='Ansibleansible-vars.yamlfile'></a>Ansible `ansible-vars.yaml` file
+### Ansible `ansible-vars.yaml` file
 
-##  4. <a name='General'></a>General
+## General
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
@@ -294,7 +289,7 @@ postgres_servers = {
 | jump_rwx_filestore_path | File store mount point on Jump Server | string | "/viya-share" | |
 | tags | Map of common tags to be placed on all resources created by this script | map | {} | |
 
-##  5. <a name='NodePools-1'></a>Node Pools
+## Node Pools
 
 A grouping of machines with host names having a matching patterns, i.e. cas, stateful, stateless, etc. constitute a node pool in this context.
 
@@ -302,7 +297,7 @@ This is a requirement for the tooling to add the appropriate labels and taints f
 
 Please refer to the SAS docs here for more information about labels and taints.
 
-###  5.1. <a name='Labels'></a>Labels
+### Labels
 
 To label your machines as specific nodes add the following items to your `ansible-vars.yaml` file:
 
@@ -323,7 +318,7 @@ node_labels:
 
 **NOTE**: The label on the `system` node pool is required if you DO NOT want SAS Software running on your system node(s).
 
-###  5.2. <a name='Taints'></a>Taints
+### Taints
 
 To taint your machines as specific nodes add the following items to your `ansible-vars.yaml` file:
 
@@ -339,11 +334,11 @@ node_taints:
     - workload.sas.com/class=stateless:NoSchedule
 ```
 
-##  6. <a name='Storage'></a>Storage
+## Storage
 
 An NFS server is setup by default. This is a required machine as it's used as backing storage for the `default` storage class created. Information on setting up that machine is listed [here](#NFSServer)
 
-##  7. <a name='PostgreSQLServers'></a>PostgreSQL Servers
+## PostgreSQL Servers
 
 When setting up ***external database servers***, you must provide information about those servers in the `postgres_servers` variable block. Each entry in the variable block represents a ***single database server***.
 
