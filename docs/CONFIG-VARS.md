@@ -20,10 +20,10 @@ Supported configuration variables are listed in the tables below.  All variables
       - [PostgreSQL Server](#postgresql-server)
   - [Bare Metal](#bare-metal)
     - [Ansible `ansible-vars.yaml` file](#ansible-ansible-varsyaml-file)
-  - [General](#general)
-  - [Node Pools](#node-pools-1)
-    - [Labels](#labels)
-    - [Taints](#taints)
+    - [Labels/Taints](#labelstaints)
+      - [Labels](#labels)
+      - [Taints](#taints)
+    - [Ansible `inventory` file](#ansible-inventory-file)
   - [Storage](#storage)
   - [PostgreSQL Servers](#postgresql-servers)
 
@@ -32,6 +32,7 @@ Supported configuration variables are listed in the tables below.  All variables
 ### Terraform `terraform.tfvars` file
 
 Terraform input variables can be set in the following ways:
+
 - Individually, with the [-var command line option](https://www.terraform.io/docs/configuration/variables.html#variables-on-the-command-line).
 - In [variable definitions (.tfvars) files](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files). We recommend this way for most variables.
 - As [environment variables](https://www.terraform.io/docs/configuration/variables.html#environment-variables).
@@ -69,7 +70,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-cluster_version        | Kubernetes version | string | | |
+cluster_version        | Kubernetes version | string | "1.22.10" | |
 cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
@@ -110,8 +111,8 @@ There is no default type for the node pools but examples based on what SAS recom
 
 **NOTE**: These node pools are required for the `node_pools`:
 
-* control_plane
-* system
+- control_plane
+- system
 
 Sample `node_pool` entry:
 
@@ -279,25 +280,42 @@ postgres_servers = {
 
 ### Ansible `ansible-vars.yaml` file
 
-## General
+Variables used to describe your machines.
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
-| kubernetes_version | Cluster Kubernetes version | string | "1.22.10" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
-| create_static_kubeconfig | Allows the user to create a provider or service account based kubeconfig file | bool | false | A value of `false` defaults to using the cloud provider's mechanism for generating the kubeconfig file. A value of `true` creates a static kubeconfig file, which uses a service account and cluster role binding to provide credentials. |
-| jump_vm_admin | OS Admin User for the Jump Server | string | "jumpuser" | | |
-| jump_rwx_filestore_path | File store mount point on Jump Server | string | "/viya-share" | |
-| tags | Map of common tags to be placed on all resources created by this script | map | {} | |
+| ansible_user | The user ID on your systems that Ansible uses to perform its tasks | string | | Must have password-less sudo privileges |
+| ansible_password | The user account password on your systems that Ansible uses to perform its tasks | string | | |
+| vm_os | Operating system used on your machines | string | "ubuntu" | All machines in your setup must have the same operating system |
+| vm_arch | Machine architecture | string | "amd64" | |
+| enable_cgroup_v2 | Enable cgroup_v2 on your machines | bool | true | |
+| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | "~/.ssh" | |
+| prefix | A prefix used in the names of all the resources created by this script | string | | |
+| deployment_type | | string | | |
+| kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled **ONLY** change the prefix value above |
+| kubernetes_version | Kubernetes version | string | "1.22.10" | |
+| kubernetes_upgrade_allowed | | bool | true | |
+| kubernetes_arch | | string | "{{ vm_arch }}" | |
+| kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
+| kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
+| kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
+| kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
+| kubernetes_vip_version | kube-vip version | string | "0.4.4" | |
+| kubernetes_vip_interface | kube-vip interface | string | | |
+| kubernetes_vip_ip | kube-vip IP address | string | | |
+| kubernetes_vip_loadbalanced_dns | kube-vip DNS | string | | |
+| kubernetes_vip_cloud_provider_range | kube-vip IP address range | string | | |
+| node_labels | Labels applied to nodes in your cluster | map(list(string)) | | |
+| node_taints | Taints applied to nodes in your cluster | map(list(string)) | | |
+| control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
+| jump_ip | Dynamic or static IP address that is assigned to your Jump Box | string | | |
+| nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
 
-## Node Pools
+### Labels/Taints
 
-A grouping of machines with host names having a matching patterns, i.e. cas, stateful, stateless, etc. constitute a node pool in this context.
+Labels and taints are applied to each node that matches the label or taint key name. The following examples outline these names and the labels/taints associated with those nodes.
 
-This is a requirement for the tooling to add the appropriate labels and taints for each node. If you choose NOT to follow this naming convention you will need to add these labels and taints yourself to each node in the cluster. If you choose not to apply any labels or taints to nodes in your cluster, the SAS Viya software will run as expected; however, the performance may suffer.
-
-Please refer to the SAS docs here for more information about labels and taints.
-
-### Labels
+#### Labels
 
 To label your machines as specific nodes add the following items to your `ansible-vars.yaml` file:
 
@@ -318,7 +336,7 @@ node_labels:
 
 **NOTE**: The label on the `system` node pool is required if you DO NOT want SAS Software running on your system node(s).
 
-### Taints
+#### Taints
 
 To taint your machines as specific nodes add the following items to your `ansible-vars.yaml` file:
 
@@ -333,6 +351,10 @@ node_taints:
   stateless:
     - workload.sas.com/class=stateless:NoSchedule
 ```
+
+### Ansible `inventory` file
+
+This inventory file represents the machines you will be using in your kubernetes deployment for SAS Viya. An example and information on this file can be found [here](../examples/bare-metal/sample-inventory).
 
 ## Storage
 
