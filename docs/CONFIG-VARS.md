@@ -2,6 +2,8 @@
 
 Supported configuration variables are listed in the tables below.  All variables can also be specified on the command line.  Values specified on the command line will override values in configuration defaults files.
 
+##  1. <a name='TableofContents'></a>Table of Contents
+
 <!-- vscode-markdown-toc -->
 * 1. [Table of Contents](#TableofContents)
 * 2. [vSphere/vCenter](#vSpherevCenter)
@@ -30,20 +32,6 @@ Supported configuration variables are listed in the tables below.  All variables
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
-
-##  1. <a name='TableofContents'></a>Table of Contents
-
-  - [Required Variables](#required-variables)
-  - [Admin Access](#admin-access)
-  - [Networking](#networking)
-      - [Use Existing](#use-existing)
-  - [General](#general)
-  - [Node Pools](#nodepools)
-    - [Default Node Pool](#default-nodepool)
-    - [Additional Node Pools](#additional-nodepools)
-  - [Storage](#storage)
-  - [Postgres](#postgres)
-
 ##  2. <a name='vSpherevCenter'></a>vSphere/vCenter
 
 ###  2.1. <a name='Terraformterraform.tfvarsfile'></a>Terraform `terraform.tfvars` file
