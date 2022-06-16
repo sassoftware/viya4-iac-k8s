@@ -58,10 +58,10 @@ Terraform input variables can be set in the following ways:
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 cluster_version        | Kubernetes version | string | | |
-cluster_cni            | Kubernetes Container Network Interface (CNI) | string | | |
-cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | | |
-cluster_service_subnet | Kubernetes service subnet | string | | |
-cluster_pod_subnet     | Kubernetes Pod subnet | string | | |
+cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
+cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
+cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
+cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
 cluster_domain         | Cluster domain suffix for DNS | string | | |
 
 #### Kubernetes Cluster VIP and Cloud Provider
@@ -69,66 +69,119 @@ cluster_domain         | Cluster domain suffix for DNS | string | | |
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 kube_vip_version   | kube-vip version | string | "0.4.4" | |
-kube_vip_interface | kube-vip interface | string | "ens160" | |
+kube_vip_interface | kube-vip interface | string | | |
 kube_vip_ip        | kube-vip IP address | string | | |
 kube_vip_dns       | kube-vip DNS | string | | |
 kube_vip_range     | kube-vip IP address range | string | | |
 
-#### Control Plan Node Specs
+#### Node Pools
+
+Node pools are a map of objects. They represent information about each pool type, its physical hardware, along with their labels and taints. Each node pool requires the following variables:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| control_plane_num_cpu | # of CPUs | number | 2 | |
-| control_plane_memory | Memory in MB | number | 4096 | |
-| control_plane_disk_size | Size of disk in GB | number | 40 | |
-| control_plane_ips | List of static IP addresses used in creating control_plane nodes | list(string) | | Cannot be used if `control_plane_count` is being used. |
-| control_plane_count | Number of control plane nodes to create with DHCP IP address assignment | number | | Cannot be used if `control_plane_ips` is being used. |
-| control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
+| count | Number of nodes | number | | Setting this variable creates nodes with dynamic IPs assigned from your network. Cannot be used with the `ip_addresses` field|
+| cpus | Number of CPUS cores | number | | |
+| memory | Memory in MB | number | | |
+| disk | Size of disk in GB | number| | |
+| ip_addresses | List of static IP addresses used in creating control_plane nodes | list(string) |  | Setting this variable creates nodes with static ips assigned from this list. Cannot be used if the `count` field is being used |
+| node_taints |  | list(string) | | |
+| node_labels |  | map(string) | | |
 
-Sample:
+There is no default type for the node pools but examples based on what SAS recommends are listed in the example files. Below is a sample of a basic cluster `node_pools` definition one would use in their `terraform.tfvars` file.
 
-```bash
-#   Suggested node specs shown below. Entries for 3
-#   IPs to support HA control plane
+**NOTE**: These node pools are required for the `node_pools`:
+
+- control_plane
+- system
+
+Sample `node_pool` entry:
+
+```yaml
+# Cluster Node Pools config
 #
-control_plane_num_cpu   = 8     # 8 CPUs
-control_plane_memory       = 16384 # 16 GB 
-control_plane_disk_size = 100   # 100 GB
-control_plane_ips = [           # Assigned values for static IP addresses - for HA you need 3/5/7/9/... IPs
-  "",
-  "",
-  ""
-]
-control_plane_ssh_key_name = "" # Name for generated control plane SSH key
-```
-
-#### Node Specs
-
-| Name | Description | Type | Default | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| node_num_cpu | Number of CPUs | number | 2 | |
-| node_memory | Memory in MB | number | 4096 | |
-| node_disk_size | Size of disk in GB | number | 40 | |
-| node_ips | List of static IP addresses used in creating control_plane nodes | list(string) | | Cannot be used if `node_count` is being used. |
-| node_count | Number of control plane nodes to create with DHCP IP address assignment | number | | Cannot be used if `node_ips` is being used. |
-
-Sample:
-
-```bash
-#   Suggested node specs shown below. Entries for 6
-#   IPs to support SAS Viya 4 deployment
+#   Your node pools must contain at least 3 or more nodes.
+#   The required node types are:
 #
-node_num_cpu   = 16     # 16 CPUs
-node_memory       = 131072 # 128 GB
-node_disk_size = 250    # 250 GB
-node_ips = [            # Assigned values for static IPs
-  "",
-  "",
-  "",
-  "",
-  "",
-  ""
-]
+#   * control_plane - Having an odd number 3/5/7... ensures
+#                     HA while using kube-vip
+#   * system        - System node pool to run misc pods, etc
+#   * cas           - CAS Nodes
+#   * <node type>   - Any number of node types with unique names.
+#                     These are typically: compute, stateful, and
+#                     stateless. 
+#
+node_pools = {
+  #
+  # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
+  #                      Other variables may be altered
+  control_plane = {
+    cpus        = 2
+    memory      = 4096
+    disk        = 100
+    ip_addresses = [
+      "192.168.7.21",
+      "192.168.7.22",
+      "192.168.7.23",
+    ]
+    node_taints = []
+    node_labels = {}
+  },
+  #
+  # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
+  #                      Other variables may be altered
+  system = {
+    count       = 1
+    cpus        = 8
+    memory      = 16384
+    disk        = 100
+    node_taints = []
+    node_labels = {
+      "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
+    }
+  },
+  cas = {
+    count       = 3
+    cpus        = 16
+    memory      = 131072
+    disk        = 350
+    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "cas"
+    }
+  },
+  compute = {
+    count       = 1
+    cpus        = 16
+    memory      = 131072
+    disk        = 100
+    node_taints = ["workload.sas.com/class=compute:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class"        = "compute"
+      "launcher.sas.com/prepullImage" = "sas-programming-environment"
+    }
+  },
+  stateful = {
+    count       = 1
+    cpus        = 8
+    memory      = 32768
+    disk        = 100
+    node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateful"
+    }
+  },
+  stateless = {
+    count       = 2
+    cpus        = 8
+    memory      = 32768
+    disk        = 100
+    node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateless"
+    }
+  }
+}
 ```
 
 #### Jump Server
@@ -147,7 +200,7 @@ Sample:
 # Jump server
 create_jump    = true # Creation flag
 jump_num_cpu   = 4    # 4 CPUs
-jump_memory       = 8092 # 8 GB
+jump_memory    = 8092 # 8 GB
 jump_disk_size = 100  # 100 GB
 jump_ip        = ""   # Assigned values for static IPs
 ```
@@ -168,7 +221,7 @@ Sample:
 # NFS server
 create_nfs    = true  # Creation flag
 nfs_num_cpu   = 8     # 8 CPUs
-nfs_memory       = 16384 # 16 GB
+nfs_memory    = 16384 # 16 GB
 nfs_disk_size = 500   # 500 GB
 nfs_ip        = ""    # Assigned values for static IP addresses
 ```
@@ -193,7 +246,7 @@ Sample:
 postgres_servers = {
   default = {
     server_num_cpu         = 8                       # 8 CPUs
-    server_memory             = 16384                   # 16 GB
+    server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = ""                      # Assigned values for static IP addresses - REQUIRED
     server_version         = 12                      # PostgreSQL version

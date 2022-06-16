@@ -312,6 +312,7 @@ variable "system_ssh_keys_dir" {
 
 variable "cluster_domain" {
   type = string
+  default = null
 }
 
 variable "cluster_version" {
@@ -346,7 +347,7 @@ variable "kube_vip_version" {
 
 variable "kube_vip_interface" {
   type    = string
-  default = "ens160"
+  default = null
 }
 
 variable "kube_vip_ip" {

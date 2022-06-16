@@ -45,7 +45,9 @@ control_plane_ssh_key_name = "cp-ssh"
 #                     HA while using kube-vip
 #   * system        - System node pool to run misc pods, etc
 #   * cas           - CAS Nodes
-#   * [anyname]     - Any number of node types with unique names
+#   * <node type>   - Any number of node types with unique names.
+#                     These are typically: compute, stateful, and
+#                     stateless. 
 #
 cluster_node_pool_mode = "minimal"
 node_pools = {
