@@ -14,9 +14,9 @@ This project contains Terraform scripts to provision cloud infrastructure resour
 
 [<img src="./docs/images/viya4-iac-k8s-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-k8s-diag.png?raw=true)
 
-This project helps you to automate the cluster-provisioning phase of SAS Viya deployment. To learn about all phases and options of the SAS Viya deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes]() in _SAS&reg; Viya&reg; Operations_.
+This project helps you to automate the cluster-provisioning phase of SAS Viya deployment. To learn about all phases and options of the SAS Viya deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://go.documentation.sas.com/doc/en/itopscdc/default/itopscon/titlepage.htm) in _SAS&reg; Viya&reg; Operations_.
 
-Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya 4 in your cloud environment. For more information about SAS Viya 4 requirements and documentation for the deployment process, refer to the [SAS&reg; Viya&reg; IT Operations Guide](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswlcm/home.htm).
+Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya 4 in your cloud environment. For more information about SAS Viya 4 requirements and documentation for the deployment process, refer to the [SAS&reg; Viya&reg; Operations Guide](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
 
 This project supports infrastructure that is built on **bare metal** (physical machines) or on **VMware vSphere/vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
 
