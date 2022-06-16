@@ -3,6 +3,7 @@
 - hosts: k8s_node
   become: true
   become_user: root
+  serial: 1
   roles:
     - { role: kubernetes/node/removal }
 

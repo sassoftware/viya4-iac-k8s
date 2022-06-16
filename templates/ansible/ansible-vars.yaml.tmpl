@@ -43,6 +43,31 @@ kubernetes_vip_cloud_provider_range : "${ kube_vip_range }"
 
 # Kubernetes - Cluster Nodes
 
+## Labels/Taints
+##
+##   The label names match the host names to apply these items
+##   If the node names do not match you'll have to apply these
+##   taints/labels by hand.
+##
+##   The format the label block is:
+##
+##       node_labels:
+##         <node name pattern>:
+##           - <label>
+##           - <label>
+##
+##       The format the taint block is:
+##
+##       node_taints:
+##         <node name pattern>:
+##           - <taint>
+##           - <taint>
+##
+##   NOTE: There are no quotes around the label and taint elements
+##         These are literal converted to strings when applying
+##         into the cluster
+## 
+
 ## Labels
 %{ if length(node_labels) != 0 ~}
 node_labels:
@@ -61,9 +86,9 @@ node_labels:
 node_taints:
 %{ for k, v in node_taints ~}
 %{ if length(v) != 0 ~}
-  ${format("- %s:\n", k)~}
+  ${format("%s:\n", k)~}
 %{ for tv in v ~}
-      ${format("%s\n", tv)~}
+  ${format("  - %s\n", tv)~}
 %{ endfor ~}
 %{ endif ~}
 %{ endfor ~}

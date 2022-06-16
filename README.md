@@ -43,10 +43,10 @@ Regardless of which method you choose, the systems must meet the minimal require
 - Machines in your target environment are running **Ubuntu Linux LTS 20.04**
 - Machines have a default user account with password-less `sudo` capabilities
 - At least 3 machines for the control plane nodes in your cluster
-- At least 6 machines for the compute nodes in your cluster
+- At least 6 machines for the nodes in your cluster
 - 1 machine to serve as a jump server
 - 1 machine to serve as an NFS server
-- At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component)
+- At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan on having an external databse to your cluster
 
 > **NOTE**: Remember that these machines are not managed by a provider or by automated tooling. The nodes that you add here dictate the capacity of the cluster. If you need the number of nodes in the cluster to increase or decrease, you must perform the task manually. There is **NO AUTOSCALING** with this setup.
 
@@ -64,7 +64,7 @@ Deployment with vSphere requires a Linux image that can be used as the basis for
 
 #### Physical or Virtual Machines
 
-In addition to VMware, this project also works with existing physical or virtual machines. You will need root access to these machines and will need to pass this along, following the sample [inventory](./examples/systems/inventory-bare-metal) and [ansible-vars.yaml](./examples/kubernetes/ansible-vars-oss.yaml) files that are provided in this repository.
+In addition to VMware, this project also works with existing physical or virtual machines. You will need root access to these machines and will need to pass this along, following the sample [inventory](./examples/bare-metal/sample-inventory) and [ansible-vars.yaml](./examples/bare-metal/sample-ansible-vars.yaml) files that are provided in this repository.
 
 ### Networking
 
@@ -133,7 +133,7 @@ You have the option to specify variable definitions that are not included in `te
 
 #### SAS Viya IaC Configuration Files
 
-In order to use this repository, modify the [`inventory` file](./examples/bare-metal/inventory) to provide information about your machines. Modify the [`ansible-vars.yaml` file](./examples/bare-metal/inventory) to customize the configuration settings for your environment.
+In order to use this repository, modify the [`inventory` file](./examples/bare-metal/sample-inventory) to provide information about your machines. Modify the [`ansible-vars.yaml` file](./examples/bare-metal/sample-ansible-vars.yaml) to customize the configuration settings for your environment.
 
 ### Create and Manage Cluster Resources
 
