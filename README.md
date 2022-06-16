@@ -14,7 +14,7 @@ This project contains Terraform scripts to provision cloud infrastructure resour
 
 [<img src="./docs/images/viya4-iac-k8s-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-k8s-diag.png?raw=true)
 
-This project helps you to automate the cluster-provisioning phase of SAS Viya deployment. To learn about all phases and options of the SAS Viya deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://go.documentation.sas.com/doc/en/itopscdc/default/itopscon/titlepage.htm) in _SAS&reg; Viya&reg; Operations_.
+This project helps you to automate the cluster-provisioning phase of SAS Viya deployment. To learn about all phases and options of the SAS Viya deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://go.documentation.sas.com/doc/en/itopscdc/default/itopscon/p1qungdpndaksyn156ng6duptma0.htm?fromDefault=) in _SAS&reg; Viya&reg; Operations_.
 
 Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya 4 in your cloud environment. For more information about SAS Viya 4 requirements and documentation for the deployment process, refer to the [SAS&reg; Viya&reg; Operations Guide](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
 
