@@ -111,61 +111,10 @@ variable "ansible_vars" {
 #
 # Systems
 #
-variable "control_plane_ips" {
-  type    = list(any)
-  default = []
-}
-
-variable "control_plane_count" {
-  type    = number
-  default = 0
-}
-
-variable "control_plane_memory" {
-  type    = number
-  default = 4096
-}
-
-variable "control_plane_num_cpu" {
-  type    = number
-  default = 2
-}
-
-variable "control_plane_disk_size" {
-  type    = number
-  default = 40
-}
-
 variable "control_plane_ssh_key_name" {
   type    = string
   default = "cp_ssh"
 }
-
-variable "node_ips" {
-  type    = list(any)
-  default = []
-}
-
-variable "node_count" {
-  type    = number
-  default = 0
-}
-
-variable "node_memory" {
-  type    = number
-  default = 4096
-}
-
-variable "node_num_cpu" {
-  type    = number
-  default = 2
-}
-
-variable "node_disk_size" {
-  type    = number
-  default = 40
-}
-
 # Node Pools
 variable "node_pool_defaults" {
   description = "Map of kubernetes nodes defaults"
@@ -317,7 +266,7 @@ variable "cluster_domain" {
 
 variable "cluster_version" {
   type    = string
-  default = null
+  default = "1.22.10"
 }
 
 variable "cluster_cni" {
