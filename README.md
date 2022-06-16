@@ -46,7 +46,7 @@ Regardless of which method you choose, the systems must meet the minimal require
 - At least 6 machines for the nodes in your cluster
 - 1 machine to serve as a jump server
 - 1 machine to serve as an NFS server
-- At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan on having an external databse to your cluster
+- At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you are plan using an external database server with your cluster
 
 > **NOTE**: Remember that these machines are not managed by a provider or by automated tooling. The nodes that you add here dictate the capacity of the cluster. If you need the number of nodes in the cluster to increase or decrease, you must perform the task manually. There is **NO AUTOSCALING** with this setup.
 
