@@ -34,7 +34,7 @@ kube_vip_dns       = ""
 kube_vip_range     = ""
 
 # Control plane node shared ssh key name
-control_plane_ssh_key_name = "cp-ssh"
+control_plane_ssh_key_name = "cp_ssh"
 
 # Cluster Node Pools config
 #

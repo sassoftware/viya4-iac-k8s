@@ -154,7 +154,7 @@ kube_vip_dns       = "vm-dev-oss-vip.sample.domain.foo.com"
 kube_vip_range     = "10.18.0.100-10.18.0.125"
 
 # Control plane node shared ssh key name
-control_plane_ssh_key_name = "cp-ssh"
+control_plane_ssh_key_name = "cp_ssh"
 
 # Cluster Node Pools config
 #
