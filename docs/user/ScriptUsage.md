@@ -2,50 +2,50 @@
 
 ## Prerequisites
 
-After satisfying all of the perquisite items listed in the [README.md](../../README.md#script-requirements) doc for this repo you're ready to begin.
+After satisfying all of the requirements that are listed in the [README file](../../README.md#script-requirements) for this repository, you are ready to begin.
 
 ### vSphere/vCenter Environment File for Authentication
 
-Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.vsphere_creds.env. Protect that file with vSphere/vCenter credentials so only you have read access to it.
+Create a file that contains the authentication variable values to use at container invocation. Store the file outside of this repository, for example in  `$HOME/.vsphere_creds.env`. Protect that file with vSphere/vCenter credentials so that only you have Read access to it.
 
-**NOTE**: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
+**NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
 
-Now each time you invoke the container, specify the file with the --env-file option to pass on Azure credentials to the container.
+Now each time you invoke the container, specify the file with the `--env-file` option to pass credentials to the container.
 
 An example of this file can be found in the `examples` directory [here](./../../examples/vsphere/.vsphere_creds.env).
 
 ### Bare Metal Environment File for Authentication
 
-Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example $HOME/.bare_metal_creds.env. Protect that file with bare-metal credentials so only you have read access to it
+Create a file that contains the authentication variable values to use at container invocation. Store the file outside of this repository, for example in  `$HOME/.bare_metal_creds.env`. Protect that file with operating-system credentials so that only you have Read access to it
 
-**NOTE**: Do not use quotes around the values in the file, and make sure to avoid any trailing blanks!
+**NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
 
-Now each time you invoke the container, specify the file with the --env-file option to pass on Azure credentials to the container.
+Now each time you invoke the container, specify the file with the --env-file option to pass credentials to the container.
 
 An example of this file can be found in the `examples` directory [here](./../../examples/bare-metal/.bare_metal_creds.env).
 
-### Variable Definitions (.tfvars) File
+### Variable Definitions File (.tfvars)
 
 Prepare your `terraform.tfvars` file, as described in [Customize Input Values](../../README.md#customize-input-values).
 
-## Running the configuration script
+## Running the Configuration Script
 
-This script offers options for both vSphere/vCenter and bare-metal. Each section below describes what is needed for each option.
+This script offers options for both vSphere/vCenter and physical machines. Each section below describes what is needed for each option.
 
 The script has the following options. These options include both actions for infrastructure and cluster creation along with encapsulated tooling.
 
 ```bash
 Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]
 
-  Actions           - Items and there meanings
+  Actions           - Items and Their Meanings
 
-    apply           - IAC Creation                     : vSphere/vCenter
+    apply           - IaC creation                     : vSphere/vCenter
     setup           - System and software setup        : systems
     install         - Kubernetes install               : systems
     update          - System and/or Kubernetes updates : systems
     uninstall       - Kubernetes uninstall             : systems
     cleanup         - Systems and software cleanup     : systems
-    destroy         - IAC Destruction                  : vSphere/vCenter
+    destroy         - IaC destruction                  : vSphere/vCenter
 
   Action groupings  - These items can be run together.
                       Alternate combinations are not allowed.
@@ -54,16 +54,16 @@ Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k
   update items      - [update]
   destruction items - [uninstall cleanup destroy]
 
-  Tooling - Integrated tools
+  Toolset - Integrated tools
 
-    helm            - Helm                             : kubernetes
-    k               - kubectl                          : kubernetes
+    helm            - Helm                             : Kubernetes
+    k               - kubectl                          : Kubernetes
     tf              - Terraform                        : vSphere/vCenter
 ```
 
-### Create your infrastructure and kubernetes cluster - `vsphere`
+### Create Your Infrastructure and Kubernetes cluster - `vsphere`
 
-To create your system resources run the `oss-k8s.sh` script with the `apply setup install` commands:
+To create your system resources, run the oss-k8s.sh script with the `apply setup install` command:
 
 ```bash
 ./oss-k8s.sh apply setup install
@@ -71,9 +71,9 @@ To create your system resources run the `oss-k8s.sh` script with the `apply setu
 
 This command can take a few minutes to complete. Once complete, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` and the `kubeconfig` file for the cluster stored here `[prefix]-oss-kubeconfig.conf` are written in the current directory, `$(pwd)`.
 
-### Create your kubernetes cluster using systems - `bare_metal`
+### Create Your Kubernetes Cluster Using Physical Machines - `bare_metal`
 
-To create your kubernetes cluster run the `oss-k8s.sh` script with the `setup install` options:
+To create your Kubernetes cluster, run the oss-k8s.sh script with the `setup install` option:
 
 ```bash
 ./oss-k8s.sh setup install
@@ -81,13 +81,13 @@ To create your kubernetes cluster run the `oss-k8s.sh` script with the `setup in
 
 ### Display Terraform Outputs - `vSphere`
 
-Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the `oss-k8s.sh` script using the `tf` option:
+When your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the oss-k8s.sh script with the `tf` option:
 
 ```bash
 ./oss-k8s.sh tf output -state /workspace/terraform.tfstate
 ```
 
-To display complex or hidden items in the output pass those values to the output command:
+To display complex or hidden items in the output, pass those values to the `output` command:
 
 ```bash
 ./oss-k8s.sh tf output postgres_servers
@@ -97,7 +97,7 @@ To display complex or hidden items in the output pass those values to the output
 
 ### Tear Down Kubernetes Resources - vSphere/vCenter
 
-To destroy all the resources created with the previous commands, run the using the `oss-k8s.sh` script `destroy` command.
+To destroy all the resources that were created with the previous commands, run the using the oss-k8s.sh script `destroy` command.
 
 ```bash
 ./oss-k8s.sh destroy
@@ -105,13 +105,13 @@ To destroy all the resources created with the previous commands, run the using t
 
 **NOTE**: The 'destroy' action is irreversible.
 
-## Interacting With The Kubernetes cluster
+## Interacting with the Kubernetes Cluster
 
-[Creating the cloud resources](#running-the-configuration-script) writes the kube_config output value to a file ./[prefix]-oss-kubeconfig.conf. When the Kubernetes cluster is ready, use kubectl to interact with the cluster.
+Following the steps in [Running the Configuration Script](#running-the-configuration-script) writes the kube_config output value to a file, `./[prefix]-oss-kubeconfig.conf`. When the Kubernetes cluster is ready, use kubectl to interact with the cluster.
 
 ### Example Using kubectl
 
-To run the kubectl command with the `oss-k8s.sh` script to list cluster nodes, be sure to set your `KUBECONFIG` environment variable so that it references the kube config file created for your cluster. This example shows how you can get node information:
+In order to run the `kubectl` command with the oss-k8s.sh script to list cluster nodes, be sure to set your `KUBECONFIG` environment variable so that it references the kubeconfig file that was created for your cluster. This example shows how you can get node information:
 
 ```bash
 ./oss-k8s.sh k get nodes -o wide
