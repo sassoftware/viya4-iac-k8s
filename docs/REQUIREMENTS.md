@@ -4,30 +4,24 @@ The items listed below are designed to create a Highly Available (HA) infrastruc
 
 Table of Contents
 
-<!-- vscode-markdown-toc -->
-* 1. [Operating System](#OperatingSystem)
-* 2. [Machines](#Machines)
-	* 2.1. [VMware vSphere](#VMwarevSphere)
-		* 2.1.1. [Resources](#Resources)
-		* 2.1.2. [Machine Template Requirements](#MachineTemplateRequirements)
-	* 2.2. [Bare-Metal](#Bare-Metal)
-* 3. [Network](#Network)
-	* 3.1. [CIDR Block](#CIDRBlock)
-	* 3.2. [Static IP Addresses](#StaticIPAddresses)
-	* 3.3. [Floating IP Addresses](#FloatingIPAddresses)
-* 4. [Examples](#Examples)
-	* 4.1. [vCenter/vSphere Sample `tfvars` File](#vCentervSphereSampletfvarsFile)
-	* 4.2. [Bare Metal Sample `inventory` File](#BareMetalSampleinventoryFile)
-* 5. [Deployment](#Deployment)
-* 6. [Third-Party Tools](#Third-PartyTools)
+- [Open Source Kubernetes Infrastructure Requirements for High Availability](#open-source-kubernetes-infrastructure-requirements-for-high-availability)
+  - [Operating System](#operating-system)
+  - [Machines](#machines)
+    - [VMware vSphere](#vmware-vsphere)
+      - [Resources](#resources)
+      - [Machine Template Requirements](#machine-template-requirements)
+    - [Bare-Metal](#bare-metal)
+  - [Network](#network)
+    - [CIDR Block](#cidr-block)
+    - [Static IP Addresses](#static-ip-addresses)
+    - [Floating IP Addresses](#floating-ip-addresses)
+  - [Examples](#examples)
+    - [vCenter/vSphere Sample `tfvars` File](#vcentervsphere-sample-tfvars-file)
+    - [Bare Metal Sample `inventory` File](#bare-metal-sample-inventory-file)
+  - [Deployment](#deployment)
+  - [Third-Party Tools](#third-party-tools)
 
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
-
-##  1. <a name='OperatingSystem'></a>Operating System
+## Operating System
 
 An Ubuntu Linux operating system is required for the tasks associated with standing up infrastructure using the tools in this repository.
 
@@ -35,7 +29,7 @@ An Ubuntu Linux operating system is required for the tasks associated with stand
 | --- | --- |
 | [Ubuntu 20.04 LTS](https://releases.ubuntu.com/20.04/) | You must have a user account and password with privileges that enable unprompted `sudo`. You must also have a shared "private/public" SSH key pair to use with each system. These are required for the Ansible tools that are described below. |
 
-##  2. <a name='Machines'></a>Machines
+## Machines
 
 The following table lists the minimum machine requirements that are needed to support a Kubernetes cluster and supporting elements for a SAS Viya 4 software installation. These machines must all be on the same network. Each machine should have a DNS entry associated with its assigned IP address; this is not required, but it makes setup easier.
 
@@ -49,11 +43,11 @@ The following table lists the minimum machine requirements that are needed to su
 | **NFS Server** | 8 | 16 GB | 500 GB | Required server used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster | 1 |
 | **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment | 1..n |
 
-###  2.1. <a name='VMwarevSphere'></a>VMware vSphere
+### VMware vSphere
 
 In order to leverage vSphere, the following items are required for use in your tfvars file. You also need Administrator access on vSphere.
 
-####  2.1.1. <a name='Resources'></a>Resources
+#### Resources
 
 | vSphere Item | Description |
 | --- | ---: |
@@ -65,7 +59,7 @@ In order to leverage vSphere, the following items are required for use in your t
 |vsphere_template | Name of the VM template to clone to create VMs for the cluster |
 |vsphere_network | Name of the vSphere network |
 
-####  2.1.2. <a name='MachineTemplateRequirements'></a>Machine Template Requirements
+#### Machine Template Requirements
 
 The current repository supports the provisioning of vSphere VMs if all the following are true:
 
@@ -74,43 +68,43 @@ The current repository supports the provisioning of vSphere VMs if all the follo
 | Disk | The `root` partition `/` must be on `/dev/sd2` |
 | Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements listed previously |
 
-###  2.2. <a name='Bare-Metal'></a>Bare-Metal
+### Bare-Metal
 
 For bare-metal provisioning, you must set up ALL systems with the required elements listed previously. These systems must have full network access to each other.
 
-##  3. <a name='Network'></a>Network
+## Network
 
 All systems need routable connectivity to each other.
 
-###  3.1. <a name='CIDRBlock'></a>CIDR Block
+### CIDR Block
 
-The CIDR block for your infrastructure must be able to handle at least the number machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created. 
+The CIDR block for your infrastructure must be able to handle at least the number machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created.
 
 The following section outlines recommendations for IP assignments. All machines can have static or floating IPs or a combination.
 
-###  3.2. <a name='StaticIPAddresses'></a>Static IP Addresses
+### Static IP Addresses
 
 These IP addresses are part of your network and will be assigned to the elements in this deployment.
 
-* Kubernetes cluster virtual IP address
-* LoadBalancer IP address
-* Jump Box
-* NFS Server
-* Postgres Server
+- Kubernetes cluster virtual IP address
+- LoadBalancer IP address
+- Jump Box
+- NFS Server
+- Postgres Server
 
-###  3.3. <a name='FloatingIPAddresses'></a>Floating IP Addresses
+### Floating IP Addresses
 
 These IP addresses are part of your network but are not assigned. The following items are required:
 
-* Control Plane
-* Nodes
-* Floating LoadBalancer IP addresses for use with additional load balancers that are created
+- Control Plane
+- Nodes
+- Floating LoadBalancer IP addresses for use with additional load balancers that are created
 
-##  4. <a name='Examples'></a>Examples
+## Examples
 
 This section provides an example configuration based on the bare-metal inventory and vSphere example provided in this repository.
 
-###  4.1. <a name='vCentervSphereSampletfvarsFile'></a>vCenter/vSphere Sample `tfvars` File
+### vCenter/vSphere Sample `tfvars` File
 
 If you are creating virtual machines with vCenter or vSphere, the `terraform.tfvars` file that you create will generate the `inventory` and `ansible-vars.yaml` files that are needed for this repository.
 
@@ -285,7 +279,7 @@ postgres_servers = {
 }
 ```
 
-###  4.2. <a name='BareMetalSampleinventoryFile'></a>Bare Metal Sample `inventory` File
+### Bare Metal Sample `inventory` File
 
 With this example, because you are using bare-metal machines or pre-configured VMs, you will need to populate the `inventory` file along with the `ansible-vars.yaml` file for your environment using the example settings provided below.
 
@@ -427,9 +421,57 @@ kubernetes_vip_loadbalanced_dns     : ""
 kubernetes_vip_cloud_provider_range : ""
 
 # Kubernetes - Control Plane
-control_plane_ssh_key_name : "cp-ssh"
+control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
 
-# Kubernetes - Compute Nodes
+# Labels/Taints
+#
+#   The label names match the host names to apply these items
+#   If the node names do not match you'll have to apply these
+#   taints/labels by hand.
+#
+#   The format the label block is:
+#
+#       node_labels:
+#         <node name pattern>:
+#           - <label>
+#           - <label>
+#
+#       The format the taint block is:
+#
+#       node_taints:
+#         <node name pattern>:
+#           - <taint>
+#           - <taint>
+#
+#   NOTE: There are no quotes around the label and taint elements
+#         These are literal converted to strings when applying
+#         into the cluster
+#   
+
+## Labels
+node_labels:
+  cas:
+    - workload.sas.com/class=cas
+  compute:
+    - launcher.sas.com/prepullImage=sas-programming-environment
+    - workload.sas.com/class=compute
+  stateful:
+    - workload.sas.com/class=stateful
+  stateless:
+    - workload.sas.com/class=stateless
+  system:
+    - kubernetes.azure.com/mode=system
+
+## Taints
+node_taints:
+  cas:
+    - workload.sas.com/class=cas:NoSchedule
+  compute:
+    - workload.sas.com/class=compute:NoSchedule
+  stateful:
+    - workload.sas.com/class=stateful:NoSchedule
+  stateless:
+    - workload.sas.com/class=stateless:NoSchedule
 
 # Jump Server
 jump_ip : ""
@@ -440,7 +482,7 @@ nfs_ip  : ""
 # PostgreSQL Servers
 ```
 
-##  5. <a name='Deployment'></a>Deployment
+## Deployment
 
 The following items **MUST** be added to your `ansible-vars.yaml` file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository.
 
@@ -473,7 +515,7 @@ NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 NFS_CLIENT_CHART_VERSION: 4.0.16
 ```
 
-##  6. <a name='Third-PartyTools'></a>Third-Party Tools
+## Third-Party Tools
 
 | Tool | Minimum Version |
 | ---: | ---: |

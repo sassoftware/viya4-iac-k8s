@@ -41,32 +41,33 @@ kubernetes_vip_ip                   : "${ kube_vip_ip }"
 kubernetes_vip_loadbalanced_dns     : "${ kube_vip_dns }"
 kubernetes_vip_cloud_provider_range : "${ kube_vip_range }"
 
-# Kubernetes - Cluster Nodes
+# Kubernetes - Control Plane
+control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
 
-## Labels/Taints
-##
-##   The label names match the host names to apply these items
-##   If the node names do not match you'll have to apply these
-##   taints/labels by hand.
-##
-##   The format the label block is:
-##
-##       node_labels:
-##         <node name pattern>:
-##           - <label>
-##           - <label>
-##
-##       The format the taint block is:
-##
-##       node_taints:
-##         <node name pattern>:
-##           - <taint>
-##           - <taint>
-##
-##   NOTE: There are no quotes around the label and taint elements
-##         These are literal converted to strings when applying
-##         into the cluster
-## 
+# Labels/Taints
+#
+#   The label names match the host names to apply these items
+#   If the node names do not match you'll have to apply these
+#   taints/labels by hand.
+#
+#   The format the label block is:
+#
+#       node_labels:
+#         <node name pattern>:
+#           - <label>
+#           - <label>
+#
+#       The format the taint block is:
+#
+#       node_taints:
+#         <node name pattern>:
+#           - <taint>
+#           - <taint>
+#
+#   NOTE: There are no quotes around the label and taint elements
+#         These are literal converted to strings when applying
+#         into the cluster
+# 
 
 ## Labels
 %{ if length(node_labels) != 0 ~}
@@ -93,11 +94,6 @@ node_taints:
 %{ endif ~}
 %{ endfor ~}
 %{ endif ~}
-
-# Kubernetes - Control Plane
-control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
-
-# Kubernetes - Compute Nodes
 
 %{ if length(jump_ip) != 0 ~}
 # Jump Server

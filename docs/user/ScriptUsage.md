@@ -1,14 +1,8 @@
-
-
-### vSphere/vCenter
-
-### Bring your own (BYO) systems
-
 # Using the `oss-k8s.sh` Script
 
 ## Prerequisites
 
-- After satisfying all of the perquisite items listed in the [README.md](../../README.md#script-requirements) doc for this repo you're ready to begin.
+After satisfying all of the perquisite items listed in the [README.md](../../README.md#script-requirements) doc for this repo you're ready to begin.
 
 ### vSphere/vCenter Environment File for Authentication
 
