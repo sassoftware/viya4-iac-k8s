@@ -1,0 +1,98 @@
+---
+- name: Installing the PostgreSQL gpg key
+  ansible.builtin.apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    keyring: /usr/share/keyrings/postgres-archive-keyring.gpg
+    state: present
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Installing the PostgreSQL repo
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64 signed-by=/usr/share/keyrings/postgres-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
+    state: present
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+    
+- name: Install postgres
+  ansible.builtin.apt:
+    pkg:
+    - "postgresql-{{ postgres_server_version }}"
+    - "postgresql-client-{{ postgres_server_version }}"
+    - python3-psycopg2
+    - acl
+    state: present
+    update_cache: yes
+  tags:
+    - install
+    - update
+
+- name: Update postgres admin user's password
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: postgres
+    password: "{{ postgres_administrator_password }}"
+    expires: "infinity"
+    state: present
+  tags:
+    - install
+    - update
+
+# TODO: This should be adjusted to enhance security
+- name: Alter postgresql.conf - Update listen_addresses
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
+    regexp: '^#listen_addresses'
+    line: "listen_addresses = '*'"
+  tags:
+    - install
+    - update
+
+- name: Alter postgresql.conf - Update ssl
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
+    regexp: '^ssl = on'
+    line: "ssl = {{ postgres_server_ssl }}"
+  tags:
+    - install
+    - update
+
+# TODO: This should be adjusted to enhance security
+- name: Alter pg_hba.conf
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgres_server_version }}/main/pg_hba.conf
+    line: "{{ item }}"
+  with_items:
+    - '#'
+    - '# Allow all hosts ipv4/ipv6'
+    - '#'
+    - 'host all all 0.0.0.0/0 md5'
+    - 'host all all ::/0  md5'
+  tags:
+    - install
+    - update
+
+- name: Enable/Restart postgres daemon
+  ansible.builtin.systemd:
+    name: postgresql
+    state: restarted
+    enabled: yes
+  tags:
+    - install
+    - update
+
+- name: Create admin postgres user
+  become: true
+  become_user: postgres
+  ansible.builtin.shell: |
+    echo "CREATE ROLE {{ postgres_administrator_login }} WITH SUPERUSER CREATEDB CREATEROLE REPLICATION LOGIN PASSWORD '{{ postgres_administrator_password }}';" > /tmp/postgres_databases.psql
+    psql -f /tmp/postgres_databases.psql
+  when: postgres_server_name != "default"
+  tags:
+    - install
+    - update

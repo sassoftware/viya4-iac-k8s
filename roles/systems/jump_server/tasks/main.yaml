@@ -1,0 +1,95 @@
+---
+# TODO: There should be other tasks here based on the OS used on your systems.
+#       The current choices are:
+#
+#       - Ubuntu 20.04 LTS
+#
+- name: Set owner and group for Ubuntu OS
+  ansible.builtin.set_fact:
+    owner: nobody
+    group: nogroup
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+    
+- name: Install nfs-common package
+  ansible.builtin.package:
+    name: nfs-common
+    state: present
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Create mount point /viya-share
+  ansible.builtin.file:
+    dest: /viya-share
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: 0777
+  tags:
+    - install
+    - update
+
+- name: Create mount point /srv/nfs/kubernetes/sc/default
+  ansible.builtin.file:
+    dest: /srv/nfs/kubernetes/sc/default
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: 0777
+  tags:
+    - install
+    - update
+
+- name: Test for fstab entry
+  ansible.builtin.shell: grep -c "{{ nfs_ip }}" /etc/fstab || true
+  register: fstab_file_rc
+  tags:
+    - install
+    - update
+
+# TODO - Verify these are the correct nfs options needed
+- name: Add entry to /etc/fstab - new entry
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: "{{ item }}"
+  when: fstab_file_rc.stdout == "0"
+  with_items:
+    - "{{ nfs_ip }}:/export    /viya-share    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
+    - "{{ nfs_ip }}:/srv/nfs/kubernetes/sc/default    /srv/nfs/kubernetes/sc/default    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
+  tags:
+    - install
+    - update
+
+# - name: Add entry to /etc/fstab - updated entry
+#   ansible.builtin.lineinfile:
+#     path: /etc/fstab
+#     regexp: '{{ nfs_ip }}'
+#     line: "{{ item }}"
+#   when: fstab_file_rc.stdout != "0"
+#   with_items:
+#     - "{{ nfs_ip }}:/export    /viya-share    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
+#     - "{{ nfs_ip }}:/srv/nfs/kubernetes/sc/default    /srv/nfs/kubernetes/sc/default    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
+#   tags:
+#     - install
+#     - update
+
+- name: Mount /viya-share
+  ansible.builtin.shell: mount -a
+  tags:
+    - install
+    - update
+
+- name: Create directory for sas storage class
+  ansible.builtin.file:
+    path: /viya-share/pvs
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: 0777
+    state: directory
+  tags:
+    - install
+    - update

@@ -1,0 +1,62 @@
+---
+#
+# TODO: Review all items here for actual need
+#       with bare metal/vm installations.
+#
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+certificatesDir: /etc/kubernetes/pki
+kubernetesVersion: v{{ kubernetes_version }}
+apiServer:
+  certSANs:
+  - "{{ kubernetes_vip_loadbalanced_dns }}"
+  - "{{ kubernetes_vip_ip }}"
+{% for cp_host in groups["k8s_control_plane"] %}
+  - "{{hostvars[cp_host]['ansible_fqdn']}}"
+{% endfor %}
+  - localhost
+  extraArgs:
+    # NOTE: enable-aggregator-routing was added
+    #       for metrics-server. Need to verify
+    authorization-mode: Node,RBAC
+    enable-aggregator-routing: "true"
+controlPlaneEndpoint: "{{ kubernetes_vip_loadbalanced_dns }}:6443"
+networking:
+  serviceSubnet: "{{ kubernetes_service_subnet }}"
+  podSubnet: "{{ kubernetes_pod_subnet }}"
+clusterName: "{{ kubernetes_cluster_name }}"
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: MasterConfiguration
+api:
+  advertiseAddress: "{{ kubernetes_vip_ip }}"
+networking:
+  podSubnet: "{{ kubernetes_pod_subnet }}"
+apiServerExtraArgs:
+  service-node-port-range: 80-32767
+  feature-gates: "PersistentLocalVolumes=true,VolumeScheduling=true,MountPropagation=true"
+controllerManagerExtraArgs:
+  feature-gates: "PersistentLocalVolumes=true,VolumeScheduling=true,MountPropagation=true"
+schedulerExtraArgs:
+  feature-gates: "PersistentLocalVolumes=true,VolumeScheduling=true,MountPropagation=true"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+cgroupDriver: systemd
+---
+#
+# NOTE: metricsBindAddress, enableProfiling, clusterCIDR
+#       were added in an attempt to help with node metrics
+#       pod metrics seem fine at this point
+#
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: "ipvs"
+ipvs:
+  strictARP: true
+metricsBindAddress: "0.0.0.0:10249"
+enableProfiling: true
+clusterCIDR: "{{ kubernetes_pod_subnet }}"

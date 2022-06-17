@@ -1,0 +1,5 @@
+ansible==5.5.0 # 2.10.7
+openshift==0.13.1 # 0.12.0 
+kubernetes==23.3.0 # 12.0.1
+dnspython==2.2.1 # 2.1.0
+jmespath==1.0.0

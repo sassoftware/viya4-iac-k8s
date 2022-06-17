@@ -1,0 +1,12 @@
+---
+collections:
+  - name: community.general
+    version: 4.8.0 # 4.2.0
+  - name: community.postgresql
+    version: 1.7.2 # 1.7.1
+  - name: kubernetes.core # community.kubernetes
+    version: 2.3.0 # 1.2.1, 2.2.2
+  - name: ansible.posix
+    version: 1.3.0
+  - name: ansible.utils
+    version: 2.6.0 # 2.3.0

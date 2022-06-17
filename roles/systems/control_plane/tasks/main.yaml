@@ -1,0 +1,26 @@
+---
+- name: Generate control plane shared ssh key pair
+  ansible.builtin.shell: |
+    rm -rf ~/.ssh/{{ control_plane_ssh_key_name }}
+    ssh-keygen -t rsa -q -N '' -b 4096 -f ~/.ssh/{{ control_plane_ssh_key_name }}
+  tags:
+    - install
+    - update
+
+- name: Get the ssh key file content
+  ansible.builtin.shell:
+    cat ~/.ssh/{{ control_plane_ssh_key_name }}.pub
+  register: ssh_key
+  tags:
+    - install
+    - update
+
+# Copy over public keys to enable file transfers between control plane nodes on your systems
+- name: Add ssh keys for control plane nodes
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ ssh_key.stdout }}"
+    state: present
+  tags:
+    - install
+    - update

@@ -1,0 +1,77 @@
+#
+# Kubernetes - Control Plane nodes
+#
+# This list is the FQDN/IP of the nodes used for the control plane
+#
+# NOTE: For HA/kube-vip to work you need at least 3 nodes
+#
+[k8s_control_plane]
+FIXME - ENTER YOUR KUBERNETES CONTROL PLANE NODE IPs/FQDNs HERE!
+
+#
+# Kubernetes - Nodes
+#
+# This list is the FQDN/IP of the nodes used for the generic nodes
+#
+# NOTE: For HA to work you need at least 3 nodes
+#
+[k8s_node]
+FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
+
+#
+# Kubernetes Nodes - alias - DO NOT MODIFY
+#
+[k8s:children]
+k8s_control_plane
+k8s_node
+
+#
+# Jump Server
+#
+[jump_server]
+FIXME - ENTER YOUR JUMP SERVER IP/FQDN HERE!
+
+#
+# Jump Server - alias - DO NOT MODIFY
+#
+[jump:children]
+jump_server
+
+#
+# NFS Server
+#
+[nfs_server]
+FIXME - ENTER YOUR NFS SERVER IP/FQDN HERE!
+
+#
+# NFS Server - alias - DO NOT MODIFY
+#
+[nfs:children]
+nfs_server
+
+#
+# Postgres Servers
+#
+# NOTE: You MUST have an entry for each postgres server
+#
+[<postgres_server_name>]
+FIXME - ENTER YOUR POSTGRES SERVER IP/FQDN HERE!
+[<postgres_server_name>:vars]
+postgres_ip="<postgres_server_ip>"
+postgres_server_version="<postgres_server_version>"
+postgres_server_ssl="<postgres_server_ssl_enabled" # NOTE: Values - [on,off]
+postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
+postgres_administrator_password="<postgres_server_administrator_password>"
+
+# NOTE: Add entries here for each postgres server listed above
+[postgres:children]
+<postgres_server_name>
+
+#
+# All systems
+#
+[all:children]
+k8s
+jump
+nfs
+postgres

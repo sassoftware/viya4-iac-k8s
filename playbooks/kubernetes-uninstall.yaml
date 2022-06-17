@@ -1,0 +1,14 @@
+---
+# Compute nodes
+- hosts: k8s_node
+  become: true
+  become_user: root
+  serial: 1
+  roles:
+    - { role: kubernetes/node/removal }
+
+- hosts: k8s_control_plane
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/control_plane/removal }

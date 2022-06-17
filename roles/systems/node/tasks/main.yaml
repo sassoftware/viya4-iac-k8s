@@ -1,0 +1,9 @@
+---
+- name: Install nfs-common for nfs-subdir-external-provisioner
+  ansible.builtin.package:
+    name: nfs-common
+    state: latest
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update

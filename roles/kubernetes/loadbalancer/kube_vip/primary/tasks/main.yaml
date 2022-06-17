@@ -1,0 +1,41 @@
+---
+- name: Create /etc/kubernetes/manifests directory
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: directory
+    mode: '0755'
+  tags:
+    - install
+
+- name: Pull the kube-vip image [ctr]
+  ansible.builtin.shell: |
+    ctr image pull ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }}
+  tags:
+    - install
+  when: kubernetes_cri|lower == 'containerd'
+
+- name: Generate kube-vip manifest using ARP (Layer 2) protocol on kubernetes - containerd
+  ansible.builtin.shell: |
+    ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} vip /kube-vip manifest pod \
+      --interface {{ kubernetes_vip_interface }} \
+      --address {{ kubernetes_vip_ip }} \
+      --controlplane \
+      --services \
+      --arp \
+      --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
+  tags:
+    - install
+  when: kubernetes_cri|lower == 'containerd'
+
+- name: Generate kube-vip manifest using ARP (Layer 2) protocol on kubernetes - docker
+  ansible.builtin.shell: |
+    docker run --network host --rm ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} manifest pod \
+      --interface {{ kubernetes_vip_interface }} \
+      --address {{ kubernetes_vip_ip }} \
+      --controlplane \
+      --services \
+      --arp \
+      --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
+  tags:
+    - install
+  when: kubernetes_cri|lower == 'docker'

@@ -1,0 +1,158 @@
+---
+#
+# Installing Kubernetes tooling
+#
+
+# Apply Google Cloud public signing key
+- name: Apply Google Cloud public signing key
+  ansible.builtin.get_url:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+# Add Kubernetes apt repository
+- name: Add Kubernetes apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: |
+      deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Set kubernetes version facts for crictl 
+  set_fact:
+    k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
+  when: kubernetes_cri|lower != 'docker'
+  tags:
+    - install
+    - update
+
+- name: Set kubernetes version part facts for crictl
+  set_fact:
+    k8s_major_version: "{% if k8s_version_semantic_parts|length > 0 %}{{ k8s_version_semantic_parts.0 }}{% endif %}"
+    k8s_minor_version: "{% if k8s_version_semantic_parts|length > 1 %}{{ k8s_version_semantic_parts.1 }}{% endif %}"
+    k8s_patch_version: "{% if k8s_version_semantic_parts|length > 2 %}{{ k8s_version_semantic_parts.2 }}{% else %}0{% endif %}"
+  when: kubernetes_cri|lower != 'docker'
+  tags:
+    - install
+    - update
+
+- name: Download crictl
+  ansible.builtin.get_url:
+    url: https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ k8s_major_version }}.{{ k8s_minor_version }}.0/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
+    dest: /tmp/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
+    mode: '0755'
+  when: kubernetes_cri|lower != 'docker'
+  tags:
+    - install
+    - update
+
+- name: Install crictl
+  ansible.builtin.unarchive:
+    src: /tmp/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+  when: kubernetes_cri|lower != 'docker'
+  tags:
+    - install
+    - update
+
+- name: Generate crictl.yaml file for docker
+  ansible.builtin.shell: |
+    cat >> /etc/crictl.yaml << EOF
+    runtime-endpoint: unix:///var/run/dockershim.sock
+    image-endpoint: unix:///var/run/dockershim.sock
+    timeout: 10
+    debug: false
+    EOF
+  when: kubernetes_cri|lower == 'docker'
+  tags:
+    - install
+    - update
+
+- name: Generate crictl.yaml file for containerd
+  ansible.builtin.shell: |
+    cat >> /etc/crictl.yaml << EOF
+    runtime-endpoint: unix:///run/containerd/containerd.sock
+    image-endpoint: unix:///run/containerd/containerd.sock
+    timeout: 10
+    debug: false
+    EOF
+  when: kubernetes_cri|lower == 'containerd'
+  tags:
+    - install
+    - update
+
+- name: Generate crictl.yaml file for cri-o
+  ansible.builtin.shell: |
+    cat >> /etc/crictl.yaml << EOF
+    runtime-endpoint: unix:///var/run/crio/crio.sock
+    image-endpoint: unix:///var/run/crio/crio.sock
+    timeout: 10
+    debug: false
+    EOF
+  when: kubernetes_cri|lower == 'cri-o'
+  tags:
+    - install
+    - update
+
+# Update apt package index and install kubelet, kubeadm, kubectl
+- name: Update apt package index and install kubelet, kubeadm, kubectl
+  ansible.builtin.apt:
+    pkg:
+    - kubelet={{ kubernetes_version }}-00
+    - kubeadm={{ kubernetes_version }}-00
+    - kubectl={{ kubernetes_version }}-00
+    state: present
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+
+# Mark the packages to hold as we control the version ;)
+- name: Mark the packages to hold as we control the version ;)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+  
+- name: Mark the packages to purge as we control the version ;)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: purge
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - uninstall
+
+- name: Update apt package index and remove kubelet, kubeadm, kubectl
+  ansible.builtin.apt:
+    pkg:
+    - kubelet={{ kubernetes_version }}-00
+    - kubeadm={{ kubernetes_version }}-00
+    - kubectl={{ kubernetes_version }}-00
+    state: absent
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - uninstall
+
+# TODO : Revisit when finishing cri-o integration
+# - name: Reboot machines for cni networking with cri
+#   ansible.builtin.reboot:
+#   tags:
+#     - install

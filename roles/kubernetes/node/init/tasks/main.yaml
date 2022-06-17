@@ -1,0 +1,12 @@
+---
+- name: Generate compute node join command
+  ansible.builtin.shell: kubeadm token create --print-join-command
+  register: kubeadm_join_cmd
+  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  tags:
+    - install
+
+- name: Join compute nodes to the cluster
+  ansible.builtin.shell: "{{ kubeadm_join_cmd.stdout }}"
+  tags:
+    - install

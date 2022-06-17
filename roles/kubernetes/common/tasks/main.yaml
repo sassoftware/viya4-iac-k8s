@@ -1,0 +1,148 @@
+---
+- name: Add ssh keys - root user
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ lookup('file', '{{item}}') }}"
+    state: present
+  with_fileglob: "{{ system_ssh_keys_dir }}/*.pub"
+  when:
+    - deployment_type == "bare_metal"
+  tags:
+    - install
+    - update
+
+- name: Add ssh keys - OS user
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    key: "{{ lookup('file', '{{item}}') }}"
+    state: present
+  with_fileglob: "{{ system_ssh_keys_dir }}/*.pub"
+  when:
+    - deployment_type == "bare_metal"
+  tags:
+    - install
+    - update
+
+- name: Update OS
+  ansible.builtin.package:
+    name: '*'
+    state: latest
+    update_cache: yes # Proxied command for apt : apt-get update
+  when:
+    - ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+    - deployment_type == "bare_metal"
+  tags:
+    - install
+    - update
+
+- name: Enable cgroup v2 # https://rootlesscontaine.rs/getting-started/common/cgroup2/#enabling-cgroup-v2
+  block:
+    - name: Adding GRUB_CMDLINE_LINUX to /etc/default/grub file
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX='
+        line: GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=1"
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Update GRUB
+      ansible.builtin.command: update-grub
+  tags:
+    - install
+
+- name: Enable CPU, CPUSET, and I/O delegation for non-root users
+  block:
+  - name: mkdir for user@.service.d
+    ansible.builtin.file:
+      path: /etc/systemd/system/user@.service.d
+      state: directory
+      mode: '0755'
+  - name: Adding delegation
+    ansible.builtin.copy:
+      dest: /etc/systemd/system/user@.service.d/delegate.conf
+      content: |
+        [Service]
+        Delegate=cpu cpuset io memory pids
+  tags:
+    - install
+    - update
+  
+# - name: Disable the firewalld - for RHEL based operating systems
+#   systemd:
+#     name: firewalld
+#     enabled: no
+#     state: stopped
+#   tags:
+#     - install
+
+# - name: Disable SELinux - for RHEL based operating systems
+#   shell: |
+#     /usr/sbin/setenforce 0
+#     /usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+#     exit 0
+#   tags:
+#     - install
+
+# - name: Install openshift pip module
+#   pip:
+#     name: openshift
+#   vars:
+#     ansible_python_interpreter: /usr/bin/python3
+#   tags:
+#     - install
+    
+- name: Adding SAS certs
+  become: true
+  ansible.builtin.shell: |
+    curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasroot.crt -o /etc/ssl/certs/sasroot.crt
+    curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasroot2.crt -o /etc/ssl/certs/sasroot2.crt
+    curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasinter.crt -o /etc/ssl/certs/sasinter.crt
+    update-ca-certificates
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  tags:
+    - install
+    - update
+
+- name: Install required packages for every machine
+  ansible.builtin.package:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - sshpass
+  tags:
+    - install
+    - update
+
+- name: Update limits to support SAS software
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.conf
+    insertbefore: '^# End of file'
+    line: "{{ item }}"    
+  with_items:
+    - ''
+    - '* soft     nproc          65535'
+    - '* hard     nproc          65535'
+    - '* soft     nofile         65535'
+    - '* hard     nofile         65535'
+    - 'root soft     nproc          65535'
+    - 'root hard     nproc          65535'
+    - 'root soft     nofile         65535'
+    - 'root hard     nofile         65535'
+    - ''
+  tags:
+    - install
+    - update
+
+- name: Allow all to bind to nfs mounts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts.allow
+    line: 'rpcbind : ALL'
+  tags:
+    - install
+    - update
+
+- name: Reboot machines to enable added items like cgroup for cri, etc.
+  ansible.builtin.reboot:
+  tags:
+    - install

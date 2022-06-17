@@ -1,0 +1,12 @@
+---
+#TODO: Added variables for max_connections, max_prepared_transactions
+- name: Alter PostgreSQL server max_connections and max_prepared_transactions
+  ansible.builtin.shell: |
+    echo 'ALTER SYSTEM SET max_connections = 1024;' > /tmp/postgres_system.psql
+    echo 'ALTER SYSTEM SET max_prepared_transactions = 1024;' >> /tmp/postgres_system.psql
+    psql -f /tmp/postgres_system.psql
+  tags:
+    - install
+    - update
+
+

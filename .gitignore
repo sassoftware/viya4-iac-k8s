@@ -1,0 +1,7 @@
+.terraform*
+terraform.tfstate*
+/terraform.tfvars
+/inventory
+/ansible-vars.yaml
+/*-oss-kubeconfig.conf
+sas-iac-buildinfo-cm.yaml

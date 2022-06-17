@@ -1,0 +1,100 @@
+#
+# Kubernetes - Control Plane nodes
+#
+# This list is the FQDN/IP of the nodes used for the control plane
+#
+# NOTE: For HA/kube-vip to work you need at least 3 nodes
+#
+[k8s_control_plane]
+%{ if length(control_plane_ips) != 0 ~}
+%{ for ip in control_plane_ips ~}
+${ip}
+%{ endfor ~}
+%{ else }
+FIXME - ENTER YOUR KUBERNETES CONTROL PLANE NODE IPs/FQDNs HERE!
+%{ endif ~}
+
+#
+# Kubernetes - Compute nodes
+#
+# This list is the FQDN/IP of the nodes used for the generic nodes
+#
+# NOTE: For HA to work you need at least 3 nodes
+#
+[k8s_node]
+%{ if length(node_ips) != 0 ~}
+%{ for ip in node_ips ~}
+${ip}
+%{ endfor ~}
+%{ else }
+FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
+%{ endif ~}
+
+#
+# Kubernetes Nodes - alias - DO NOT MODIFY
+#
+[k8s:children]
+k8s_control_plane
+k8s_node
+
+%{ if length(jump_ip) != 0 ~}
+#
+# Jump Server
+#
+[jump_server]
+${jump_ip}
+
+#
+# Jump Server - alias - DO NOT MODIFY
+#
+[jump:children]
+jump_server
+%{ endif ~}
+
+%{ if length(nfs_ip) != 0 ~}
+#
+# NFS Server
+#
+[nfs_server]
+${nfs_ip}
+
+#
+# NFS Server - alias - DO NOT MODIFY
+#
+[nfs:children]
+nfs_server
+%{ endif ~}
+
+%{ if length(postgres_servers) != 0 ~}
+#
+# Postgres Servers
+#
+%{ for server_name, server_data in postgres_servers ~}
+[${prefix}_${server_name}_pgsql]
+${server_data.server_ip}
+[${prefix}_${server_name}_pgsql:vars]
+postgres_server_name=${server_name}
+postgres_server_version=${server_data.server_version}
+postgres_server_ssl=${server_data.server_ssl}  # NOTE: Values - [on,off]
+postgres_administrator_login=${server_data.administrator_login} # NOTE: Do not change this value at this time
+postgres_administrator_password=${server_data.administrator_password}
+
+%{ endfor ~}
+[postgres:children]
+%{ for server_name, server_data in postgres_servers ~}
+${prefix}_${server_name}_pgsql
+%{ endfor ~}
+
+%{ endif ~}
+#
+# All systems
+#
+[all:children]
+k8s
+%{ if length(jump_ip) != 0 ~}
+jump
+%{ endif ~}
+nfs
+%{ if length(postgres_servers) != 0 ~}
+postgres
+%{ endif ~}
