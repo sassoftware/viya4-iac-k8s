@@ -494,7 +494,7 @@ INGRESS_NGINX_CONFIG:
   controller:
     service:
       externalTrafficPolicy: Cluster
-      loadBalancerIP: <your load balancer ip> # Assigns a specific IP for your loadBalancer if needed.
+      # loadBalancerIP: # Optional : Assigns a static IP for your loadBalancer if needed.
       loadBalancerSourceRanges: [] # Not supported on bare-metal
       annotations:
 
