@@ -494,7 +494,7 @@ INGRESS_NGINX_CONFIG:
   controller:
     service:
       externalTrafficPolicy: Cluster
-      # loadBalancerIP: # Optional : Assigns a static IP for your loadBalancer if needed.
+      # loadBalancerIP: # Optional : Assigns a static IP to the SAS Viya ingress controller
       loadBalancerSourceRanges: [] # Not supported on bare-metal
       annotations:
 
