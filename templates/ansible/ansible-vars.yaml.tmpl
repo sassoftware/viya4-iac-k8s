@@ -104,3 +104,8 @@ jump_ip : "${jump_ip}"
 # NFS Server
 nfs_ip  : "${nfs_ip}"
 %{ endif ~}
+
+%{ if length(cr_ip) != 0 ~}
+# Container Registry
+cr_ip   : "${cr_ip}"
+%{ endif ~}
