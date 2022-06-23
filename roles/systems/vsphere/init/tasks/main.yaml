@@ -28,3 +28,19 @@
   ansible.builtin.shell: "xfs_growfs -d /"
   tags:
     - install
+
+- name: Copy partitioning script
+  ansible.builtin.copy:
+    src: ./files/create_partitions.sh
+    dest: /tmp/create_partitions.sh
+    owner: root
+    group: root
+    mode: '0700'
+  tags:
+    - install
+
+- name: Run partitioning script
+  ansible.builtin.shell: |
+    /tmp/create_partitions.sh
+  tags:
+    - install
