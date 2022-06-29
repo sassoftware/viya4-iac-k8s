@@ -37,16 +37,42 @@
 
 - name: Enable cgroup v2 # https://rootlesscontaine.rs/getting-started/common/cgroup2/#enabling-cgroup-v2
   block:
-    - name: Adding GRUB_CMDLINE_LINUX to /etc/default/grub file
+    - name: Retrieve contents of /etc/default/grub
+      ansible.builtin.shell: cat /etc/default/grub
+      register: grub_content
+      changed_when: False
+
+    - name: Adding GRUB_CMDLINE_LINUX to /etc/default/grub if absent
       ansible.builtin.lineinfile:
         path: /etc/default/grub
-        regexp: '^GRUB_CMDLINE_LINUX='
-        line: GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=1"
+        line: 'GRUB_CMDLINE_LINUX="{{ option }}={{ value }}"'
         owner: root
         group: root
         mode: '0644'
+      when: '"GRUB_CMDLINE_LINUX=" not in grub_content.stdout'
+
+    - name: Adding {{ option }}=={{ value }} to existing GRUB_CMDLINE_LINUX in /etc/default/grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        backrefs: yes
+        regexp: '^(GRUB_CMDLINE_LINUX=(?!.*{{ option | regex_escape }})"[^"]*)(")'
+        line: '\1 {{ option }}={{ value }}\2'
+        owner: root
+        group: root
+        mode: '0644'
+      when: '"GRUB_CMDLINE_LINUX=" in grub_content.stdout'
+
+    - name: Ensure {{ option }}=={{ value }} if previously disabled
+      ansible.builtin.replace:
+        path: /etc/default/grub
+        regexp: '{{ option | regex_escape }}=0'
+        replace: '{{ option }}={{ value }}'
+
     - name: Update GRUB
       ansible.builtin.command: update-grub
+  vars:
+    option: systemd.unified_cgroup_hierarchy
+    value: 1
   tags:
     - install
 
