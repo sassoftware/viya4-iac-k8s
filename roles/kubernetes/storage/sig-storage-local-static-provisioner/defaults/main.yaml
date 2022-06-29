@@ -11,7 +11,7 @@ LOCAL_VOLUME_CONFIG:
     serviceAccount:
       create: true
   classes:
-    - name: local-storage # Defines name of storage class.
+    - name: local-storage
       hostDir: /mnt/sas/volumes
       volumeMode: Filesystem
       fsType: xfs
