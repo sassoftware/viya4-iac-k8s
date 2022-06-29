@@ -7,17 +7,19 @@ LOCAL_VOLUME_CHART_VERSION: 2.4.0
 LOCAL_VOLUME_REPO_VERSION: "v{{ LOCAL_VOLUME_CHART_VERSION }}"
 LOCAL_VOLUME_REPO_LOCATION: "/tmp/{{ LOCAL_VOLUME_NAME }}"
 LOCAL_VOLUME_CONFIG:
+  common:
+    serviceAccount:
+      create: true
   classes:
     - name: local-storage # Defines name of storage class.
       hostDir: /mnt/sas/volumes
       volumeMode: Filesystem
-      fsType: ext4
+      fsType: xfs
       namePattern: "*"
       blockCleanerCommand:
         - "/scripts/shred.sh"
         - "2"
       storageClass: true
-
   daemonset:
     tolerations:
     - effect: NoSchedule
@@ -28,7 +30,6 @@ LOCAL_VOLUME_CONFIG:
       key: workload.sas.com/class
       operator: Equal
       value: stateless
-
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
