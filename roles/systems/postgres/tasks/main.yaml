@@ -72,12 +72,17 @@
       ansible.builtin.copy:
         src: "{{ postgres_server_ssl_cert_file }}"
         dest: /etc/ssl/certs/
+        owner: root
+        group: root
+        mode: "0644"
       register: cert_result
     - name: Add user supplied SSL Key
       ansible.builtin.copy:
         src: "{{ postgres_server_ssl_key_file }}"
         dest: /etc/ssl/private/
-        mode: "0600"
+        owner: root
+        group: ssl-cert
+        mode: "0640"
       register: key_result
     - name: Set postgres_server_ssl_cert_file_dest and postgres_server_ssl_key_file_dest
       ansible.builtin.set_fact:
@@ -97,13 +102,18 @@
       ansible.builtin.copy:
         src: /etc/ssl/certs/ssl-cert-snakeoil.pem
         dest: /etc/ssl/certs/ssl-cert-sas.pem
+        owner: root
+        group: root
+        mode: "0644"
         remote_src: yes
       register: cert_result
     - name: Copy Ubuntu default SSL Key
       ansible.builtin.copy:
         src: /etc/ssl/private/ssl-cert-snakeoil.key
         dest: /etc/ssl/private/ssl-cert-sas.key
-        mode: "0600"
+        owner: root
+        group: ssl-cert
+        mode: "0640"
         remote_src: yes
       register: key_result
     - name: Fetch SSL Cert
@@ -141,10 +151,10 @@
   ansible.builtin.lineinfile:
     path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
     regexp: '^ssl_cert_file ='
-    line: "ssl_cert_file = {{ postgres_server_ssl_cert_file_dest }}"
+    line: "ssl_cert_file = '{{ postgres_server_ssl_cert_file_dest }}'"
   when:
     - postgres_server_ssl|lower == "on"
-    - (postgres_server_ssl_cert_file|length > 0) and (postgres_server_ssl_key_file|length > 0)
+    - (postgres_server_ssl_cert_file_dest|length > 0) and (postgres_server_ssl_key_file_dest|length > 0)
   tags:
     - install
     - update
@@ -153,10 +163,10 @@
   ansible.builtin.lineinfile:
     path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
     regexp: '^ssl_key_file ='
-    line: "ssl_key_file = {{ postgres_server_ssl_key_file_dest }}"
+    line: "ssl_key_file = '{{ postgres_server_ssl_key_file_dest }}'"
   when:
     - postgres_server_ssl|lower == "on"
-    - (postgres_server_ssl_cert_file|length > 0) and (postgres_server_ssl_key_file|length > 0)
+    - (postgres_server_ssl_cert_file_dest|length > 0) and (postgres_server_ssl_key_file_dest|length > 0)
   tags:
     - install
     - update
