@@ -56,7 +56,7 @@ node_pools = {
     count       = 1
     cpus        = 2
     memory      = 4096
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {}
   },
@@ -66,7 +66,7 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 16384
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
@@ -76,7 +76,7 @@ node_pools = {
     count       = 3
     cpus        = 8
     memory      = 16384
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
@@ -84,9 +84,9 @@ node_pools = {
   },
   generic = {
     count       = 5
-    cpus        = 24 # 16
+    cpus        = 24
     memory      = 131072
-    disk        = 350 # 250
+    os_disk     = 350
     node_taints = []
     node_labels = {
       "workload.sas.com/class"        = "compute"
@@ -96,25 +96,25 @@ node_pools = {
 }
 
 # Jump server
-create_jump    = true          # Creation flag
-jump_num_cpu   = 4             # 4 CPUs
-jump_memory    = 8092          # 8 GB
-jump_disk_size = 100           # 100 GB
-jump_ip        = "10.12.50.30" # Assigned values for static IPs
+create_jump       = true          # Creation flag
+jump_num_cpu      = 4             # 4 CPUs
+jump_memory       = 8092          # 8 GB
+jump_os_disk_size = 100           # 100 GB
+jump_ip           = "10.12.50.30" # Assigned values for static IPs
 
 # NFS server
-create_nfs    = true          # Creation flag
-nfs_num_cpu   = 8             # 8 CPUs
-nfs_memory    = 16384         # 16 GB
-nfs_disk_size = 500           # 500 GB
-nfs_ip        = "10.12.50.31" # Assigned values for static IPs
+create_nfs       = true          # Creation flag
+nfs_num_cpu      = 8             # 8 CPUs
+nfs_memory       = 16384         # 16 GB
+nfs_os_disk_size = 500           # 500 GB
+nfs_ip           = "10.12.50.31" # Assigned values for static IPs
 
 # Postgres Servers
 postgres_servers = {
   default = {
     server_num_cpu         = 8                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
-    server_disk_size       = 250                     # 256 GB
+    server_os_disk_size    = 250                     # 256 GB
     server_ip              = "10.12.50.32"           # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag

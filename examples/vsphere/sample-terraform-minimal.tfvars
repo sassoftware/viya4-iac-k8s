@@ -57,7 +57,7 @@ node_pools = {
     count       = 1
     cpus        = 2
     memory      = 4096
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {}
   },
@@ -67,17 +67,17 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 16384
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
     }
   },
   cas = {
-    count  = 3
-    cpus   = 8
-    memory = 16384
-    disk   = 100
+    count   = 3
+    cpus    = 8
+    memory  = 16384
+    os_disk = 100
     misc_disks = [
       150,
       150,
@@ -88,10 +88,10 @@ node_pools = {
     }
   },
   generic = {
-    count  = 5
-    cpus   = 24 # 16
-    memory = 131072
-    disk   = 350 # 250
+    count   = 5
+    cpus    = 24
+    memory  = 131072
+    os_disk = 350
     misc_disks = [
       150,
     ]
