@@ -148,7 +148,6 @@ cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix
 
 # Kubernetes - Cluster Virtual IP Address and Cloud Provider
 kube_vip_version   = "0.4.4"
-kube_vip_interface = "ens160"
 kube_vip_ip        = "10.18.0.175"
 kube_vip_dns       = "vm-dev-oss-vip.sample.domain.foo.com"
 kube_vip_range     = "10.18.0.100-10.18.0.125"
