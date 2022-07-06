@@ -99,14 +99,14 @@ node_pools = {
 create_jump       = true          # Creation flag
 jump_num_cpu      = 4             # 4 CPUs
 jump_memory       = 8092          # 8 GB
-jump_disk_size = 100           # 100 GB
+jump_disk_size    = 100           # 100 GB
 jump_ip           = "10.12.50.30" # Assigned values for static IPs
 
 # NFS server
 create_nfs       = true          # Creation flag
 nfs_num_cpu      = 8             # 8 CPUs
 nfs_memory       = 16384         # 16 GB
-nfs_disk_size = 500           # 500 GB
+nfs_disk_size    = 500           # 500 GB
 nfs_ip           = "10.12.50.31" # Assigned values for static IPs
 
 # Postgres Servers
