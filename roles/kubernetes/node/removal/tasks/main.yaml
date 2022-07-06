@@ -1,7 +1,7 @@
 ---
 - name: Draining the node
   ansible.builtin.shell: |
-    kubectl drain {{ ansible_nodename }} --delete-emptydir-data --force --ignore-daemonsets
+    kubectl drain {{ ansible_hostname }} --delete-emptydir-data --force --ignore-daemonsets
   delegate_to: "{{groups['k8s_control_plane'][0]}}"
   ignore_errors: true
   tags:
@@ -22,7 +22,7 @@
 
 - name: Remove the node
   ansible.builtin.shell: |
-    kubectl delete nodes {{ ansible_nodename }}
+    kubectl delete nodes {{ ansible_hostname }}
   delegate_to: "{{groups['k8s_control_plane'][0]}}"
   ignore_errors: true
   tags:
