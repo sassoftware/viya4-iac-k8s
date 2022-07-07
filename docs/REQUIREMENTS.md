@@ -491,6 +491,12 @@ The following items **MUST** be added to your `ansible-vars.yaml` file if you ar
 
 ### Ingress Controller
 INGRESS_NGINX_CONFIG:
+  controller:
+    service:
+      externalTrafficPolicy: Cluster
+      # loadBalancerIP: # Optional : Assigns a static IP to the SAS Viya ingress controller
+      loadBalancerSourceRanges: [] # Not supported on open source kubernetes
+      annotations:
 
 ### Metrics Server
 METRICS_SERVER_CHART_VERSION: 5.10.14
