@@ -171,23 +171,6 @@
     - install
     - update
 
-########################################################################################################################
-# DEBUG STUFF
-- name: TODO REMOVE ME - DEBUG VARS
-  ansible.builtin.debug:
-    msg:
-      - "cert: {{ postgres_server_ssl_cert_file }}"
-      - "key: {{ postgres_server_ssl_key_file }}"
-      - "toggle: {{ postgres_server_ssl }}"
-      - "LEN CHECK: {{ postgres_server_ssl_cert_file|length }}"
-      - "LEN CHECK: {{ postgres_server_ssl_key_file|length }}"
-      - "C DEST: {{ postgres_server_ssl_cert_file_dest }}"
-      - "K DEST: {{ postgres_server_ssl_key_file_dest }}"
-  tags:
-    - install
-    - update
-########################################################################################################################
-
 # TODO: This should be adjusted to enhance security
 - name: Alter pg_hba.conf
   ansible.builtin.lineinfile:
