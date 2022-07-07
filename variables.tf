@@ -320,11 +320,6 @@ variable "kube_vip_version" {
   default = "0.4.4"
 }
 
-variable "kube_vip_interface" {
-  type    = string
-  default = null
-}
-
 variable "kube_vip_ip" {
   type    = string
   default = null

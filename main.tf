@@ -209,7 +209,6 @@ resource "local_file" "ansible_vars" {
     cluster_pod_subnet         = var.cluster_pod_subnet
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
     kube_vip_version           = var.kube_vip_version
-    kube_vip_interface         = var.kube_vip_interface # NOTE: Cannot be a loopback interface. Must be the same on all machines
     kube_vip_ip                = var.kube_vip_ip
     kube_vip_dns               = var.kube_vip_dns == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.kube_vip_dns) > 0 ? var.kube_vip_dns : "${local.cluster_name}-vip.${var.cluster_domain}"
     kube_vip_range             = var.kube_vip_range
