@@ -89,8 +89,8 @@ A more comprehensive description of these items and their requirements can be fo
 
 This project supports the following options for running:
 
-- Running the bash `run.sh` script on your local machine
-- Using a Docker container to run the `run.sh` script (Docker is required)
+- Running the bash `oss-k8s.sh` script on your local machine
+- Using a Docker container to run the `oss-k8s.sh` script (Docker is required)
 
    For more information, see [Docker Usage](./docs/user/DockerUsage.md). Using Docker to run the Terraform and Ansible scripts is recommended.
 
@@ -145,7 +145,7 @@ In order to use this repository, modify the [`inventory` file](./examples/bare-m
 
 Create and manage the required cluster resources for your SAS Viya 4 deployment. Perform one of the following steps, based on whether you are using Docker:
 
-- Run the [`run.sh`](docs/user/ScriptUsage.md) script directly on your workstation
+- Run the [`oss-k8s.sh`](docs/user/ScriptUsage.md) script directly on your workstation
 - Start the [Docker container](docs/user/DockerUsage.md) (recommended)
 
 ## Contributing
