@@ -65,6 +65,7 @@ ${nfs_ip}
 nfs_server
 %{ endif ~}
 
+%{ if cr_ip != null ~}
 %{ if length(cr_ip) != 0 ~}
 #
 # Container Registry
@@ -77,6 +78,7 @@ ${cr_ip}
 #
 [cr:children]
 cr_server
+%{ endif ~}
 %{ endif ~}
 
 %{ if length(postgres_servers) != 0 ~}
@@ -111,8 +113,10 @@ jump
 %{ if length(nfs_ip) != 0 ~}
 nfs
 %{ endif ~}
+%{ if cr_ip != null ~}
 %{ if length(cr_ip) != 0 ~}
 cr
+%{ endif ~}
 %{ endif ~}
 %{ if length(postgres_servers) != 0 ~}
 postgres
