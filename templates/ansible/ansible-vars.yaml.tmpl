@@ -94,14 +94,18 @@ node_taints:
 %{ endfor ~}
 %{ endif ~}
 
+%{ if length(jump_ip) != null ~}
 %{ if length(jump_ip) != 0 ~}
 # Jump Server
 jump_ip : "${jump_ip}"
 %{ endif ~}
+%{ endif ~}
 
+%{ if length(nfs_ip) != null ~}
 %{ if length(nfs_ip) != 0 ~}
 # NFS Server
 nfs_ip  : "${nfs_ip}"
+%{ endif ~}
 %{ endif ~}
 
 %{ if cr_ip != null ~}
