@@ -37,7 +37,7 @@ FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
 k8s_control_plane
 k8s_node
 
-%{ if length(jump_ip) != null ~}
+%{ if jump_ip != null ~}
 %{ if length(jump_ip) != 0 ~}
 #
 # Jump Server
@@ -53,7 +53,7 @@ jump_server
 %{ endif ~}
 %{ endif ~}
 
-%{ if length(nfs_ip) != null ~}
+%{ if nfs_ip != null ~}
 %{ if length(nfs_ip) != 0 ~}
 #
 # NFS Server
@@ -111,12 +111,12 @@ ${prefix}_${server_name}_pgsql
 #
 [all:children]
 k8s
-%{ if length(jump_ip) != null ~}
+%{ if jump_ip != null ~}
 %{ if length(jump_ip) != 0 ~}
 jump
 %{ endif ~}
 %{ endif ~}
-%{ if length(nfs_ip) != null ~}
+%{ if nfs_ip != null ~}
 %{ if length(nfs_ip) != 0 ~}
 nfs
 %{ endif ~}
