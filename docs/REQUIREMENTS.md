@@ -180,7 +180,7 @@ node_pools = {
     count       = 3
     cpus        = 2
     memory      = 4096
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {}
   },
@@ -191,7 +191,7 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 16384
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
@@ -201,7 +201,11 @@ node_pools = {
     count       = 3
     cpus        = 16
     memory      = 131072
-    disk        = 350
+    os_disk     = 350
+    misc_disks  = [
+      150,
+      150,
+    ]
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
@@ -211,7 +215,7 @@ node_pools = {
     count       = 1
     cpus        = 16
     memory      = 131072
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
       "workload.sas.com/class"        = "compute"
@@ -222,7 +226,10 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 32768
-    disk        = 100
+    os_disk     = 100
+    misc_disks  = [
+      150,
+    ]
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateful"
@@ -232,7 +239,10 @@ node_pools = {
     count       = 2
     cpus        = 8
     memory      = 32768
-    disk        = 100
+    os_disk     = 100
+    misc_disks  = [
+      150,
+    ]
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateless"
@@ -490,6 +500,12 @@ The following items **MUST** be added to your `ansible-vars.yaml` file if you ar
 
 ### Ingress Controller
 INGRESS_NGINX_CONFIG:
+  controller:
+    service:
+      externalTrafficPolicy: Cluster
+      # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
+      loadBalancerSourceRanges: [] # Not supported on open source kubernetes
+      annotations:
 
 ### Metrics Server
 METRICS_SERVER_CHART_VERSION: 5.10.14

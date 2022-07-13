@@ -1,0 +1,61 @@
+## sig-storage-local-static-provisioner
+LOCAL_VOLUME_NAME: sig-storage-local-static-provisioner-sas
+LOCAL_VOLUME_NAMESPACE: kube-system
+LOCAL_VOLUME_CHART_NAME: Chart.yaml
+LOCAL_VOLUME_REPO: https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner.git
+LOCAL_VOLUME_CHART_VERSION: 2.4.0
+LOCAL_VOLUME_REPO_VERSION: "v{{ LOCAL_VOLUME_CHART_VERSION }}"
+LOCAL_VOLUME_REPO_LOCATION: "/tmp/{{ LOCAL_VOLUME_NAME }}"
+LOCAL_VOLUME_CONFIG:
+  common:
+    serviceAccount:
+      create: true
+  classes:
+    - name: local-storage
+      hostDir: /mnt/sas/volumes
+      volumeMode: Filesystem
+      fsType: xfs
+      namePattern: "*"
+      blockCleanerCommand:
+        - "/scripts/shred.sh"
+        - "2"
+      storageClass: true
+  daemonset:
+    tolerations:
+    - effect: NoSchedule
+      key: workload.sas.com/class
+      operator: Equal
+      value: stateful
+    - effect: NoSchedule
+      key: workload.sas.com/class
+      operator: Equal
+      value: stateless
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+            - key: workload.sas.com/class
+              operator: In
+              values:
+              - stateful
+            matchFields: []
+          weight: 100
+        - preference:
+            matchExpressions:
+            - key: workload.sas.com/class
+              operator: NotIn
+              values:
+              - compute
+              - cas
+              - stateless
+            matchFields: []
+          weight: 50
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.azure.com/mode
+              operator: NotIn
+              values:
+              - system
+            matchFields: []

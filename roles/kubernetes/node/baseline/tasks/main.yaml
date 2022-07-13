@@ -36,6 +36,7 @@
     owner: "{{ owner }}"
     group: "{{ group }}"
     mode: 0777
+  ignore_errors: true
   tags:
     - install
     - update

@@ -122,7 +122,8 @@ variable "node_pool_defaults" {
   default = {
     cpus         = 2
     memory       = 4096
-    disk         = 25
+    os_disk      = 25
+    misc_disks   = []
     count        = 0
     ip_addresses = []
     node_taints  = []
@@ -213,6 +214,31 @@ variable "nfs_disk_size" {
   default = 250
 }
 
+# container registry
+variable "create_cr" {
+  type    = bool
+  default = false
+}
+variable "cr_ip" {
+  type    = string
+  default = null
+}
+
+variable "cr_memory" {
+  type    = number
+  default = 8092
+}
+
+variable "cr_num_cpu" {
+  type    = number
+  default = 4
+}
+
+variable "cr_disk_size" {
+  type    = number
+  default = 160
+}
+
 # postgres
 variable "postgres_server_defaults" {
   description = ""
@@ -260,7 +286,7 @@ variable "system_ssh_keys_dir" {
 }
 
 variable "cluster_domain" {
-  type = string
+  type    = string
   default = null
 }
 
