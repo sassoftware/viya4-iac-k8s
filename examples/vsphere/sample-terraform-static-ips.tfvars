@@ -1,9 +1,9 @@
 # General items
 ansible_user     = ""
 ansible_password = ""
-prefix           = "viya4-k8s" # Infra prefix
-gateway          = ""          # Gateway for servers
-netmask          = ""          # Needed for any network outside the 10.12.0 location
+prefix           = "v4-k8s-static" # Infra prefix
+gateway          = ""              # Gateway for servers
+netmask          = ""              # Needed for any network outside the 10.12.0 location
 
 # vSphere
 vsphere_server        = "" # Name of the vSphere server
@@ -53,40 +53,56 @@ node_pools = {
   # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
   #                      Other varaibles may be altered
   control_plane = {
-    count       = 3
-    cpus        = 2
-    memory      = 4096
-    disk        = 100
+    cpus    = 2
+    memory  = 4096
+    os_disk = 100
+    ip_addresses = [
+      "",
+      "",
+      "",
+    ]
     node_taints = []
     node_labels = {}
   },
   # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
   #                      Other varaibles may be altered
   system = {
-    count       = 1
-    cpus        = 8
-    memory      = 16384
-    disk        = 100
+    cpus    = 8
+    memory  = 16384
+    os_disk = 100
+    ip_addresses = [
+      "",
+    ]
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
     }
   },
   cas = {
-    count       = 3
-    cpus        = 16
-    memory      = 131072
-    disk        = 350
+    cpus    = 16
+    memory  = 131072
+    os_disk = 350
+    misc_disks = [
+      150,
+      150,
+    ]
+    ip_addresses = [
+      "",
+      "",
+      "",
+    ]
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
     }
   },
   compute = {
-    count       = 1
-    cpus        = 16
-    memory      = 131072
-    disk        = 100
+    cpus    = 16
+    memory  = 131072
+    os_disk = 100
+    ip_addresses = [
+      "",
+    ]
     node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
       "workload.sas.com/class"        = "compute"
@@ -94,20 +110,31 @@ node_pools = {
     }
   },
   stateful = {
-    count       = 1
-    cpus        = 8
-    memory      = 32768
-    disk        = 100
+    cpus    = 8
+    memory  = 32768
+    os_disk = 100
+    misc_disks = [
+      150,
+    ]
+    ip_addresses = [
+      "",
+    ]
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateful"
     }
   },
   stateless = {
-    count       = 2
-    cpus        = 8
-    memory      = 32768
-    disk        = 100
+    cpus    = 8
+    memory  = 32768
+    os_disk = 100
+    misc_disks = [
+      150,
+    ]
+    ip_addresses = [
+      "",
+      "",
+    ]
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateless"

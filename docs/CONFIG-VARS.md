@@ -81,8 +81,7 @@ cluster_domain         | Cluster domain suffix for DNS | string | | |
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-kube_vip_version   | kube-vip version | string | "0.4.4" | |
-kube_vip_interface | kube-vip interface | string | | |
+kube_vip_version   | kube-vip version | string | "0.4.4" | The minimal supported version is 0.4.4 |
 kube_vip_ip        | kube-vip IP address | string | | |
 kube_vip_dns       | kube-vip DNS | string | | |
 kube_vip_range     | kube-vip IP address range | string | | |

@@ -1,9 +1,9 @@
 # General items
 ansible_user     = ""
 ansible_password = ""
-prefix           = "v4-k8s-min" # Infra prefix
-gateway          = ""           # Gateway for servers
-netmask          = ""           # Needed for any network outside the 10.12.0 location
+prefix           = "v4-k8s-dhcp" # Infra prefix
+gateway          = ""            # Gateway for servers
+netmask          = ""            # Needed for any network outside the 10.12.0 location
 
 # vSphere
 vsphere_server        = "" # Name of the vSphere server
@@ -48,12 +48,11 @@ control_plane_ssh_key_name = "cp_ssh"
 #                     These are typically: compute, stateful, and
 #                     stateless. 
 #
-cluster_node_pool_mode = "minimal"
 node_pools = {
   # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
   #                      Other varaibles may be altered
   control_plane = {
-    count       = 1
+    count       = 3
     cpus        = 2
     memory      = 4096
     os_disk     = 100
@@ -74,9 +73,9 @@ node_pools = {
   },
   cas = {
     count   = 3
-    cpus    = 8
-    memory  = 16384
-    os_disk = 100
+    cpus    = 16
+    memory  = 131072
+    os_disk = 350
     misc_disks = [
       150,
       150,
@@ -86,18 +85,41 @@ node_pools = {
       "workload.sas.com/class" = "cas"
     }
   },
-  generic = {
-    count   = 5
-    cpus    = 24
-    memory  = 131072
-    os_disk = 350
-    misc_disks = [
-      150,
-    ]
-    node_taints = []
+  compute = {
+    count       = 1
+    cpus        = 16
+    memory      = 131072
+    os_disk     = 100
+    node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
       "workload.sas.com/class"        = "compute"
       "launcher.sas.com/prepullImage" = "sas-programming-environment"
+    }
+  },
+  stateful = {
+    count   = 1
+    cpus    = 8
+    memory  = 32768
+    os_disk = 100
+    misc_disks = [
+      150,
+    ]
+    node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateful"
+    }
+  },
+  stateless = {
+    count   = 2
+    cpus    = 8
+    memory  = 32768
+    os_disk = 100
+    misc_disks = [
+      150,
+    ]
+    node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateless"
     }
   }
 }

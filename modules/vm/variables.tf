@@ -62,6 +62,11 @@ variable "disk_size" {
   type = string
 }
 
+variable "misc_disks" {
+  type    = list(any)
+  default = null
+}
+
 variable "dns_servers" {
   type = list(any)
 }

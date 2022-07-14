@@ -36,7 +36,6 @@ kubernetes_pod_subnet      : "${ cluster_pod_subnet }"
 #   VIP Cloud Provider IP Range : https://kube-vip.chipzoller.dev/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
 kubernetes_vip_version              : "${ kube_vip_version }"
-kubernetes_vip_interface            : "${ kube_vip_interface }"
 kubernetes_vip_ip                   : "${ kube_vip_ip }"
 kubernetes_vip_loadbalanced_dns     : "${ kube_vip_dns }"
 kubernetes_vip_cloud_provider_range : "${ kube_vip_range }"
@@ -103,4 +102,9 @@ jump_ip : "${jump_ip}"
 %{ if length(nfs_ip) != 0 ~}
 # NFS Server
 nfs_ip  : "${nfs_ip}"
+%{ endif ~}
+
+%{ if length(cr_ip) != 0 ~}
+# Container Registry
+cr_ip   : "${cr_ip}"
 %{ endif ~}

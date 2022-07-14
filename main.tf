@@ -30,7 +30,8 @@ module "control_plane" {
   instance_count   = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
   num_cpu          = each.value.cpus
   memory           = each.value.memory
-  disk_size        = each.value.disk
+  disk_size        = each.value.os_disk
+  misc_disks       = each.value.misc_disks
   ip_addresses     = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
 
 }
@@ -56,7 +57,8 @@ module "system" {
   instance_count   = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
   num_cpu          = each.value.cpus
   memory           = each.value.memory
-  disk_size        = each.value.disk
+  disk_size        = each.value.os_disk
+  misc_disks       = each.value.misc_disks
   ip_addresses     = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
 
 }
@@ -82,7 +84,8 @@ module "node" {
   instance_count   = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
   num_cpu          = each.value.cpus
   memory           = each.value.memory
-  disk_size        = each.value.disk
+  disk_size        = each.value.os_disk
+  misc_disks       = each.value.misc_disks
   ip_addresses     = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
 
 }
@@ -131,6 +134,28 @@ module "nfs" {
   dns_servers      = var.dns_servers
 }
 
+module "cr" {
+  source = "./modules/vm"
+
+  name             = "cr"
+  instance_count   = var.create_cr ? 1 : 0
+  resource_pool_id = data.vsphere_resource_pool.pool.id
+  folder           = var.vsphere_folder
+  datastore        = var.vsphere_datastore
+  network          = var.vsphere_network
+  datacenter_id    = data.vsphere_datacenter.dc.id
+  template         = var.vsphere_template
+  cluster_domain   = var.cluster_domain
+  cluster_name     = local.cluster_name
+  ip_addresses     = [var.cr_ip]
+  memory           = var.cr_memory
+  num_cpu          = var.cr_num_cpu
+  disk_size        = var.cr_disk_size
+  netmask          = var.netmask
+  gateway          = var.gateway
+  dns_servers      = var.dns_servers
+}
+
 module "postgresql" {
   source = "./modules/server"
 
@@ -162,6 +187,7 @@ resource "local_file" "inventory" {
     node_ips          = length(local.node_ips) > 0 ? local.node_ips : []
     nfs_ip            = var.create_nfs ? var.nfs_ip : null
     jump_ip           = var.create_jump ? var.jump_ip : null
+    cr_ip             = var.create_cr ? var.cr_ip : null
     postgres_servers  = local.postgres_servers
     }
   )
@@ -183,12 +209,12 @@ resource "local_file" "ansible_vars" {
     cluster_pod_subnet         = var.cluster_pod_subnet
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
     kube_vip_version           = var.kube_vip_version
-    kube_vip_interface         = var.kube_vip_interface # NOTE: Cannot be a loopback interface. Must be the same on all machines
     kube_vip_ip                = var.kube_vip_ip
     kube_vip_dns               = var.kube_vip_dns == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.kube_vip_dns) > 0 ? var.kube_vip_dns : "${local.cluster_name}-vip.${var.cluster_domain}"
     kube_vip_range             = var.kube_vip_range
     nfs_ip                     = var.create_nfs ? var.nfs_ip : null
     jump_ip                    = var.create_jump ? var.jump_ip : null
+    cr_ip                      = var.create_cr ? var.cr_ip : null
     system_ssh_keys_dir        = var.system_ssh_keys_dir
     node_labels                = local.node_labels
     node_taints                = local.node_taints

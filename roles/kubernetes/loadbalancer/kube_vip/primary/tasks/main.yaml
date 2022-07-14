@@ -17,7 +17,7 @@
 - name: Generate kube-vip manifest using ARP (Layer 2) protocol on kubernetes - containerd
   ansible.builtin.shell: |
     ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} vip /kube-vip manifest pod \
-      --interface {{ kubernetes_vip_interface }} \
+      --enableLoadBalancer \
       --address {{ kubernetes_vip_ip }} \
       --controlplane \
       --services \
@@ -30,7 +30,7 @@
 - name: Generate kube-vip manifest using ARP (Layer 2) protocol on kubernetes - docker
   ansible.builtin.shell: |
     docker run --network host --rm ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} manifest pod \
-      --interface {{ kubernetes_vip_interface }} \
+      --enableLoadBalancer \
       --address {{ kubernetes_vip_ip }} \
       --controlplane \
       --services \
