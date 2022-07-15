@@ -85,20 +85,6 @@ cr_server
 %{ endif ~}
 %{ endif ~}
 
-%{ if length(cr_ip) != 0 ~}
-#
-# Container Registry
-#
-[cr_server]
-${cr_ip}
-
-#
-# Container Registry - alias - DO NOT MODIFY
-#
-[cr:children]
-cr_server
-%{ endif ~}
-
 %{ if length(postgres_servers) != 0 ~}
 #
 # Postgres Servers
