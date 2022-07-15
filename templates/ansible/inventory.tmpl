@@ -37,6 +37,7 @@ FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
 k8s_control_plane
 k8s_node
 
+%{ if jump_ip != null ~}
 %{ if length(jump_ip) != 0 ~}
 #
 # Jump Server
@@ -50,7 +51,9 @@ ${jump_ip}
 [jump:children]
 jump_server
 %{ endif ~}
+%{ endif ~}
 
+%{ if nfs_ip != null ~}
 %{ if length(nfs_ip) != 0 ~}
 #
 # NFS Server
@@ -63,6 +66,23 @@ ${nfs_ip}
 #
 [nfs:children]
 nfs_server
+%{ endif ~}
+%{ endif ~}
+
+%{ if cr_ip != null ~}
+%{ if length(cr_ip) != 0 ~}
+#
+# Container Registry
+#
+[cr_server]
+${cr_ip}
+
+#
+# Container Registry - alias - DO NOT MODIFY
+#
+[cr:children]
+cr_server
+%{ endif ~}
 %{ endif ~}
 
 %{ if length(cr_ip) != 0 ~}
@@ -105,14 +125,20 @@ ${prefix}_${server_name}_pgsql
 #
 [all:children]
 k8s
+%{ if jump_ip != null ~}
 %{ if length(jump_ip) != 0 ~}
 jump
 %{ endif ~}
+%{ endif ~}
+%{ if nfs_ip != null ~}
 %{ if length(nfs_ip) != 0 ~}
 nfs
 %{ endif ~}
+%{ endif ~}
+%{ if cr_ip != null ~}
 %{ if length(cr_ip) != 0 ~}
 cr
+%{ endif ~}
 %{ endif ~}
 %{ if length(postgres_servers) != 0 ~}
 postgres
