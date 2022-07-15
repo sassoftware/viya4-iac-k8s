@@ -10,7 +10,7 @@ After satisfying all of the prerequisite items that are listed in the [README.md
 docker build -t viya4-iac-k8s .
 ```
 
-The Docker image, `viya4-iac-k8s`, contains Ansible, Terraform, Helm, and kubectl executables. The entrypoint for the Docker image is `run.sh`. The entrypoint is run with subcommands in the subsequent steps.
+The Docker image, `viya4-iac-k8s`, contains Ansible, Terraform, Helm, and kubectl executables. The entrypoint for the Docker image is `oss-k8s.sh`. The entrypoint is run with subcommands in the subsequent steps.
 
 ### VMware vSphere/vCenter Environment File for Authentication
 
@@ -111,7 +111,7 @@ docker run --rm -it \
 
 ### Display Terraform Outputs - vSphere/vCenter
 
-Once your resources have been created using the `run.sh` command, you can display Terraform output values by running the `viya4-iac-k8s` Docker image with the `output` command:
+Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the `viya4-iac-k8s` Docker image with the `output` command:
 
 ```bash
 docker run --rm --group-add root \
