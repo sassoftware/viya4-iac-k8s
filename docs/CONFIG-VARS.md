@@ -254,8 +254,16 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field |
 | server_version | PostgreSQL version | number | 12 | |
 | server_ssl | Enable/disable SSL | string | "off" | |
+| server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | "" | If `server_ssl` is on and this variable is not defined, the System default SSL cert will be used |
+| server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is on and this variable is not defined, the System default SSL key will be used |
 | administrator_login | Admin user | string | "postgres" | |
 | administrator_password | Admin password | string | "my$up3rS3cretPassw0rd" | |
+
+**NOTES**:
+
+1. If you set `server_ssl` to on, and you do not define either `server_ssl_cert_file` or `server_ssl_cert_file` the system's default SSL certificate and key will be used instead. By default, on Ubuntu systems we create a copy of those files and name them `ssl-cert-sas.pem` and `ssl-cert-sas.key`
+    * The Ansible tasks will take care of copying the certificate and key from the Postgres VM into your local workspace directory
+2. If you are planning on using the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a Viya deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls), ensure in the viya4-deployment ansible-vars.yaml the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable points to a directory that contains the `server_ssl_cert_file`.
 
 Sample:
 

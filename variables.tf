@@ -250,6 +250,8 @@ variable "postgres_server_defaults" {
     server_ip              = ""                      # Assigned values for static IPs
     server_version         = 12                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
+    server_ssl_cert_file   = ""                      # PostgreSQL SSL certificate file
+    server_ssl_key_file    = ""                      # PostgreSQL SSL key file
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
   }

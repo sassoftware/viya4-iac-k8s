@@ -93,11 +93,13 @@ cr_server
 [${prefix}_${server_name}_pgsql]
 ${server_data.server_ip}
 [${prefix}_${server_name}_pgsql:vars]
-postgres_server_name=${server_name}
-postgres_server_version=${server_data.server_version}
-postgres_server_ssl=${server_data.server_ssl}
-postgres_administrator_login=${server_data.administrator_login}
-postgres_administrator_password=${server_data.administrator_password}
+postgres_server_name="${server_name}"
+postgres_server_version="${server_data.server_version}"
+postgres_server_ssl="${server_data.server_ssl}"
+postgres_administrator_login="${server_data.administrator_login}"
+postgres_administrator_password="${server_data.administrator_password}"
+postgres_server_ssl_cert_file="${server_data.server_ssl_cert_file}"
+postgres_server_ssl_key_file="${server_data.server_ssl_key_file}"
 
 %{ endfor ~}
 [postgres:children]
