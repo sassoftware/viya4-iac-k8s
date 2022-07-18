@@ -25,11 +25,19 @@ LOCAL_VOLUME_CONFIG:
     - effect: NoSchedule
       key: workload.sas.com/class
       operator: Equal
-      value: stateful
+      value: cas
     - effect: NoSchedule
       key: workload.sas.com/class
       operator: Equal
       value: stateless
+    - effect: NoSchedule
+      key: workload.sas.com/class
+      operator: Equal
+      value: stateful
+    - effect: NoSchedule
+      key: workload.sas.com/class
+      operator: Equal
+      value: singlestore
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -39,6 +47,9 @@ LOCAL_VOLUME_CONFIG:
               operator: In
               values:
               - stateful
+              - stateless
+              - cas
+              - singlestore
             matchFields: []
           weight: 100
         - preference:
@@ -47,8 +58,6 @@ LOCAL_VOLUME_CONFIG:
               operator: NotIn
               values:
               - compute
-              - cas
-              - stateless
             matchFields: []
           weight: 50
         requiredDuringSchedulingIgnoredDuringExecution:
