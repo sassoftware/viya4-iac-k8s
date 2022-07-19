@@ -1,6 +1,6 @@
 ---
 #
-# This task is only run when deployment_type == 'vsphere'
+# This task is only run when deployment_type != 'bare_metal'
 #
 # NOTE: There is no equivalent for 'bare-metal' as the
 #       infrastructure has been setup by the customer
@@ -40,4 +40,4 @@
     tags:
       - install
       - update
-  when: deployment_type == 'vsphere'
+  when: deployment_type != 'bare_metal'
