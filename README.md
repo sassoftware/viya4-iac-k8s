@@ -13,8 +13,8 @@ This project contains Terraform scripts to provision cloud infrastructure resour
 >- An open source [Kubernetes](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) cluster with the following components:
   >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
   >>- Container Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
-  >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.chipzoller.dev/)
-  >>- Cloud controller manager: [kube-vip](https://kube-vip.chipzoller.dev/docs/usage/cloud-provider/)
+  >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.io/)
+  >>- Cloud controller manager: [kube-vip](https://kube-vip.io/docs/usage/cloud-provider/)
 >- Nodes with required labels and taints
 >- Infrastructure to deploy the SAS Viya CAS server in SMP or MPP mode
 
@@ -167,4 +167,4 @@ Create and manage the required cluster resources for your SAS Viya 4 deployment.
   - [Kubernetes - `kubeadm` Bootstrap guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/)
   - [Kubernetes - CRI - Containerd](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime)
   - [Kubernetes - CNI - Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
-- [kube-vip](https://kube-vip.chipzoller.dev/)
+- [kube-vip](https://kube-vip.io/)
