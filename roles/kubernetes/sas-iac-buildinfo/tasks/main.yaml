@@ -1,9 +1,14 @@
 ---
 #
-# This task is only run when deployment_type != 'bare_metal'
+# This task is only run when deployment_type == 'vsphere'
 #
 # NOTE: There is no equivalent for 'bare-metal' as the
-#       infrastructure has been setup by the customer
+#       infrastructure has been setup by the customer.
+#
+#       This code only handles infrastructure creation
+#       on VMWare. All other infrastructure creation
+#       is handled externally and therefore will not
+#       have this code applied.
 #
 - block:
   - name: Register Git HASH information
@@ -40,4 +45,4 @@
     tags:
       - install
       - update
-  when: deployment_type != 'bare_metal'
+  when: deployment_type == 'vsphere'
