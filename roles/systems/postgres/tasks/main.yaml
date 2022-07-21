@@ -101,7 +101,7 @@
     - name: Copy Ubuntu default SSL Cert
       ansible.builtin.copy:
         src: /etc/ssl/certs/ssl-cert-snakeoil.pem
-        dest: "/etc/ssl/certs/ssl-cert-sas-{{ inventory_hostname }}.pem"
+        dest: "/etc/ssl/certs/ssl-cert-sas-{{ ansible_hostname }}.pem"
         owner: root
         group: root
         mode: "0644"
@@ -110,7 +110,7 @@
     - name: Copy Ubuntu default SSL Key
       ansible.builtin.copy:
         src: /etc/ssl/private/ssl-cert-snakeoil.key
-        dest: "/etc/ssl/private/ssl-cert-sas-{{ inventory_hostname }}.key"
+        dest: "/etc/ssl/private/ssl-cert-sas-{{ ansible_hostname }}.key"
         owner: root
         group: ssl-cert
         mode: "0640"
