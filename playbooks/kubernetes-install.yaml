@@ -81,6 +81,7 @@
 # Setup default storage class for cluster
 - hosts: localhost
   roles:
+    - { role: kubernetes/storage/sig-storage-local-static-provisioner }
     - { role: kubernetes/storage/nfs-subdir-external-provisioner }
 
 # Misc cluster related items

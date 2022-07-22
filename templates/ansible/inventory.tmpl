@@ -37,6 +37,7 @@ FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
 k8s_control_plane
 k8s_node
 
+%{ if jump_ip != null ~}
 %{ if length(jump_ip) != 0 ~}
 #
 # Jump Server
@@ -50,7 +51,9 @@ ${jump_ip}
 [jump:children]
 jump_server
 %{ endif ~}
+%{ endif ~}
 
+%{ if nfs_ip != null ~}
 %{ if length(nfs_ip) != 0 ~}
 #
 # NFS Server
@@ -64,6 +67,23 @@ ${nfs_ip}
 [nfs:children]
 nfs_server
 %{ endif ~}
+%{ endif ~}
+
+%{ if cr_ip != null ~}
+%{ if length(cr_ip) != 0 ~}
+#
+# Container Registry
+#
+[cr_server]
+${cr_ip}
+
+#
+# Container Registry - alias - DO NOT MODIFY
+#
+[cr:children]
+cr_server
+%{ endif ~}
+%{ endif ~}
 
 %{ if length(postgres_servers) != 0 ~}
 #
@@ -73,11 +93,13 @@ nfs_server
 [${prefix}_${server_name}_pgsql]
 ${server_data.server_ip}
 [${prefix}_${server_name}_pgsql:vars]
-postgres_server_name=${server_name}
-postgres_server_version=${server_data.server_version}
-postgres_server_ssl=${server_data.server_ssl}  # NOTE: Values - [on,off]
-postgres_administrator_login=${server_data.administrator_login} # NOTE: Do not change this value at this time
-postgres_administrator_password=${server_data.administrator_password}
+postgres_server_name="${server_name}"
+postgres_server_version="${server_data.server_version}"
+postgres_server_ssl="${server_data.server_ssl}"
+postgres_administrator_login="${server_data.administrator_login}"
+postgres_administrator_password="${server_data.administrator_password}"
+postgres_server_ssl_cert_file="${server_data.server_ssl_cert_file}"
+postgres_server_ssl_key_file="${server_data.server_ssl_key_file}"
 
 %{ endfor ~}
 [postgres:children]
@@ -91,10 +113,21 @@ ${prefix}_${server_name}_pgsql
 #
 [all:children]
 k8s
+%{ if jump_ip != null ~}
 %{ if length(jump_ip) != 0 ~}
 jump
 %{ endif ~}
+%{ endif ~}
+%{ if nfs_ip != null ~}
+%{ if length(nfs_ip) != 0 ~}
 nfs
+%{ endif ~}
+%{ endif ~}
+%{ if cr_ip != null ~}
+%{ if length(cr_ip) != 0 ~}
+cr
+%{ endif ~}
+%{ endif ~}
 %{ if length(postgres_servers) != 0 ~}
 postgres
 %{ endif ~}
