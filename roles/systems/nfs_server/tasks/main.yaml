@@ -22,6 +22,15 @@
         mode: 0777
       when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
 
+    - name: Create directory for sas storage class (needed by viya4-deployment)
+      ansible.builtin.file:
+        path: /export/pvs
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: 0777
+      when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+
     - name: Test for export mount point
       ansible.builtin.shell: grep -c "^/export" /etc/exports || true
       register: exports_file_rc

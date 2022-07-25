@@ -82,14 +82,3 @@
   tags:
     - install
     - update
-
-- name: Create directory for sas storage class
-  ansible.builtin.file:
-    path: /viya-share/pvs
-    owner: "{{ owner }}"
-    group: "{{ group }}"
-    mode: 0777
-    state: directory
-  tags:
-    - install
-    - update
