@@ -24,7 +24,7 @@
   become: true
   become_user: root
   roles:
-    - { role: kubernetes/loadbalancer/kube_vip/primary } # kube-vip :  https://kube-vip.io/docs/installation/static/
+    - { role: kubernetes/loadbalancer/kube_vip/primary } # kube-vip : https://kube-vip.io/docs/installation/static/
     - { role: kubernetes/control_plane/init/primary }
     - { role: "kubernetes/cni/{{ kubernetes_cni }}" }     # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
 

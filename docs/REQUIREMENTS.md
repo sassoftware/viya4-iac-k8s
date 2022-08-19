@@ -420,8 +420,8 @@ kubernetes_pod_subnet      : ""
 # 
 # Useful links:
 #
-#   VIP IP :  https://kube-vip.io/docs/installation/static/
-#   VIP Cloud Provider IP Range :  https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+#   VIP IP : https://kube-vip.io/docs/installation/static/
+#   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
 kubernetes_vip_version              : "0.4.4"
 kubernetes_vip_interface            : ""
