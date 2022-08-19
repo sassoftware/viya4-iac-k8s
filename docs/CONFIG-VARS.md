@@ -71,6 +71,7 @@ Terraform input variables can be set in the following ways:
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 cluster_version        | Kubernetes version | string | "1.22.10" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/v_031/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
+cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
