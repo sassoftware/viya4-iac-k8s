@@ -6,7 +6,7 @@
 #
 - name: Install Operator
   ansible.builtin.shell: |
-    kubectl apply -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+    kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
   tags:
     - install
     - update
@@ -23,7 +23,7 @@
 
 - name: Apply custom-resources
   ansible.builtin.shell: |
-    kubectl apply -f /tmp/custom-resources.yaml
+    kubectl create -f /tmp/custom-resources.yaml
   tags:
     - install
     - update
