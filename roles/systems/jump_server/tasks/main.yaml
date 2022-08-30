@@ -2,6 +2,7 @@
 # TODO: There should be other tasks here based on the OS used on your systems.
 #       The current choices are:
 #
+#       - Ubuntu 20.04 LTS
 #       - Ubuntu 22.04 LTS
 #
 - name: Set owner and group for Ubuntu OS
