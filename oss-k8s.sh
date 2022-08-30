@@ -59,8 +59,8 @@ terraform_prep() {
 terraform_up() {
     terraform_prep
     terraform apply -parallelism=20 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
-    echo "Wait for OS startup - Sleeping for 45 seconds"
-    sleep 45
+    echo "Wait for OS startup - Sleeping for 60 seconds"
+    sleep 60
 }
 
 terraform_down() {
