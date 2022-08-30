@@ -3,11 +3,11 @@ terraform {
   required_providers {
     vsphere = {
       source  = "hashicorp/vsphere"
-      version = ">= 2.1.1"
+      version = ">= 2.2.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = ">= 2.2.2"
+      version = ">= 2.2.3"
     }
   }
 }

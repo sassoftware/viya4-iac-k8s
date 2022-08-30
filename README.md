@@ -46,7 +46,7 @@ The tools in this repository can create systems as needed **only** if you are ru
 
 Regardless of which method you choose, the systems must meet the minimal requirements listed below:
 
-- Machines in your target environment are running **Ubuntu Linux LTS 20.04**
+- Machines in your target environment are running **Ubuntu Linux LTS 22.04**
 - Machines have a default user account with password-less `sudo` capabilities
 - At least 3 machines for the control plane nodes in your cluster
 - At least 6 machines for the nodes in your cluster
@@ -60,7 +60,7 @@ Regardless of which method you choose, the systems must meet the minimal require
 
 Deployment with vSphere requires a Linux image that can be used as the basis for your machines. This image requires the following minimal settings:
 
-- Ubuntu Linux LTS 20.04 minimal installation
+- Ubuntu Linux LTS 22.04 minimal installation
 - 2 CPUs
 - 4 GB memory
 - 8 GB disk thin provisioned

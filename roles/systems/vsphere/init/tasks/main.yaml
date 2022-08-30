@@ -1,14 +1,14 @@
 # TODO: Check for supported operating systems
 #       Currently supported operating systems:
 #
-#       - Ubuntu 20.04 LTS
+#       - Ubuntu 22.04 LTS
 #
 ---
-- name: Configure partition for Ubuntu 20.04 LTS Operating System
+- name: Configure partition for Ubuntu 22.04 LTS Operating System
   ansible.builtin.set_fact:
     partition_number: 2
   when:
-    - ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -33,7 +33,7 @@
   ansible.builtin.set_fact:
     owner: nobody
     group: nogroup
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update

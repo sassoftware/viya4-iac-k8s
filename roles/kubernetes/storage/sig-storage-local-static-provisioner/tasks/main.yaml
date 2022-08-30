@@ -6,6 +6,14 @@
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 #
+- name: Cleaning up old sig-storage-local-static-provisioner repo
+  ansible.builtin.file:
+    path: "/tmp/{{ LOCAL_VOLUME_NAME }}"
+    state: absent
+  tags:
+    - install
+    - update
+    
 - name: Cloning sig-storage-local-static-provisioner
   ansible.builtin.git:
     repo: "{{ LOCAL_VOLUME_REPO }}"

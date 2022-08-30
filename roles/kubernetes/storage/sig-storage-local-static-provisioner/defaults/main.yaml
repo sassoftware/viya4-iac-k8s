@@ -17,8 +17,7 @@ LOCAL_VOLUME_CONFIG:
       fsType: xfs
       namePattern: "*"
       blockCleanerCommand:
-        - "/scripts/shred.sh"
-        - "2"
+        - "/scripts/quick_reset.sh"
       storageClass: true
   daemonset:
     tolerations:
