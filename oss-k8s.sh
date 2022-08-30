@@ -58,14 +58,14 @@ terraform_prep() {
 
 terraform_up() {
     terraform_prep
-    terraform apply -parallelism=15 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
+    terraform apply -parallelism=20 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
     echo "Wait for OS startup - Sleeping for 45 seconds"
     sleep 45
 }
 
 terraform_down() {
     terraform_prep
-    terraform destroy -parallelism=15 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
+    terraform destroy -parallelism=20 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
 }
 
 # bare_metal items (ansible)

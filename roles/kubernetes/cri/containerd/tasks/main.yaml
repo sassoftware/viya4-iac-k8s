@@ -80,7 +80,7 @@
     - update
 
 # TODO: Verify this needs an OS guard for package. Currently
-#       only tested with Ubuntu 20.04 LTS
+#       only tested with Ubuntu 22.04 LTS
 #
 # Installing containerd
 - name: Installing containerd
@@ -90,7 +90,7 @@
   vars:
     packages:
     - containerd
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
