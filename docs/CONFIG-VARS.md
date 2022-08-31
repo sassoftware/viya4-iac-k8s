@@ -70,7 +70,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-cluster_version        | Kubernetes version | string | "1.22.10" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
+cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
 cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
@@ -81,7 +81,7 @@ cluster_domain         | Cluster domain suffix for DNS | string | | |
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-kube_vip_version   | kube-vip version | string | "0.4.4" | The minimal supported version is 0.4.4 |
+kube_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported version is 0.5.0 |
 kube_vip_ip        | kube-vip IP address | string | | |
 kube_vip_dns       | kube-vip DNS | string | | |
 kube_vip_range     | kube-vip IP address range | string | | |
@@ -300,14 +300,14 @@ Variables used to describe your machines.
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
 | deployment_type | | string | | |
 | kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled **ONLY** change the prefix value above |
-| kubernetes_version | Kubernetes version | string | "1.22.10" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
+| kubernetes_version | Kubernetes version | string | "1.23.8" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
 | kubernetes_upgrade_allowed | | bool | true | |
 | kubernetes_arch | | string | "{{ vm_arch }}" | |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
-| kubernetes_vip_version | kube-vip version | string | "0.4.4" | |
+| kubernetes_vip_version | kube-vip version | string | "0.5.0" | |
 | kubernetes_vip_interface | kube-vip interface | string | | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_loadbalanced_dns | kube-vip DNS | string | | |

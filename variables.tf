@@ -294,7 +294,7 @@ variable "cluster_domain" {
 
 variable "cluster_version" {
   type    = string
-  default = "1.22.10"
+  default = "1.23.8"
 }
 
 variable "cluster_cni" {
@@ -319,7 +319,7 @@ variable "cluster_pod_subnet" {
 
 variable "kube_vip_version" {
   type    = string
-  default = "0.4.4"
+  default = "0.5.0"
 }
 
 variable "kube_vip_ip" {
