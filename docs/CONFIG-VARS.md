@@ -81,7 +81,7 @@ cluster_domain         | Cluster domain suffix for DNS | string | | |
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-kube_vip_version   | kube-vip version | string | "0.4.4" | The minimal supported version is 0.4.4 |
+kube_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported version is 0.5.0 |
 kube_vip_ip        | kube-vip IP address | string | | |
 kube_vip_dns       | kube-vip DNS | string | | |
 kube_vip_range     | kube-vip IP address range | string | | |
@@ -307,7 +307,7 @@ Variables used to describe your machines.
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
-| kubernetes_vip_version | kube-vip version | string | "0.4.4" | |
+| kubernetes_vip_version | kube-vip version | string | "0.5.0" | |
 | kubernetes_vip_interface | kube-vip interface | string | | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_loadbalanced_dns | kube-vip DNS | string | | |

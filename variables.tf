@@ -319,7 +319,7 @@ variable "cluster_pod_subnet" {
 
 variable "kube_vip_version" {
   type    = string
-  default = "0.4.4"
+  default = "0.5.0"
 }
 
 variable "kube_vip_ip" {

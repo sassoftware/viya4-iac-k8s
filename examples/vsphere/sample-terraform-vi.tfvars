@@ -27,7 +27,7 @@ cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
 cluster_domain         = ""             # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP and Cloud Provider
-kube_vip_version   = "0.4.4"
+kube_vip_version   = "0.5.0"
 kube_vip_ip        = ""
 kube_vip_dns       = ""
 kube_vip_range     = ""
