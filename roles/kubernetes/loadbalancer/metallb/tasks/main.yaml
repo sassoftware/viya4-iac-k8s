@@ -1,0 +1,32 @@
+---
+# NOTE: The usage and setting of the iac_inventory_dir variable
+#       is only needed given this task is run on localhost
+#       an implied localhost and this keeps the magic inventory_file
+#       and inventory_dir from having values.
+#
+#       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
+#
+- name: Setting up metallb 
+  kubernetes.core.helm:
+    name: "{{ METALLB_NAME }}"
+    namespace: "{{ METALLB_NAMESPACE }}"
+    chart_repo_url: "{{ METALLB_CHART_URL }}"
+    chart_ref: "{{ METALLB_CHART_NAME }}"
+    chart_version: "{{ METALLB_CHART_VERSION }}"
+    values: "{{ METALLB_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    create_namespace: true
+    wait: true
+  tags:
+    - install
+    - update
+
+- name: Remove metallb
+  kubernetes.core.helm:
+    name: "{{ METALLB_NAME }}"
+    namespace: "{{ METALLB_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
+    state: absent
+  tags:
+    - uninstall

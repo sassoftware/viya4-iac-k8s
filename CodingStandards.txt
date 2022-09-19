@@ -1,0 +1,41 @@
+Coding standards and guidelines for IaC repos.
+
+For Terraform related files the standards are:
+
+  - Variables defined live in the root variables.yaml file for that element.
+  - Outputs defined live in the root outputs.yaml file for that element.
+  - Modules defined live at the root level of the project in the modules directory.
+  - Documentation lives at the root level of the project in the docs directory.
+  - Examples live at the root level of the project in the examples directory.
+  - Template files live in the root templates directory for that element.
+
+  Example directory structure and files following these standards:
+
+    .
+    ├── docs
+    ├── examples
+    ├── files
+    ├── locals.tf
+    ├── main.tf
+    ├── modules
+    │   ├── foo
+    |   |   ├─ main.tf
+    |   |   ├─ locals.tf
+    |   |   ├─ variables.tf
+    |   |   └─ output.tf
+    │   └── bar
+    |       ├─ main.tf
+    |       ├─ locals.tf
+    |       ├─ variables.tf
+    |       └─ output.tf
+    ├── output.tf
+    ├── provider.tf
+    ├── templates
+    ├── variables.tf
+    └── versions.tf
+
+When coding has finished you must run the 
+
+  - terraform fmt -recursive
+
+This ensures everyone on the team has the same and consistent file formatting prior to pushing the code into git.
