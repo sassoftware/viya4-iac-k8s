@@ -335,6 +335,11 @@ variable "kube_vip_fqdn" {
 variable "kube_lb_type" {
   type    = string
   default = "kube_vip"
+
+  validation {
+    condition     = contains(["kube_vip", "metallb"], lower(var.kube_lb_type))
+    error_message = "ERROR: Valid values for the kube_lb_type are: kube_vip, metallb"
+  }
 }
 
 variable "kube_lb_addresses" {
