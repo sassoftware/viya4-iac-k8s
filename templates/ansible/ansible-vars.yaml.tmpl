@@ -37,8 +37,20 @@ kubernetes_pod_subnet      : "${ cluster_pod_subnet }"
 #
 kubernetes_vip_version              : "${ kube_vip_version }"
 kubernetes_vip_ip                   : "${ kube_vip_ip }"
-kubernetes_vip_loadbalanced_dns     : "${ kube_vip_dns }"
-kubernetes_vip_cloud_provider_range : "${ kube_vip_range }"
+kubernetes_vip_fqdn                 : "${ kube_vip_fqdn }"
+
+# Kubernetes - Load Balancer
+kubernetes_loadbalancer       : "${ kube_lb_type }"
+%{ if kube_lb_type == "kube_vip" ~}
+# Kubernetes - Load Balancer IP addresses - kube-vip : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+%{ endif ~}
+%{ if kube_lb_type == "metallb" ~}
+# Kubernetes - Load Balancer IP Address Pool - metallb : https://metallb.universe.tf/configuration/#layer-2-configuration
+%{ endif ~}
+kubernetes_loadbalancer_addresses :
+%{ for v in kube_lb_addresses ~}
+  ${format("- \"%s\"\n", v)~}
+%{ endfor ~}
 
 # Kubernetes - Control Plane
 control_plane_ssh_key_name : ${ control_plane_ssh_key_name }

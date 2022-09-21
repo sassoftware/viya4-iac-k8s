@@ -136,6 +136,15 @@
     - install
     - update
 
+- name: Installing helm
+  ansible.builtin.shell: |
+      curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 755 get-helm-3
+      ./get-helm-3 --version v{{ helm_version }} --no-sudo
+  tags:
+    - install
+    - update
+
 - name: Update limits to support SAS software
   ansible.builtin.lineinfile:
     path: /etc/security/limits.conf

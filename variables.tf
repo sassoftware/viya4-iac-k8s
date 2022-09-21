@@ -327,13 +327,18 @@ variable "kube_vip_ip" {
   default = null
 }
 
-variable "kube_vip_dns" {
+variable "kube_vip_fqdn" {
   type    = string
   default = null
 }
 
-variable "kube_vip_range" {
+variable "kube_lb_type" {
   type    = string
+  default = "kube_vip"
+}
+
+variable "kube_lb_addresses" {
+  type    = list(any)
   default = null
 }
 

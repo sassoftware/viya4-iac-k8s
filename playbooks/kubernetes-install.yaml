@@ -24,9 +24,9 @@
   become: true
   become_user: root
   roles:
-    - { role: kubernetes/loadbalancer/kube_vip/primary } # kube-vip : https://kube-vip.io/docs/installation/static/
+    - { role: kubernetes/vip/primary }                # kube-vip : https://kube-vip.io/docs/installation/static/
     - { role: kubernetes/control_plane/init/primary }
-    - { role: "kubernetes/cni/{{ kubernetes_cni }}" }    # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
+    - { role: "kubernetes/cni/{{ kubernetes_cni }}" } # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
 
 # Secure kubernetes items
 - hosts: localhost
@@ -39,7 +39,7 @@
   become_user: root
   roles:
     - { role: kubernetes/control_plane/init/secondary }
-    - { role: kubernetes/loadbalancer/kube_vip/secondary }
+    - { role: kubernetes/vip/secondary }
 
 # Compute nodes
 - hosts: k8s_node
@@ -49,17 +49,12 @@
     - { role: kubernetes/node/baseline }
     - { role: kubernetes/node/init }
 
-# Cloud load balancer - kube-vip
+# Kubernetes loadbalancer
 - hosts: k8s_control_plane[0]
   become: true
   become_user: root
   roles:
-    - { role: kubernetes/loadbalancer/kube_vip/cloud_provider }
-
-# Setup metallb
-# - hosts: localhost
-#   roles:
-#     - { role: kubernetes/loadbalancer/metallb }
+    - { role: "kubernetes/loadbalancer/{{ kubernetes_loadbalancer }}" }
 
 # Label/Taint Kubernetes nodes
 - hosts: k8s

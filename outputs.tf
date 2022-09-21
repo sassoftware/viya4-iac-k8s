@@ -68,3 +68,8 @@ output "postgres_servers" {
   value     = length(local.postgres_servers) != 0 ? local.postgres_outputs : null
   sensitive = true
 }
+
+output "k8s_version" {
+  description = "Kubernetes version"
+  value       = var.cluster_version
+}

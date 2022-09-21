@@ -23,7 +23,7 @@
     - install
     - update
 
-- name: Setting up default storage for cluster using sig-storage-local-static-provisioner 
+- name: Setting up local storage for the cluster using sig-storage-local-static-provisioner 
   kubernetes.core.helm:
     name: "{{ LOCAL_VOLUME_NAME }}"
     namespace: "{{ LOCAL_VOLUME_NAMESPACE }}"

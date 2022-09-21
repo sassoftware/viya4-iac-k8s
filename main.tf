@@ -210,8 +210,9 @@ resource "local_file" "ansible_vars" {
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
     kube_vip_version           = var.kube_vip_version
     kube_vip_ip                = var.kube_vip_ip
-    kube_vip_dns               = var.kube_vip_dns == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.kube_vip_dns) > 0 ? var.kube_vip_dns : "${local.cluster_name}-vip.${var.cluster_domain}"
-    kube_vip_range             = var.kube_vip_range
+    kube_vip_fqdn              = var.kube_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.kube_vip_fqdn) > 0 ? var.kube_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
+    kube_lb_type               = var.kube_lb_type
+    kube_lb_addresses              = local.cluster_lb_addresses
     nfs_ip                     = var.create_nfs ? var.nfs_ip : null
     jump_ip                    = var.create_jump ? var.jump_ip : null
     cr_ip                      = var.create_cr ? var.cr_ip : null
