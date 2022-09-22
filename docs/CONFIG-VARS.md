@@ -12,7 +12,8 @@ Supported configuration variables are listed in the tables below.  All variables
       - [vSphere](#vsphere)
       - [Systems](#systems)
       - [Kubernetes Cluster](#kubernetes-cluster)
-      - [Kubernetes Cluster VIP and Cloud Provider](#kubernetes-cluster-vip-and-cloud-provider)
+      - [Kubernetes Cluster VIP](#kubernetes-cluster-vip)
+      - [Kubernetes Load Balancer](#kubernetes-load-balancer)
       - [Control Plane](#control-plane)
       - [Node Pools](#node-pools)
       - [Jump Server](#jump-server)
@@ -70,21 +71,26 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
-cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
-cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
-cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
-cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
-cluster_domain         | Cluster domain suffix for DNS | string | | |
+| cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
+| cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
+| cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
+| cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
+| cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
+| cluster_domain         | Cluster domain suffix for DNS | string | | |
 
-#### Kubernetes Cluster VIP and Cloud Provider
+#### Kubernetes Cluster VIP
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-kube_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported version is 0.5.0 |
-kube_vip_ip        | kube-vip IP address | string | | |
-kube_vip_dns       | kube-vip DNS | string | | |
-kube_vip_range     | kube-vip IP address range | string | | |
+| kube_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported | version is 0.5.0 |
+| kube_vip_ip        | kube-vip IP address | string | | |
+| kube_vip_fqdn       | kube-vip DNS | string | | |
+
+#### Kubernetes Load Balancer
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| kube_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: kube_vip, metallb |
+| kube_lb_addresses | IP addresses used by the load balancer | list | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
 
 #### Control Plane
 
@@ -310,7 +316,7 @@ Variables used to describe your machines.
 | kubernetes_vip_version | kube-vip version | string | "0.5.0" | |
 | kubernetes_vip_interface | kube-vip interface | string | | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
-| kubernetes_vip_loadbalanced_dns | kube-vip DNS | string | | |
+| kubernetes_vip_fqdn | kube-vip DNS | string | | |
 | kubernetes_vip_cloud_provider_range | kube-vip IP address range | string | | |
 | node_labels | Labels applied to nodes in your cluster | map(list(string)) | | |
 | node_taints | Taints applied to nodes in your cluster | map(list(string)) | | |
