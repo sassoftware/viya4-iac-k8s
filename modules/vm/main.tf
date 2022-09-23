@@ -44,14 +44,11 @@ resource "vsphere_virtual_machine" "static" {
     unit_number      = 0
   }
   dynamic "disk" {
-    # for_each = var.misc_disks != null ? length(var.misc_disks) > 0 ? var.misc_disks : [] : []
     for_each = var.misc_disks != null ? length(var.misc_disks) > 0 ? { for k, v in var.misc_disks : k => v } : {} : {}
     content {
-      # label            = "misc-disk-${index(var.misc_disks, disk.value) + 1}"
       label            = format("misc-disk-%02d", disk.key + 1)
       size             = disk.value
       thin_provisioned = true
-      # unit_number      = index(var.misc_disks, disk.value) + 1
       unit_number = disk.key + 1
     }
   }
@@ -103,14 +100,11 @@ resource "vsphere_virtual_machine" "dhcp" {
     unit_number      = 0
   }
   dynamic "disk" {
-    # for_each = var.misc_disks != null ? length(var.misc_disks) > 0 ? var.misc_disks : [] : []
     for_each = var.misc_disks != null ? length(var.misc_disks) > 0 ? { for k, v in var.misc_disks : k => v } : {} : {}
     content {
-      # label            = "misc-disk-${index(var.misc_disks, disk.value) + 1}"
       label            = format("misc-disk-%02d", disk.key + 1)
       size             = disk.value
       thin_provisioned = true
-      # unit_number      = index(var.misc_disks, disk.value) + 1
       unit_number = disk.key + 1
     }
   }

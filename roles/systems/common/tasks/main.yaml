@@ -28,6 +28,33 @@
     - install
     - update
 
+- name: Disable and turn off unattended-upgrades
+  ansible.builtin.systemd:
+    name: unattended-upgrades.service
+    enabled: no
+    state: stopped
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+- name: Kill the unattended-upgrades task if it's running
+  ansible.builtin.shell: |
+    kill -9 unattended-upgrades 2>&1 /dev/null
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+- name: Uninstalling unattended-upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: absent
+    purge: yes
+  tags:
+    - install
+    - update
+
 # Update OS on each system
 - name: Update OS
   ansible.builtin.package:
