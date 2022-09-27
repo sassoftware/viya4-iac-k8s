@@ -49,7 +49,7 @@ resource "vsphere_virtual_machine" "static" {
       label            = format("misc-disk-%02d", disk.key + 1)
       size             = disk.value
       thin_provisioned = true
-      unit_number = disk.key + 1
+      unit_number      = disk.key + 1
     }
   }
 
@@ -105,7 +105,7 @@ resource "vsphere_virtual_machine" "dhcp" {
       label            = format("misc-disk-%02d", disk.key + 1)
       size             = disk.value
       thin_provisioned = true
-      unit_number = disk.key + 1
+      unit_number      = disk.key + 1
     }
   }
 
