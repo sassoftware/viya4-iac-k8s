@@ -396,7 +396,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | :--- | ---: | ---: | ---: | ---: |
 | administrator_login | The administrator login for the PostgreSQL server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
 | administrator_password | The password associated with the administrator_login for the PostgreSQL server | string | "my$up3rS3cretPassw0rd" |  |
-| server_version | The version of the  PostgreSQL server instance | string | "11" | Supported values are 11 and 12 |
+| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [Viya 4 Administration Guide](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for SAS Viya. |
 | ssl_enforcement_enabled | Enforce SSL on connections to the PostgreSQL database | bool | true | |
 
 Here is an example of the `postgres_servers` variable with the `default` entry only overriding the `administrator_password` parameter and the `cps` entry overriding all of the parameters:
