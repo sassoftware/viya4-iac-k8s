@@ -23,7 +23,7 @@ locals {
   node_ips = flatten(sort(flatten([for item in values(merge(module.system, module.node)) : values(item)])))
 
   ## Load Balancer addresses and data items for kube-vip and metallb
-  loadbalancer_addresses = var.kube_lb_addresses != null ? length(var.kube_lb_addresses) > 0 ? [for v in var.kube_lb_addresses : v] : null : null
+  loadbalancer_addresses = var.cluster_lb_addresses != null ? length(var.cluster_lb_addresses) > 0 ? [for v in var.cluster_lb_addresses : v] : null : null
 
   # PostgreSQL
   postgres_servers = var.postgres_servers == null ? {} : { for k, v in var.postgres_servers : k => merge(var.postgres_server_defaults, v, ) }

@@ -147,9 +147,9 @@ cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster Virtual IP Address and Cloud Provider
-kube_vip_version = "0.5.0"
-kube_vip_ip      = "10.18.0.175"
-kube_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
+cluster_vip_version = "0.5.0"
+cluster_vip_ip      = "10.18.0.175"
+cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"

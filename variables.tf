@@ -317,32 +317,32 @@ variable "cluster_pod_subnet" {
   default = "10.42.0.0/16"
 }
 
-variable "kube_vip_version" {
+variable "cluster_vip_version" {
   type    = string
   default = "0.5.0"
 }
 
-variable "kube_vip_ip" {
+variable "cluster_vip_ip" {
   type    = string
   default = null
 }
 
-variable "kube_vip_fqdn" {
+variable "cluster_vip_fqdn" {
   type    = string
   default = null
 }
 
-variable "kube_lb_type" {
+variable "cluster_lb_type" {
   type    = string
   default = "kube_vip"
 
   validation {
-    condition     = contains(["kube_vip", "metallb"], lower(var.kube_lb_type))
-    error_message = "ERROR: Valid values for the kube_lb_type are: kube_vip, metallb"
+    condition     = contains(["kube_vip", "metallb"], lower(var.cluster_lb_type))
+    error_message = "ERROR: Valid values for the cluster_lb_type are: kube_vip, metallb"
   }
 }
 
-variable "kube_lb_addresses" {
+variable "cluster_lb_addresses" {
   type    = list(any)
   default = null
 }

@@ -11,8 +11,8 @@ enable_cgroup_v2    : true                       # TODO - If needed hookup or re
 system_ssh_keys_dir : "${ system_ssh_keys_dir }" # Directory holding public keys to be used on each system
 
 # Generic items
-prefix : "${ prefix }"
-deployment_type: "${ deployment_type }"
+prefix          : "${ prefix }"
+deployment_type : "${ deployment_type }"
 
 # Kubernetes - Common
 #
@@ -32,23 +32,23 @@ kubernetes_pod_subnet      : "${ cluster_pod_subnet }"
 # 
 # Useful links:
 #
-#   VIP IP : https://kube-vip.io/docs/installation/static/
+#   VIP IP                      : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "${ kube_vip_version }"
-kubernetes_vip_ip                   : "${ kube_vip_ip }"
-kubernetes_vip_fqdn                 : "${ kube_vip_fqdn }"
+kubernetes_vip_version : "${ cluster_vip_version }"
+kubernetes_vip_ip      : "${ cluster_vip_ip }"
+kubernetes_vip_fqdn    : "${ cluster_vip_fqdn }"
 
 # Kubernetes - Load Balancer
-kubernetes_loadbalancer       : "${ kube_lb_type }"
-%{ if kube_lb_type == "kube_vip" ~}
+%{ if cluster_lb_type == "kube_vip" ~}
 # Kubernetes - Load Balancer IP addresses - kube-vip : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 %{ endif ~}
-%{ if kube_lb_type == "metallb" ~}
+%{ if cluster_lb_type == "metallb" ~}
 # Kubernetes - Load Balancer IP Address Pool - metallb : https://metallb.universe.tf/configuration/#layer-2-configuration
 %{ endif ~}
+kubernetes_loadbalancer           : "${ cluster_lb_type }"
 kubernetes_loadbalancer_addresses :
-%{ for v in kube_lb_addresses ~}
+%{ for v in cluster_lb_addresses ~}
   ${format("- \"%s\"\n", v)~}
 %{ endfor ~}
 

@@ -82,15 +82,15 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| kube_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported | version is 0.5.0 |
-| kube_vip_ip        | kube-vip IP address | string | | |
-| kube_vip_fqdn       | kube-vip DNS | string | | |
+| cluster_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported | version is 0.5.0 |
+| cluster_vip_ip        | kube-vip IP address | string | | |
+| cluster_vip_fqdn       | kube-vip DNS | string | | |
 
 #### Kubernetes Load Balancer
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| kube_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: kube_vip, metallb |
-| kube_lb_addresses | IP addresses used by the load balancer | list | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
+| cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: kube_vip, metallb |
+| cluster_lb_addresses | IP addresses used by the load balancer | list | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
 
 #### Control Plane
 

@@ -27,10 +27,36 @@ cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
 cluster_domain         = ""             # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP and Cloud Provider
-kube_vip_version = "0.5.0"
-kube_vip_ip      = ""
-kube_vip_dns     = ""
-kube_vip_range   = ""
+cluster_vip_version = "0.5.0"
+cluster_vip_ip      = ""
+cluster_vip_fqdn    = ""
+
+# Kubernetes - Load Balancer
+
+# Load Balancer Type
+cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
+
+# Load Balancer Addresses
+#
+# Examples for each provider can be found here:
+#
+#  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#
+#  kube-vip example:
+# 
+#    cluster_lb_addresses = [
+#      # "range-global: 10.12.50.11-10.12.50.15",
+#      # "cidr-global: 10.12.50.49/29"
+#    ]
+#
+#  metallb example:
+#
+#    cluster_lb_addresses = [
+#      "10.12.50.11-10.12.50.19",
+#      "10.12.50.20/32"
+#    ]
+#
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"
