@@ -43,20 +43,24 @@ cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
 #  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
 #
-#  kube-vip example:
-# 
-#    cluster_lb_addresses = [
-#      # "range-global: 10.12.50.11-10.12.50.15",
-#      # "cidr-global: 10.12.50.49/29"
-#    ]
+#  kube-vip sample:
 #
-#  metallb example:
+#      cluster_lb_addresses = [
+#        cidr-default: 192.168.0.200/29                      # CIDR-based IP range for use in the default Namespace
+#        range-development: 192.168.0.210-192.168.0.219      # Range-based IP range for use in the development Namespace
+#        cidr-finance: 192.168.0.220/29,192.168.0.230/29     # Multiple CIDR-based ranges for use in the finance Namespace
+#        cidr-global: 192.168.0.240/29                       # CIDR-based range which can be used in any Namespace
+#      ]
 #
-#    cluster_lb_addresses = [
-#      "10.12.50.11-10.12.50.19",
-#      "10.12.50.20/32"
-#    ]
+#    metallb sample:
 #
+#      cluster_lb_addresses = [
+#        192.168.10.0/24
+#        192.168.9.1-192.168.9.5
+#      ]
+#
+cluster_lb_addresses = [
+]
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"
