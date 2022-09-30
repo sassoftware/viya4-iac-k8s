@@ -35,16 +35,16 @@ cluster_vip_fqdn      = ""
 # Kubernetes - Load Balancer
 
 # Load Balancer Type
-cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
+cluster_lb_type = "kube_vip" # Load Balancer accepted values [kube_vip,metallb]
 
 # Load Balancer Addresses
 #
-# Examples for each provider can be found here:
+# Examples for each load balancer type can be found here:
 #
 #  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
 #
-#  kube-vip sample:
+#    kube-vip sample:
 #
 #      cluster_lb_addresses = [
 #        cidr-default: 192.168.0.200/29                      # CIDR-based IP range for use in the default Namespace
@@ -60,8 +60,7 @@ cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
 #        192.168.9.1-192.168.9.5
 #      ]
 #
-cluster_lb_addresses = [
-]
+cluster_lb_addresses = []
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"

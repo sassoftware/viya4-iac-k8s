@@ -82,7 +82,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_vip_version   | kube-vip version | string | "0.5.0" | The minimal supported | version is 0.5.0 |
+| cluster_vip_version   | kube-vip version | string | "0.5.0" | Currently kube-vip is the only supported kubernetes vip provider. The minimal supported version is 0.5.0 |
 | cluster_vip_ip        | kube-vip IP address | string | | |
 | cluster_vip_fqdn       | kube-vip DNS | string | | |
 
@@ -90,7 +90,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: kube_vip, metallb |
+| cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: `kube_vip`, `metallb` |
 | cluster_lb_addresses | IP addresses used by the load balancer | list | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
 
 #### Control Plane
@@ -108,7 +108,8 @@ Node pools are a map of objects. They represent information about each pool type
 | count | Number of nodes | number | | Setting this variable creates nodes with dynamic IPs assigned from your network. Cannot be used with the `ip_addresses` field|
 | cpus | Number of CPUS cores | number | | |
 | memory | Memory in MB | number | | |
-| disk | Size of disk in GB | number| | |
+| os_disk | Size of OS disk in GB | number | | |
+| misc_disk | Size of extra disks in GB | number | | |
 | ip_addresses | List of static IP addresses used in creating control_plane nodes | list(string) |  | Setting this variable creates nodes with static ips assigned from this list. Cannot be used if the `count` field is being used |
 | node_taints |  | list(string) | | |
 | node_labels |  | map(string) | | |
@@ -143,7 +144,7 @@ node_pools = {
   control_plane = {
     cpus        = 2
     memory      = 4096
-    disk        = 100
+    os_disk     = 100
     ip_addresses = [
       "192.168.7.21",
       "192.168.7.22",
@@ -159,7 +160,7 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 16384
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
@@ -169,8 +170,11 @@ node_pools = {
     count       = 3
     cpus        = 16
     memory      = 131072
-    disk        = 350
-    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    os_disk     = 350
+    misc_disks = [
+      150,
+      150,
+    ]    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
     }
@@ -179,7 +183,7 @@ node_pools = {
     count       = 1
     cpus        = 16
     memory      = 131072
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
       "workload.sas.com/class"        = "compute"
@@ -190,7 +194,7 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 32768
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateful"
@@ -200,12 +204,28 @@ node_pools = {
     count       = 2
     cpus        = 8
     memory      = 32768
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateless"
     }
   }
+  singlestore = {
+    cpus    = 16
+    memory  = 131072
+    os_disk = 100
+    misc_disks = [
+      250,
+      250,
+      500,
+      500,
+    ]
+    count       = 3
+    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "singlestore"
+    }
+  },
 }
 ```
 
@@ -282,7 +302,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = ""                      # Assigned values for static IP addresses - REQUIRED
-    server_version         = 12                      # PostgreSQL version
+    server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password

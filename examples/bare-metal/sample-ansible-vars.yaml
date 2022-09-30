@@ -11,8 +11,8 @@ enable_cgroup_v2    : true     # TODO - If needed hookup or remove flag
 system_ssh_keys_dir : "~/.ssh" # Directory holding public keys to be used on each system
 
 # Generic items
-prefix : ""
-deployment_type: "" # Values are: [bare_metal|vsphere]
+prefix          : ""
+deployment_type : "" # Values are : [bare_metal|vsphere]
 
 # Kubernetes - Common
 #
@@ -32,14 +32,41 @@ kubernetes_pod_subnet      : ""
 # 
 # Useful links:
 #
-#   VIP IP : https://kube-vip.io/docs/installation/static/
+#   VIP IP                      : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
 kubernetes_vip_version              : "0.5.0"
-kubernetes_vip_interface            : ""
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
-kubernetes_vip_cloud_provider_range : ""
+
+# Kubernetes - Load Balancer
+#
+# Load Balancer Type
+#
+kubernetes_loadbalancer : "" # Load Balancer accepted values [kube_vip,metallb]
+
+# Load Balancer Addresses
+#
+# Examples for each load balancer type can be found here:
+#
+#  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#
+#    kube-vip sample:
+#
+#      kubernetes_loadbalancer_addresses :
+#        - "cidr-default: 192.168.0.200/29"                  # CIDR-based IP range for use in the default Namespace
+#        - "range-development: 192.168.0.210-192.168.0.219"  # Range-based IP range for use in the development Namespace
+#        - "cidr-finance: 192.168.0.220/29,192.168.0.230/29" # Multiple CIDR-based ranges for use in the finance Namespace
+#        - "cidr-global: 192.168.0.240/29"                   # CIDR-based range which can be used in any Namespace
+#
+#    metallb sample:
+#
+#      kubernetes_loadbalancer_addresses :
+#        - "192.168.10.0/24"
+#        - "192.168.9.1-192.168.9.5"
+#
+kubernetes_loadbalancer_addresses : []
 
 # Kubernetes - Control Plane
 control_plane_ssh_key_name : "cp_ssh"
