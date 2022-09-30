@@ -59,6 +59,11 @@ cluster_lb_type = "kube_vip" # Load Balancer accepted values [kube_vip,metallb]
 #        192.168.9.1-192.168.9.5
 #      ]
 #
+#  NOTE: If you are assigning a static IP using the loadBalancerIP value for your 
+#        load balancer controller service when using `metallb` that IP must fall
+#        within the address range you provide below. If you are using `kube_vip`
+#        you do not have this limitation.
+#
 cluster_lb_addresses = []
 
 # Control plane node shared ssh key name
