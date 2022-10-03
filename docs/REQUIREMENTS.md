@@ -423,7 +423,6 @@ kubernetes_pod_subnet      : ""
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
 kubernetes_vip_version              : "0.5.0"
-kubernetes_vip_interface            : ""
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
 kubernetes_vip_cloud_provider_range : ""

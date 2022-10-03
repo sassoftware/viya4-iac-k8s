@@ -28,7 +28,6 @@ cluster_domain         = ""             # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP and Cloud Provider
 cluster_vip_version   = "0.5.0"
-cluster_vip_interface = ""
 cluster_vip_ip        = ""
 cluster_vip_fqdn      = ""
 

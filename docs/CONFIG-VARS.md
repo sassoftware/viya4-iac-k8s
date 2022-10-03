@@ -335,7 +335,6 @@ Variables used to describe your machines.
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
 | kubernetes_vip_version | kube-vip version | string | "0.5.0" | |
-| kubernetes_vip_interface | kube-vip interface | string | | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_fqdn | kube-vip DNS | string | | |
 | kubernetes_vip_cloud_provider_range | kube-vip IP address range | string | | |
