@@ -30,7 +30,7 @@ Create a file with the authentication variable values to use with container invo
 
 Now each time you invoke the container, specify the file with the `--env-file` option to pass the Azure credentials to the container.
 
-An example of this file can be found in the `examples` directory [here](./../../examples/bare-metal/.bare_metal_creds.enc).
+An example of this file can be found in the `examples` directory [here](./../../examples/bare-metal/.bare_metal_creds.env).
 
 ### Docker Volume Mounts
 
