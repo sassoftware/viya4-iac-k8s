@@ -140,16 +140,6 @@ fi
 #   destroy   - IaC Destruction
 #
 
-# Validating all arguments supplied are in the action list
-valid_args=("apply setup install update uninstall cleanup destroy")
-for arg in ${ARGS[@]}; do
-  if [[ ! " ${valid_args[*]} " =~ " $arg " ]]; then
-    creation_flag=true
-    echo "An argume supplied is invalid: $arg"
-    echo ""
-    help
-  fi
-done
 
 # Determine what arguments have been passed and store
 # those values in a known order

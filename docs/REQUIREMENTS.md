@@ -525,7 +525,7 @@ METRICS_SERVER_CONFIG:
 ### NFS Subdir External Provisioner - SAS default storage class
 # Updates to support open source Kubernetes 
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
-NFS_CLIENT_CHART_VERSION: 4.0.16
+NFS_CLIENT_CHART_VERSION: 4.0.17
 ```
 
 ## Third-Party Tools
