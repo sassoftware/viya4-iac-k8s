@@ -28,6 +28,13 @@
   roles:
     - { role: systems/postgres }
 
+# Container Registry Server
+- hosts: cr
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/container_registry }
+
 # Kubernetes - Control Plane
 - hosts: k8s_control_plane
   become: true
