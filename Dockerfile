@@ -7,9 +7,9 @@ RUN apt update && apt upgrade -y \
 
 # Layers used for building/downloading/installing tools
 FROM baseline as tool_builder
-ARG HELM_VERSION=3.8.1
-ARG KUBECTL_VERSION=1.23.8
-ARG TERRAFORM_VERSION=1.2.0
+ARG HELM_VERSION=3.10.0
+ARG KUBECTL_VERSION=1.23.12
+ARG TERRAFORM_VERSION=1.3.2
 
 WORKDIR /build
 
