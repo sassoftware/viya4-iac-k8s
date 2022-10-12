@@ -3,7 +3,7 @@ ansible_user     = ""
 ansible_password = ""
 prefix           = "v4-k8s-static" # Infra prefix
 gateway          = ""              # Gateway for servers
-netmask          = ""              # Needed for any network outside the 10.12.0 location
+netmask          = ""              # Network interface netmask
 
 # vSphere
 vsphere_server        = "" # Name of the vSphere server
