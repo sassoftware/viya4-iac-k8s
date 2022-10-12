@@ -38,7 +38,7 @@ The following table lists the minimum machine requirements that are needed to su
 | Machine | CPU | Memory | Disk | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | --- | ---: |
 | **Control Plane** | 2 | 4 GB | 100 GB | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 1 |
-| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. This varies and suggested capacities and info can be found in the sample files | 3 |
+| **Nodes** | xx | xx GB | xx GB | Nodes in the Kubernetes cluster. These values vary. Suggested capacities and info can be found in the sample files | 3 |
 | **Jump Server** | 4 | 8 GB | 100 GB | Bastion box used to access NFS mounts, share data, etc. | 1 |
 | **NFS Server** | 8 | 16 GB | 500 GB | Required server used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster | 1 |
 | **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment | 1..n |
@@ -111,9 +111,9 @@ If you are creating virtual machines with vCenter or vSphere, the `terraform.tfv
 For this example, the network setup is as follows:
 
 ```text
-CIDR Range       : 10.18.0.0/16
-Virtual IP       : 10.18.0.175
-LoadBalanced IPs : 10.18.0.100-10.18.0.125
+CIDR Range        : 10.18.0.0/16
+Virtual IP        : 10.18.0.175
+Load Balancer IPs : 10.18.0.100-10.18.0.125
 ```
 
 Refer to the file [terraform.tfvars](../examples/vsphere/terraform.tfvars) for more information.
@@ -139,7 +139,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.23.8"                       # Kubernetes version
+cluster_version        = "1.23.9"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
@@ -147,9 +147,41 @@ cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster Virtual IP Address and Cloud Provider
-cluster_vip_version = "0.5.0"
+cluster_vip_version = "0.5.5"
 cluster_vip_ip      = "10.18.0.175"
 cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
+
+# Kubernetes - Load Balancer
+
+# Load Balancer Type
+cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
+
+# Load Balancer Addresses
+#
+# Examples for each provider can be found here:
+#
+#  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#
+#    kube-vip sample:
+#
+#      cluster_lb_addresses = [
+#        cidr-default: 192.168.0.200/29                      # CIDR-based IP range for use in the default Namespace
+#        range-development: 192.168.0.210-192.168.0.219      # Range-based IP range for use in the development Namespace
+#        cidr-finance: 192.168.0.220/29,192.168.0.230/29     # Multiple CIDR-based ranges for use in the finance Namespace
+#        cidr-global: 192.168.0.240/29                       # CIDR-based range which can be used in any Namespace
+#      ]
+#
+#    metallb sample:
+#
+#      cluster_lb_addresses = [
+#        192.168.10.0/24
+#        192.168.9.1-192.168.9.5
+#      ]
+#
+cluster_lb_addresses = [
+  range-global: 10.18.0.100-10.18.0.125
+]
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"
@@ -246,7 +278,23 @@ node_pools = {
     node_labels = {
       "workload.sas.com/class" = "stateless"
     }
-  }
+  },
+  singlestore = {
+    cpus    = 16
+    memory  = 131072
+    os_disk = 100
+    misc_disks = [
+      250,
+      250,
+      500,
+      500,
+    ]
+    count       = 3
+    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "singlestore"
+    }
+  },
 }
 
 # Jump server
@@ -269,6 +317,13 @@ nfs_memory    = 16384        # 16 GB
 nfs_disk_size = 500          # 500 GB
 nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 
+# Container Registry
+create_cr    = false         # Creation flag
+cr_num_cpu   = 4             # 4 CPUs
+cr_memory    = 8092          # 8 GB
+cr_disk_size = 250           # 250 GB
+cr_ip        = "10.18.0.13"  # Assigned values for static IPs
+
 # Postgres server
 #
 #   Suggested server specs shown below.
@@ -278,7 +333,7 @@ postgres_servers = {
     server_num_cpu         = 8                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = "10.18.0.13"            # Assigned values for static IPs
+    server_ip              = "10.18.0.14"            # Assigned values for static IPs
     server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
@@ -422,10 +477,45 @@ kubernetes_pod_subnet      : ""
 #   VIP IP : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "0.5.0"
+kubernetes_vip_version              : "0.5.5"
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
-kubernetes_vip_cloud_provider_range : ""
+
+# Kubernetes - Load Balancer
+
+#
+# Load Balancer Type
+#
+kubernetes_loadbalancer : "kube_vip" # Load Balancer accepted values [kube_vip,metallb]
+
+#
+# Load Balancer Addresses
+#
+# Examples for each load balancer type can be found here:
+#
+#  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#
+#    kube-vip sample:
+#
+#      kubernetes_loadbalancer_addresses :
+#        - "cidr-default: 192.168.0.200/29"                  # CIDR-based IP range for use in the default Namespace
+#        - "range-development: 192.168.0.210-192.168.0.219"  # Range-based IP range for use in the development Namespace
+#        - "cidr-finance: 192.168.0.220/29,192.168.0.230/29" # Multiple CIDR-based ranges for use in the finance Namespace
+#        - "cidr-global: 192.168.0.240/29"                   # CIDR-based range which can be used in any Namespace
+#
+#    metallb sample:
+#
+#      kubernetes_loadbalancer_addresses :
+#        - "192.168.10.0/24"
+#        - "192.168.9.1-192.168.9.5"
+#
+#  NOTE: If you are assigning a static IP using the loadBalancerIP value for your 
+#        load balancer controller service when using `metallb` that IP must fall
+#        within the address range you provide below. If you are using `kube_vip`
+#        you do not have this limitation.
+#
+kubernetes_loadbalancer_addresses : []
 
 # Kubernetes - Control Plane
 control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
@@ -462,6 +552,8 @@ node_labels:
   compute:
     - launcher.sas.com/prepullImage=sas-programming-environment
     - workload.sas.com/class=compute
+  singlestore:
+    - workload.sas.com/class=singlestore
   stateful:
     - workload.sas.com/class=stateful
   stateless:
@@ -475,6 +567,8 @@ node_taints:
     - workload.sas.com/class=cas:NoSchedule
   compute:
     - workload.sas.com/class=compute:NoSchedule
+  singlestore:
+    - workload.sas.com/class=singlestore:NoSchedule
   stateful:
     - workload.sas.com/class=stateful:NoSchedule
   stateless:
@@ -485,6 +579,9 @@ jump_ip : ""
 
 # NFS Server
 nfs_ip  : ""
+
+# Container Registry
+cr_ip   : ""
 
 # PostgreSQL Servers
 ```
@@ -532,7 +629,7 @@ NFS_CLIENT_CHART_VERSION: 4.0.17
 
 | Tool | Minimum Version |
 | ---: | ---: |
-| [Ansible](https://www.ansible.com/) | Core 2.12.5 |
-| [Terraform](https://www.terraform.io/) |1.2.0 |
-| [Docker](https://www.docker.com/) | 20.10.12 |
-| [Helm](https://helm.sh/) | v3.8.2 |
+| [Ansible](https://www.ansible.com/) | Core 2.13.4 |
+| [Terraform](https://www.terraform.io/) |1.3.20 |
+| [Docker](https://www.docker.com/) | 20.10.17 |
+| [Helm](https://helm.sh/) | v3.10.0 |

@@ -319,7 +319,7 @@ variable "cluster_pod_subnet" {
 
 variable "cluster_vip_version" {
   type    = string
-  default = "0.5.0"
+  default = "0.5.5"
 }
 
 variable "cluster_vip_ip" {

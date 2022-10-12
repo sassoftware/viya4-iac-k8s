@@ -19,7 +19,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on each system
 
 # Kubernetes - Cluster
-cluster_version        = "1.23.8"       # Kubernetes Version
+cluster_version        = "1.23.9"       # Kubernetes Version
 cluster_cni            = "calico"       # Kuberentes Container Network Interface (CNI)
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
@@ -27,7 +27,7 @@ cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
 cluster_domain         = ""             # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP and Cloud Provider
-cluster_vip_version = "0.5.0"
+cluster_vip_version = "0.5.5"
 cluster_vip_ip      = ""
 cluster_vip_fqdn    = ""
 
@@ -137,18 +137,25 @@ node_pools = {
 }
 
 # Jump server
-create_jump    = true          # Creation flag
-jump_num_cpu   = 4             # 4 CPUs
-jump_memory    = 8092          # 8 GB
-jump_disk_size = 100           # 100 GB
-jump_ip        = "10.12.50.30" # Assigned values for static IPs
+create_jump    = true # Creation flag
+jump_num_cpu   = 4    # 4 CPUs
+jump_memory    = 8092 # 8 GB
+jump_disk_size = 100  # 100 GB
+jump_ip        = ""   # Assigned values for static IPs
 
 # NFS server
-create_nfs    = true          # Creation flag
-nfs_num_cpu   = 8             # 8 CPUs
-nfs_memory    = 16384         # 16 GB
-nfs_disk_size = 500           # 500 GB
-nfs_ip        = "10.12.50.31" # Assigned values for static IPs
+create_nfs    = true  # Creation flag
+nfs_num_cpu   = 8     # 8 CPUs
+nfs_memory    = 16384 # 16 GB
+nfs_disk_size = 500   # 500 GB
+nfs_ip        = ""    # Assigned values for static IPs
+
+# Container Registry
+create_cr    = false # Creation flag
+cr_num_cpu   = 4     # 4 CPUs
+cr_memory    = 8092  # 8 GB
+cr_disk_size = 250   # 250 GB
+cr_ip        = ""    # Assigned values for static IPs
 
 # Postgres Servers
 postgres_servers = {
@@ -156,7 +163,7 @@ postgres_servers = {
     server_num_cpu         = 8                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = "10.12.50.32"           # Assigned values for static IPs
+    server_ip              = ""                      # Assigned values for static IPs
     server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED

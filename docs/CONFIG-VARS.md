@@ -65,13 +65,13 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | | These keys are applied to the OS and root users of your machines |
+| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | "~/.ssh" | These keys are applied to the OS and root users of your machines |
 
 #### Kubernetes Cluster
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
+| cluster_version        | Kubernetes version | string | "1.23.9" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
 | cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 | cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
@@ -82,9 +82,9 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_vip_version   | kube-vip version | string | "0.5.0" | Currently kube-vip is the only supported kubernetes vip provider. The minimal supported version is 0.5.0 |
-| cluster_vip_ip        | kube-vip IP address | string | | |
-| cluster_vip_fqdn       | kube-vip DNS | string | | |
+| cluster_vip_version   | kube-vip version | string | "0.5.5" | Currently kube-vip is the only supported kubernetes vip provider. The minimal supported version is 0.5.5 |
+| cluster_vip_ip        | kube-vip IP address | string | | IP address assigned to the FQDN value. You must access the cluster via the FQDN value supplied. |
+| cluster_vip_fqdn       | kube-vip DNS | string | | FQDN used in the creation of the kube config file. This file is used to access the cluster |
 
 #### Kubernetes Load Balancer
 
@@ -108,8 +108,8 @@ Node pools are a map of objects. They represent information about each pool type
 | count | Number of nodes | number | | Setting this variable creates nodes with dynamic IPs assigned from your network. Cannot be used with the `ip_addresses` field|
 | cpus | Number of CPUS cores | number | | |
 | memory | Memory in MB | number | | |
-| os_disk | Size of OS disk in GB | number | | |
-| misc_disk | Size of extra disks in GB | number | | |
+| os_disk | Size of OS disk in GB | number | | Operating system root disk. |
+| misc_disk | Size of extra disks in GB | number | | Miscellaneous disks used for local-storage storage class |
 | ip_addresses | List of static IP addresses used in creating control_plane nodes | list(string) |  | Setting this variable creates nodes with static ips assigned from this list. Cannot be used if the `count` field is being used |
 | node_taints |  | list(string) | | |
 | node_labels |  | map(string) | | |
@@ -325,21 +325,22 @@ Variables used to describe your machines.
 | enable_cgroup_v2 | Enable cgroup_v2 on your machines | bool | true | |
 | system_ssh_keys_dir | Directory holding public keys to be used on each system | string | "~/.ssh" | |
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
-| deployment_type | | string | | |
-| kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled **ONLY** change the prefix value above |
-| kubernetes_version | Kubernetes version | string | "1.23.8" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
-| kubernetes_upgrade_allowed | | bool | true | |
-| kubernetes_arch | | string | "{{ vm_arch }}" | |
+| deployment_type | Type of deploy the code will be deploying | string | "bare_metal" | Choices are: `bare_metal` or `vsphere` |
+| kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled **ONLY** change the `prefix` value above |
+| kubernetes_version | Kubernetes version | string | "1.23.9" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
+| kubernetes_upgrade_allowed | | bool | true | NOTE: Not currently used |
+| kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled **ONLY** change the `vm_arch` value above |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
-| kubernetes_vip_version | kube-vip version | string | "0.5.0" | |
+| kubernetes_vip_version | kube-vip version | string | "0.5.5" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_fqdn | kube-vip DNS | string | | |
-| kubernetes_vip_cloud_provider_range | kube-vip IP address range | string | | |
-| node_labels | Labels applied to nodes in your cluster | map(list(string)) | | |
-| node_taints | Taints applied to nodes in your cluster | map(list(string)) | | |
+| kubernetes_loadbalancer | Load balancer provider | string | "kube_vip" | Choices are: `kube_vip` or `metallb`
+| kubernetes_loadbalancer_addresses | Load balancer IP addresses | string | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
+| node_labels | Labels applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below |
+| node_taints | Taints applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below |
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 | jump_ip | Dynamic or static IP address that is assigned to your Jump Box | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
