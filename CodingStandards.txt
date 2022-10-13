@@ -28,8 +28,6 @@ For Terraform related files the standards are:
     ├── docs
     ├── examples
     ├── files
-    ├── locals.tf
-    ├── main.tf
     ├── modules
     │   ├── foo
     |   |   ├─ main.tf
@@ -41,9 +39,11 @@ For Terraform related files the standards are:
     |       ├─ locals.tf
     |       ├─ variables.tf
     |       └─ outputs.tf
+    ├── templates
+    ├── locals.tf
+    ├── main.tf
     ├── outputs.tf
     ├── provider.tf
-    ├── templates
     ├── variables.tf
     └── versions.tf
 
