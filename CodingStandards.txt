@@ -10,8 +10,7 @@ For Terraform related files the standards are:
   - Outputs defined live in the root outputs.yaml file for that element.
   
   - Locals defined live in the root locals.yaml file for that element.
-    * Locals are created when one is using a module, resources, or outputs
-      that require any extra logic.
+    * Locals are created when one is using a module, resources, or outputs that require any extra logic.
     * Locals hide the extra logic to keep the main code base more readable.
 
   - Modules defined live at the root level of the project in the modules directory.
