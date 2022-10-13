@@ -174,7 +174,8 @@ node_pools = {
     misc_disks = [
       150,
       150,
-    ]    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    ]    
+    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
     }
@@ -209,7 +210,7 @@ node_pools = {
     node_labels = {
       "workload.sas.com/class" = "stateless"
     }
-  }
+  },
   singlestore = {
     cpus    = 16
     memory  = 131072
