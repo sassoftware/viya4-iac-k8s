@@ -294,7 +294,7 @@ variable "cluster_domain" {
 
 variable "cluster_version" {
   type    = string
-  default = "1.23.12"
+  default = "1.23.8"
 }
 
 variable "cluster_cni" {
