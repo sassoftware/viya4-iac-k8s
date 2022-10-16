@@ -46,7 +46,7 @@ The tools in this repository can create systems as needed **only** if you are ru
 
 Regardless of which method you choose, the systems must meet the minimal requirements listed below:
 
-- Machines in your target environment are running **Ubuntu Linux LTS 20.04**
+- Machines in your target environment are running **Ubuntu Linux LTS 22.04**
 - Machines have a default user account with password-less `sudo` capabilities
 - At least 3 machines for the control plane nodes in your cluster
 - At least 6 machines for the nodes in your cluster
@@ -60,7 +60,7 @@ Regardless of which method you choose, the systems must meet the minimal require
 
 Deployment with vSphere requires a Linux image that can be used as the basis for your machines. This image requires the following minimal settings:
 
-- Ubuntu Linux LTS 20.04 minimal installation
+- Ubuntu Linux LTS 22.04 minimal installation
 - 2 CPUs
 - 4 GB memory
 - 8 GB disk thin provisioned
@@ -98,10 +98,10 @@ This project supports the following options for running:
 
 The following software is required to run the SAS Viya IaC tooling here on your local system:
 
-- [Terraform](https://www.terraform.io/downloads) - v.1.2.0
-- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - v2.12.5
-- [Docker](https://docs.docker.com/engine/install/) - v4.6.1
-- [Helm](https://helm.sh/docs/intro/install/) - v3.8.2
+- [Terraform](https://www.terraform.io/downloads) - v.1.3.2
+- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) - v2.13.4
+- [Docker](https://docs.docker.com/engine/install/) - v20.10.17
+- [Helm](https://helm.sh/docs/intro/install/) - v3.10.0
 
 #### Docker Requirements
 

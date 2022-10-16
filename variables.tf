@@ -248,7 +248,7 @@ variable "postgres_server_defaults" {
     server_memory          = 16384                   # 16 GiB
     server_disk_size       = 250                     # 250 GiB
     server_ip              = ""                      # Assigned values for static IPs
-    server_version         = 12                      # PostgreSQL version
+    server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     server_ssl_cert_file   = ""                      # PostgreSQL SSL certificate file
     server_ssl_key_file    = ""                      # PostgreSQL SSL key file
@@ -317,23 +317,33 @@ variable "cluster_pod_subnet" {
   default = "10.42.0.0/16"
 }
 
-variable "kube_vip_version" {
+variable "cluster_vip_version" {
   type    = string
-  default = "0.4.4"
+  default = "0.5.5"
 }
 
-variable "kube_vip_ip" {
+variable "cluster_vip_ip" {
   type    = string
   default = null
 }
 
-variable "kube_vip_dns" {
+variable "cluster_vip_fqdn" {
   type    = string
   default = null
 }
 
-variable "kube_vip_range" {
+variable "cluster_lb_type" {
   type    = string
+  default = "kube_vip"
+
+  validation {
+    condition     = contains(["kube_vip", "metallb"], lower(var.cluster_lb_type))
+    error_message = "ERROR: Valid values for the cluster_lb_type are: kube_vip, metallb"
+  }
+}
+
+variable "cluster_lb_addresses" {
+  type    = list(any)
   default = null
 }
 

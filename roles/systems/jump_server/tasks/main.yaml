@@ -3,12 +3,13 @@
 #       The current choices are:
 #
 #       - Ubuntu 20.04 LTS
+#       - Ubuntu 22.04 LTS
 #
 - name: Set owner and group for Ubuntu OS
   ansible.builtin.set_fact:
     owner: nobody
     group: nogroup
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -17,7 +18,7 @@
   ansible.builtin.package:
     name: nfs-common
     state: present
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update

@@ -1,1 +1,47 @@
-# Place Holder
+# NOTE: Should make this more generic for other OS types
+- name: Set owner and group for Ubuntu OS
+  ansible.builtin.set_fact:
+    owner: nobody
+    group: nogroup
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Create /mnt/sas/volumes directory
+  ansible.builtin.file:
+    path: /mnt/sas/volumes
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: 0777
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+#
+# Create local-static-provisioner items for later use
+#
+
+# Copy script
+- name: Copy link creation script
+  ansible.builtin.copy:
+    src: ./files/link_devs.sh
+    dest: /tmp/link_devs.sh
+    owner: root
+    group: root
+    mode: '0700'
+  tags:
+    - install
+
+# TODO: Add code here to add partitions for disks
+#       that are not going to be used for local-static
+#       storage class storage
+
+# Run script
+- name: Run link creation script
+  ansible.builtin.shell: |
+    /tmp/link_devs.sh
+  tags:
+    - install
