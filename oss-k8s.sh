@@ -316,6 +316,7 @@ for item in "${arguments[@]}"; do
     clean_up
     rm -rf "$TFSTATE" 2>&1 > /dev/null
     rm -rf "$TFSTATE.backup" 2>&1 > /dev/null
+    rm -rf $BASEDIR/ssl-cert-sas-*-pgsql.{key,pem} 2>&1 > /dev/null
     break
   fi
 done
