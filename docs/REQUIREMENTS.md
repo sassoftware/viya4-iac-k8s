@@ -1,6 +1,6 @@
 # Open Source Kubernetes Infrastructure Requirements for High Availability
 
-The items listed below are designed to create a Highly Available (HA) infrastructure when creating your cluster on bare-metal machines or in a vCenter/vSphere environment. All of these items are REQUIRED as listed.
+The items listed below are required for a Highly Available (HA) infrastructure when creating your Kubernetes cluster on physical machines or in a VMware vCenter/vSphere environment. All of these items are REQUIRED as listed.
 
 Table of Contents
 
@@ -10,38 +10,38 @@ Table of Contents
     - [VMware vSphere](#vmware-vsphere)
       - [Resources](#resources)
       - [Machine Template Requirements](#machine-template-requirements)
-    - [Bare-Metal](#bare-metal)
+    - [Physical Machines](#physical-machines)
   - [Network](#network)
     - [CIDR Block](#cidr-block)
     - [Static IP Addresses](#static-ip-addresses)
     - [Floating IP Addresses](#floating-ip-addresses)
   - [Examples](#examples)
-    - [vCenter/vSphere Sample `tfvars` File](#vcentervsphere-sample-tfvars-file)
-    - [Bare Metal Sample `inventory` File](#bare-metal-sample-inventory-file)
+    - [vCenter/vSphere Sample tfvars File](#vcentervsphere-sample-tfvars-file)
+    - [Physical Machine Sample Inventory File](#physical-machine-sample-inventory-file)
   - [Deployment](#deployment)
   - [Third-Party Tools](#third-party-tools)
 
 ## Operating System
 
-An Ubuntu Linux operating system is required for the tasks associated with standing up infrastructure using the tools in this repository.
+An Ubuntu Linux operating system is required for the machine that uses the tools in this repository to perform the tasks associated with standing up infrastructure for a SAS Viya deployment. 
 
-| OS | Description |
+| Operating System | Description |
 | --- | --- |
 | [Ubuntu 20.04 LTS](https://releases.ubuntu.com/20.04/) | You must have a user account and password with privileges that enable unprompted `sudo`. You must also have a shared "private/public" SSH key pair to use with each system. These are required for the Ansible tools that are described below. |
 
 ## Machines
 
-The following table lists the minimum machine requirements that are needed to support a Kubernetes cluster and supporting elements for a SAS Viya 4 software installation. These machines must all be on the same network. Each machine should have a DNS entry associated with its assigned IP address; this is not required, but it makes setup easier.
+The following table lists the minimum machine requirements that are needed to support a Kubernetes cluster and supporting elements for a SAS Viya 4 software installation. These machines must be running a recent version of Linux and must all be on the same network. Each machine should have a DNS entry associated with its assigned IP address; this is not required, but it makes setup easier.
 
-**NOTE**: The PostgreSQL server described in the following table is listed as 1 machine. If you plan to use the internal PostgreSQL server for SAS Viya, this server is not required, but you will need to adjust the capacity of your compute nodes in order to ensure that they can handle the resource requirements of the postgres processes.
+**NOTE**: The PostgreSQL server that is described in the following table is listed as 1 machine. If you plan to use the internal PostgreSQL server for SAS Viya, this server is not required, but you will need to adjust the capacity of your compute nodes in order to ensure that they can handle the resource requirements of the PostgreSQL processes.
 
 | Machine | CPU | Memory | Disk | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | --- | ---: |
-| **Control Plane** | 2 | 4 GB | 100 GB | You must have an odd number of nodes > 3 in order to provide high availability (HA) for the cluster | 1 |
-| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. This varies and suggested capacities and info can be found in the sample files | 3 |
-| **Jump Server** | 4 | 8 GB | 100 GB | Bastion box used to access NFS mounts, share data, etc. | 1 |
-| **NFS Server** | 8 | 16 GB | 500 GB | Required server used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster | 1 |
-| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment | 1..n |
+| **Control Plane** | 2 | 4 GB | 100 GB | You must have an odd number of nodes, 3 or more, in order to provide high availability (HA) for the cluster. | 1 |
+| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. The number of machines varies, depending on multiple factors. Suggested capacities and information can be found in the sample files. | 3 |
+| **Jump Server** | 4 | 8 GB | 100 GB | Bastion box that is used to access NFS mounts, share data, etc. | 1 |
+| **NFS Server** | 8 | 16 GB | 500 GB | Required server that is used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster. | 1 |
+| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment. | 1..n |
 
 ### VMware vSphere
 
@@ -56,57 +56,60 @@ In order to leverage vSphere, the following items are required for use in your t
 |vsphere_datastore | Name of the vSphere data store to use for the VMs |
 |vsphere_resource_pool | Name of the vSphere resource pool to use for the VMs |
 |vsphere_folder | Name of the vSphere folder to store the VMs |
-|vsphere_template | Name of the VM template to clone to create VMs for the cluster |
+|vsphere_template | Name of the VM template to use to create VMs for the cluster |
 |vsphere_network | Name of the vSphere network |
 
 #### Machine Template Requirements
 
-The current repository supports the provisioning of vSphere VMs if all the following are true:
+The current repository supports the provisioning of vSphere VMs. The following table describes storage-related requirements:
 
 | Requirement | Description |
 | --- | --- |
-| Disk | The `root` partition `/` must be on `/dev/sd2` |
-| Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements listed previously |
+| Disk | The `root` partition `/` must be on `/dev/sd2`. |
+| Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements that were listed previously. |
 
-### Bare-Metal
+### Physical Machines
 
-For bare-metal provisioning, you must set up ALL systems with the required elements listed previously. These systems must have full network access to each other.
+In order to provision physical machines for a SAS Viya deployment, you must set up ALL systems with the required elements that were listed previously. These systems must have full network access to each other.
 
 ## Network
 
-All systems need routable connectivity to each other.
+All systems require routable connectivity to each other.
 
 ### CIDR Block
 
-The CIDR block for your infrastructure must be able to handle at least the number machines described previously, as well as the virtual IP address that is used for the cluster entrypoint and the cloud provider IP address source range that is needed to support the LoadBalancer services that are created.
+The CIDR block for your infrastructure must be able to accommodate at least the number of machines described in [Machines](#machines). In addition, the CIDR block must have the following:
 
-The following section outlines recommendations for IP assignments. All machines can have static or floating IPs or a combination.
+- the virtual IP address for the cluster entrypoint 
+- the cloud provider IP address source range that is required to support the LoadBalancer services that are created
+
+The following section outlines recommendations for IP address assignments. All machines can have static or floating IP addresses or a combination of these.
 
 ### Static IP Addresses
 
-These IP addresses are part of your network and will be assigned to the elements in this deployment.
+Static IP addresses must be part of your network and will be assigned to the following components that are deployed:
 
 - Kubernetes cluster virtual IP address
-- LoadBalancer IP address
-- Jump Box
-- NFS Server
-- Postgres Server
+- Load balancer IP address
+- Jump server
+- NFS server
+- PostgreSQL server
 
 ### Floating IP Addresses
 
-These IP addresses are part of your network but are not assigned. The following items are required:
+These IP addresses are part of your network but are not assigned. Floating IP addresses are required for the following components:
 
 - Control Plane
-- Nodes
-- Floating LoadBalancer IP addresses for use with additional load balancers that are created
+- Cluster nodes
+- Additional load balancers that are created
 
 ## Examples
 
-This section provides an example configuration based on the bare-metal inventory and vSphere example provided in this repository.
+This section provides an example configuration based on the physical-machine and vSphere inventory files that are provided in this repository. You are expected to modify the inventory files to match your environment and your requirements.
 
-### vCenter/vSphere Sample `tfvars` File
+### vCenter/vSphere Sample tfvars File
 
-If you are creating virtual machines with vCenter or vSphere, the `terraform.tfvars` file that you create will generate the `inventory` and `ansible-vars.yaml` files that are needed for this repository.
+If you are creating virtual machines with vCenter or vSphere, the terraform.tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
 
 For this example, the network setup is as follows:
 
@@ -139,7 +142,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.23.8"                       # Kubernetes version
+cluster_version        = "1.23.8"                        # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
@@ -162,7 +165,7 @@ control_plane_ssh_key_name = "cp_ssh"
 #
 #   * control_plane - Having an odd number 3/5/7... ensures
 #                     HA while using kube-vip
-#   * system        - System node pool to run misc pods, etc
+#   * system        - System node pool to run miscellaneous pods
 #   * cas           - CAS Nodes
 #   * <node type>   - Any number of node types with unique names.
 #                     These are typically: compute, stateful, and
@@ -288,13 +291,13 @@ postgres_servers = {
 }
 ```
 
-### Bare Metal Sample `inventory` File
+### Physical Machine Sample Inventory File
 
-With this example, because you are using bare-metal machines or pre-configured VMs, you will need to populate the `inventory` file along with the `ansible-vars.yaml` file for your environment using the example settings provided below.
+With this example, because you are using physical (bare-metal) machines or pre-configured VMs, you must update the inventory file and the ansible-vars.yaml file for your environment, using the settings provided below as examples.
 
-This example is using the `192.168.0.0/16` CIDR block for the cluster. The cluster's prefix is `viya4-oss`. The cluster virtual IP address is `192.168.0.1`.
+This example is using the `192.168.0.0/16` CIDR block for the cluster. The cluster prefix is `viya4-oss`. The cluster virtual IP address is `192.168.0.1`.
 
-Refer to the [inventory](../examples/bare-metal/inventory) file for more information.
+Refer to the [inventory file](../examples/bare-metal/inventory) for more information.
 
 ```yaml
 #
@@ -368,7 +371,7 @@ postgres_server_ssl=off                 # NOTE: Values - [on,off]
 postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
 postgres_administrator_password="Un33d2ChgM3n0W!"
 
-# NOTE: Add entries here for each postgres server listed previously
+# NOTE: Add entries here for each PostgreSQL server listed previously
 [postgres:children]
 viya4_oss_default_pgsql
 
@@ -434,9 +437,9 @@ control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
 
 # Labels/Taints
 #
-#   The label names match the host names to apply these items
-#   If the node names do not match you'll have to apply these
-#   taints/labels by hand.
+#   The label names match the host names to apply these items.
+#   If the node names do not match, you'll have to apply these
+#   taints/labels manually.
 #
 #   The format the label block is:
 #
@@ -493,7 +496,7 @@ nfs_ip  : ""
 
 ## Deployment
 
-The following items **MUST** be added to your `ansible-vars.yaml` file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository.
+The following items **MUST** be added to your ansible-vars.yaml file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository to deploy SAS Viya:
 
 ```yaml
 ## 3rd Party
@@ -504,7 +507,7 @@ INGRESS_NGINX_CONFIG:
     service:
       externalTrafficPolicy: Cluster
       # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
-      loadBalancerSourceRanges: [] # Not supported on open source kubernetes
+      loadBalancerSourceRanges: [] # Not supported on open source Kubernetes
       annotations:
 
 ### Metrics Server
@@ -532,7 +535,9 @@ NFS_CLIENT_CHART_VERSION: 4.0.16
 
 ## Third-Party Tools
 
-| Tool | Minimum Version |
+The third-party applications that are listed in the following table are supported for the deployment of SAS Viya into a cluster configured by viya4-iac-kubernetes:
+
+| Application | Minimum Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.12.5 |
 | [Terraform](https://www.terraform.io/) |1.2.0 |
