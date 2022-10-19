@@ -2,9 +2,8 @@
 
 ## Release Notes
 
-- The current implementation of the default storage class, along with its usage of an NFS server as its
-backing store, might cause problems with the SAS Viya software and its information catalogue component. This
-known problem is being addressed with [this issue](https://github.com/sassoftware/viya4-iac-k8s/issues/6). As soon as this problem is resolved, this banner will be removed and documentation will be updated to direct you in activating the required storage class.
+- A problem with the implementation of the default storage class and its usage of an NFS server as its
+backing store has been addressed with [this issue](https://github.com/sassoftware/viya4-iac-k8s/issues/6).
 
 ## Overview
 
@@ -24,7 +23,7 @@ To learn about all phases and options of the SAS Viya deployment process, see [G
 
 Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya in your cloud environment. For more information about SAS Viya requirements and documentation for the deployment process, refer to the [SAS Viya Operations Guide](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
 
-This project supports infrastructure that is built on **physical machines** ("bare metal") or on **VMware vSphere or vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Microsoft Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
+This project supports infrastructure that is built on **physical machines** ("bare metal" machines or Linux VMs) or on **VMware vSphere or vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Microsoft Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
 
 ## Prerequisites
 
@@ -46,7 +45,7 @@ The tools in this repository can create systems as needed **only** if you are ru
 
 Regardless of which method you choose, the machines in your deployment must meet the minimal requirements listed below:
 
-- Machines in your target environment are running **Ubuntu Linux LTS 20.04**
+- Machines in your target environment are running **Ubuntu Linux LTS 20.04** or **22.04**
 - Machines have a default user account with password-less `sudo` capabilities
 - At least 3 machines for the control plane nodes in your cluster
 - At least 6 machines for the application nodes in your cluster
@@ -62,7 +61,7 @@ Regardless of which method you choose, the machines in your deployment must meet
 
 Deployment with vSphere requires a Linux image that can be used as the basis for your machines. This image requires the following minimal settings:
 
-- Ubuntu Linux LTS 20.04 minimal installation
+- Ubuntu Linux LTS 20.04 or 22.04 minimal installation
 - 2 CPUs
 - 4 GB of memory
 - 8 GB disk, thin provisioned
