@@ -38,7 +38,7 @@ The following table lists the minimum machine requirements that are needed to su
 | Machine | CPU | Memory | Disk | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | --- | ---: |
 | **Control Plane** | 2 | 4 GB | 100 GB | You must have an odd number of nodes, 3 or more, in order to provide high availability (HA) for the cluster. | 1 |
-| **Nodes** | ?? | ?? GB | ?? GB | Nodes in the Kubernetes cluster. The number of machines varies, depending on multiple factors. Suggested capacities and information can be found in the sample files. | 3 |
+| **Nodes** | xx | xx GB | xx GB | Nodes in the Kubernetes cluster. The number of machines varies, depending on multiple factors. Suggested capacities and information can be found in the sample files. | 3 |
 | **Jump Server** | 4 | 8 GB | 100 GB | Bastion box that is used to access NFS mounts, share data, etc. | 1 |
 | **NFS Server** | 8 | 16 GB | 500 GB | Required server that is used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster. | 1 |
 | **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment. | 1..n |
@@ -150,10 +150,41 @@ cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster Virtual IP Address and Cloud Provider
-kube_vip_version   = "0.4.4"
-kube_vip_ip        = "10.18.0.175"
-kube_vip_dns       = "vm-dev-oss-vip.sample.domain.foo.com"
-kube_vip_range     = "10.18.0.100-10.18.0.125"
+cluster_vip_version = "0.5.5"
+cluster_vip_ip      = "10.18.0.175"
+cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
+
+# Kubernetes - Load Balancer
+
+# Load Balancer Type
+cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
+
+# Load Balancer Addresses
+#
+# Examples for each provider can be found here:
+#
+#  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#
+#    kube-vip sample:
+#
+#      cluster_lb_addresses = [
+#        cidr-default: 192.168.0.200/29                      # CIDR-based IP range for use in the default Namespace
+#        range-development: 192.168.0.210-192.168.0.219      # Range-based IP range for use in the development Namespace
+#        cidr-finance: 192.168.0.220/29,192.168.0.230/29     # Multiple CIDR-based ranges for use in the finance Namespace
+#        cidr-global: 192.168.0.240/29                       # CIDR-based range which can be used in any Namespace
+#      ]
+#
+#    metallb sample:
+#
+#      cluster_lb_addresses = [
+#        192.168.10.0/24
+#        192.168.9.1-192.168.9.5
+#      ]
+#
+cluster_lb_addresses = [
+  range-global: 10.18.0.100-10.18.0.125
+]
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"
@@ -250,7 +281,23 @@ node_pools = {
     node_labels = {
       "workload.sas.com/class" = "stateless"
     }
-  }
+},
+  singlestore = {
+    cpus    = 16
+    memory  = 131072
+    os_disk = 100
+    misc_disks = [
+      250,
+      250,
+      500,
+      500,
+    ]
+    count       = 3
+    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "singlestore"
+    }
+  },
 }
 
 # Jump server
@@ -273,7 +320,14 @@ nfs_memory    = 16384        # 16 GB
 nfs_disk_size = 500          # 500 GB
 nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 
-# Postgres server
+# Container Registry
+create_cr    = false         # Creation flag
+cr_num_cpu   = 4             # 4 CPUs
+cr_memory    = 8092          # 8 GB
+cr_disk_size = 250           # 250 GB
+cr_ip        = "10.18.0.13"  # Assigned values for static IPs
+
+# PostgreSQL server
 #
 #   Suggested server specs shown below.
 #
@@ -283,7 +337,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.18.0.13"            # Assigned values for static IPs
-    server_version         = 12                      # PostgreSQL version
+    server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
@@ -426,7 +480,7 @@ kubernetes_pod_subnet      : ""
 #   VIP IP : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "0.4.4"
+kubernetes_vip_version              : "0.5.5"
 kubernetes_vip_interface            : ""
 kubernetes_vip_ip                   : ""
 kubernetes_vip_loadbalanced_dns     : ""
@@ -530,7 +584,7 @@ METRICS_SERVER_CONFIG:
 ### NFS Subdir External Provisioner - SAS default storage class
 # Updates to support open source Kubernetes 
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
-NFS_CLIENT_CHART_VERSION: 4.0.16
+NFS_CLIENT_CHART_VERSION: 4.0.17
 ```
 
 ## Third-Party Tools
@@ -539,7 +593,7 @@ The third-party applications that are listed in the following table are supporte
 
 | Application | Minimum Version |
 | ---: | ---: |
-| [Ansible](https://www.ansible.com/) | Core 2.12.5 |
-| [Terraform](https://www.terraform.io/) |1.2.0 |
-| [Docker](https://www.docker.com/) | 20.10.12 |
-| [Helm](https://helm.sh/) | v3.8.2 |
+| [Ansible](https://www.ansible.com/) | Core 2.13.4 |
+| [Terraform](https://www.terraform.io/) |1.3.2 |
+| [Docker](https://www.docker.com/) | 20.10.17 |
+| [Helm](https://helm.sh/) | 3.10.0 |
