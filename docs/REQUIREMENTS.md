@@ -1,23 +1,23 @@
 # Open Source Kubernetes Infrastructure Requirements for High Availability
 
-The items listed below are required for a Highly Available (HA) infrastructure when creating your Kubernetes cluster on physical machines or in a VMware vCenter/vSphere environment. All of these items are REQUIRED as listed.
+The items listed below are required for a Highly Available (HA) infrastructure when creating your Kubernetes cluster on physical machines, on generic Linux VMs, or in a VMware vCenter/vSphere environment. All of these items are REQUIRED as listed.
 
 Table of Contents
 
 - [Open Source Kubernetes Infrastructure Requirements for High Availability](#open-source-kubernetes-infrastructure-requirements-for-high-availability)
   - [Operating System](#operating-system)
   - [Machines](#machines)
-    - [VMware vSphere](#vmware-vsphere)
+    - [VMware vSphere or vCenter](#vmware-vsphere-or-vcenter)
       - [Resources](#resources)
       - [Machine Template Requirements](#machine-template-requirements)
-    - [Physical Machines](#physical-machines)
+    - [Physical Machines or Linux VMs](#physical-machines-or-linux-vms)
   - [Network](#network)
     - [CIDR Block](#cidr-block)
     - [Static IP Addresses](#static-ip-addresses)
     - [Floating IP Addresses](#floating-ip-addresses)
   - [Examples](#examples)
     - [vCenter/vSphere Sample tfvars File](#vcentervsphere-sample-tfvars-file)
-    - [Physical Machine Sample Inventory File](#physical-machine-sample-inventory-file)
+    - [Physical Machine or VM Sample Inventory File](#physical-machine-or-vm-sample-inventory-file)
   - [Deployment](#deployment)
   - [Third-Party Tools](#third-party-tools)
 
@@ -43,9 +43,9 @@ The following table lists the minimum machine requirements that are needed to su
 | **NFS Server** | 8 | 16 GB | 500 GB | Required server that is used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster. | 1 |
 | **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment. | 1..n |
 
-### VMware vSphere
+### VMware vSphere or vCenter
 
-In order to leverage vSphere, the following items are required for use in your tfvars file. You also need Administrator access on vSphere.
+In order to leverage vSphere or vCenter, the following items are required for use in your tfvars file. You also need Administrator access on vSphere or vCenter.
 
 #### Resources
 
@@ -68,7 +68,7 @@ The current repository supports the provisioning of vSphere VMs. The following t
 | Disk | The `root` partition `/` must be on `/dev/sd2`. |
 | Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements that were listed previously. |
 
-### Physical Machines
+### Physical Machines or Linux VMs
 
 In order to provision physical machines for a SAS Viya deployment, you must set up ALL systems with the required elements that were listed previously. These systems must have full network access to each other.
 
@@ -291,9 +291,9 @@ postgres_servers = {
 }
 ```
 
-### Physical Machine Sample Inventory File
+### Physical Machine or VM Sample Inventory File
 
-With this example, because you are using physical (bare-metal) machines or pre-configured VMs, you must update the inventory file and the ansible-vars.yaml file for your environment, using the settings provided below as examples.
+With this example, because you are using physical (bare-metal) machines or generic Linux VMs, you must update the inventory file and the ansible-vars.yaml file for your environment, using the settings provided below as examples.
 
 This example is using the `192.168.0.0/16` CIDR block for the cluster. The cluster prefix is `viya4-oss`. The cluster virtual IP address is `192.168.0.1`.
 
@@ -441,14 +441,14 @@ control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
 #   If the node names do not match, you'll have to apply these
 #   taints/labels manually.
 #
-#   The format the label block is:
+#   The format for the label block is:
 #
 #       node_labels:
 #         <node name pattern>:
 #           - <label>
 #           - <label>
 #
-#       The format the taint block is:
+#       The format for the taint block is:
 #
 #       node_taints:
 #         <node name pattern>:
