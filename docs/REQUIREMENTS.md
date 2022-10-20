@@ -518,7 +518,7 @@ kubernetes_loadbalancer : "kube_vip" # Load Balancer accepted values [kube_vip,m
 kubernetes_loadbalancer_addresses : []
 
 # Kubernetes - Control Plane
-control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
+control_plane_ssh_key_name : "cp_ssh"
 
 # Labels/Taints
 #
