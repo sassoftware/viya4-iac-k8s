@@ -599,7 +599,7 @@ INGRESS_NGINX_CONFIG:
     service:
       externalTrafficPolicy: Cluster
       # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
-      loadBalancerSourceRanges: [] # Not supported on open source kubernetes
+      loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
 ### Metrics Server
