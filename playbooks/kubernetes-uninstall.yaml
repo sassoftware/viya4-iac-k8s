@@ -7,6 +7,7 @@
   roles:
     - { role: kubernetes/node/removal }
 
+# Control plane
 - hosts: k8s_control_plane
   become: true
   become_user: root

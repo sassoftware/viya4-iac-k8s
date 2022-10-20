@@ -6,7 +6,7 @@
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 #
-- name: Setting up default storage for cluster using nfs-subdir-external-provisioner 
+- name: Setting up default storage for the cluster using nfs-subdir-external-provisioner 
   kubernetes.core.helm:
     name: "{{ NFS_CLIENT_NAME }}"
     namespace: "{{ NFS_CLIENT_NAMESPACE }}"

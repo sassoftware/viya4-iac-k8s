@@ -12,7 +12,8 @@ Supported configuration variables are listed in the tables below.  All variables
       - [vSphere](#vsphere)
       - [Systems](#systems)
       - [Kubernetes Cluster](#kubernetes-cluster)
-      - [Kubernetes Cluster VIP and Cloud Provider](#kubernetes-cluster-vip-and-cloud-provider)
+      - [Kubernetes Cluster VIP](#kubernetes-cluster-vip)
+      - [Kubernetes Load Balancer](#kubernetes-load-balancer)
       - [Control Plane](#control-plane)
       - [Node Pools](#node-pools)
       - [Jump Server](#jump-server)
@@ -64,27 +65,33 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | | These keys are applied to the OS and root users of your machines |
+| system_ssh_keys_dir | Directory holding public keys to be used on each system | string | "~/.ssh" | These keys are applied to the OS and root users of your machines |
 
 #### Kubernetes Cluster
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
-cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
-cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
-cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
-cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
-cluster_domain         | Cluster domain suffix for DNS | string | | |
+| cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6) |
+| cluster_cni            | Kubernetes Container Network Interface (CNI) | string | "calico" | |
+| cluster_cri            | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
+| cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
+| cluster_pod_subnet     | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
+| cluster_domain         | Cluster domain suffix for DNS | string | | |
 
-#### Kubernetes Cluster VIP and Cloud Provider
+#### Kubernetes Cluster VIP
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-kube_vip_version   | kube-vip version | string | "0.4.4" | The minimal supported version is 0.4.4 |
-kube_vip_ip        | kube-vip IP address | string | | |
-kube_vip_dns       | kube-vip DNS | string | | |
-kube_vip_range     | kube-vip IP address range | string | | |
+| cluster_vip_version   | kube-vip version | string | "0.5.5" | Currently kube-vip is the only supported kubernetes vip provider. The minimal supported version is 0.5.5 |
+| cluster_vip_ip        | kube-vip IP address | string | | IP address assigned to the FQDN value. You must access the cluster via the FQDN value supplied. |
+| cluster_vip_fqdn       | kube-vip DNS | string | | FQDN used in the creation of the kube config file. This file is used to access the cluster |
+
+#### Kubernetes Load Balancer
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: `kube_vip`, `metallb` |
+| cluster_lb_addresses | IP addresses used by the load balancer | list | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
 
 #### Control Plane
 
@@ -101,7 +108,8 @@ Node pools are a map of objects. They represent information about each pool type
 | count | Number of nodes | number | | Setting this variable creates nodes with dynamic IPs assigned from your network. Cannot be used with the `ip_addresses` field|
 | cpus | Number of CPUS cores | number | | |
 | memory | Memory in MB | number | | |
-| disk | Size of disk in GB | number| | |
+| os_disk | Size of OS disk in GB | number | | Operating system root disk. |
+| misc_disk | Size of extra disks in GB | number | | Miscellaneous disks used for local-storage storage class |
 | ip_addresses | List of static IP addresses used in creating control_plane nodes | list(string) |  | Setting this variable creates nodes with static ips assigned from this list. Cannot be used if the `count` field is being used |
 | node_taints |  | list(string) | | |
 | node_labels |  | map(string) | | |
@@ -136,7 +144,7 @@ node_pools = {
   control_plane = {
     cpus        = 2
     memory      = 4096
-    disk        = 100
+    os_disk     = 100
     ip_addresses = [
       "192.168.7.21",
       "192.168.7.22",
@@ -152,7 +160,7 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 16384
-    disk        = 100
+    os_disk     = 100
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system" # REQUIRED LABEL - DO NOT REMOVE
@@ -162,7 +170,11 @@ node_pools = {
     count       = 3
     cpus        = 16
     memory      = 131072
-    disk        = 350
+    os_disk     = 350
+    misc_disks = [
+      150,
+      150,
+    ]    
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
@@ -172,7 +184,7 @@ node_pools = {
     count       = 1
     cpus        = 16
     memory      = 131072
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
       "workload.sas.com/class"        = "compute"
@@ -183,7 +195,7 @@ node_pools = {
     count       = 1
     cpus        = 8
     memory      = 32768
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateful"
@@ -193,12 +205,28 @@ node_pools = {
     count       = 2
     cpus        = 8
     memory      = 32768
-    disk        = 100
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateless"
     }
-  }
+  },
+  singlestore = {
+    cpus    = 16
+    memory  = 131072
+    os_disk = 100
+    misc_disks = [
+      250,
+      250,
+      500,
+      500,
+    ]
+    count       = 3
+    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "singlestore"
+    }
+  },
 }
 ```
 
@@ -262,7 +290,7 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 **NOTES**:
 
 1. If you set `server_ssl` to on, and you do not define either `server_ssl_cert_file` or `server_ssl_cert_file` the system's default SSL certificate and key will be used instead. By default, on Ubuntu systems we create a copy of those files and name them `ssl-cert-sas-${PG_HOST}.pem` and `ssl-cert-sas-${PG_HOST}.key`
-    * The Ansible tasks will take care of copying the certificate and key from the Postgres VM into your local workspace directory
+    - The Ansible tasks will take care of copying the certificate and key from the Postgres VM into your local workspace directory
 2. If you are planning on using the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a Viya deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls), ensure in the viya4-deployment ansible-vars.yaml the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable points to a directory that contains the `server_ssl_cert_file`.
 
 Sample:
@@ -275,7 +303,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = ""                      # Assigned values for static IP addresses - REQUIRED
-    server_version         = 12                      # PostgreSQL version
+    server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
@@ -298,22 +326,22 @@ Variables used to describe your machines.
 | enable_cgroup_v2 | Enable cgroup_v2 on your machines | bool | true | |
 | system_ssh_keys_dir | Directory holding public keys to be used on each system | string | "~/.ssh" | |
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
-| deployment_type | | string | | |
-| kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled **ONLY** change the prefix value above |
+| deployment_type | Type of deploy the code will be deploying | string | "bare_metal" | Choices are: `bare_metal` or `vsphere` |
+| kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled **ONLY** change the `prefix` value above |
 | kubernetes_version | Kubernetes version | string | "1.23.8" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/) |
-| kubernetes_upgrade_allowed | | bool | true | |
-| kubernetes_arch | | string | "{{ vm_arch }}" | |
+| kubernetes_upgrade_allowed | | bool | true | NOTE: Not currently used |
+| kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled **ONLY** change the `vm_arch` value above |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
-| kubernetes_vip_version | kube-vip version | string | "0.4.4" | |
-| kubernetes_vip_interface | kube-vip interface | string | | |
+| kubernetes_vip_version | kube-vip version | string | "0.5.5" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
-| kubernetes_vip_loadbalanced_dns | kube-vip DNS | string | | |
-| kubernetes_vip_cloud_provider_range | kube-vip IP address range | string | | |
-| node_labels | Labels applied to nodes in your cluster | map(list(string)) | | |
-| node_taints | Taints applied to nodes in your cluster | map(list(string)) | | |
+| kubernetes_vip_fqdn | kube-vip DNS | string | | |
+| kubernetes_loadbalancer | Load balancer provider | string | "kube_vip" | Choices are: `kube_vip` or `metallb`
+| kubernetes_loadbalancer_addresses | Load balancer IP addresses | string | [] | Values change depending on load balancer selected. [Link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) to kube-vip load balancer addresses. [Link](https://metallb.universe.tf/configuration/#layer-2-configuration) to metallb load balancer addresses. |
+| node_labels | Labels applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below |
+| node_taints | Taints applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below |
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 | jump_ip | Dynamic or static IP address that is assigned to your Jump Box | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
@@ -365,7 +393,7 @@ This inventory file represents the machines you will be using in your kubernetes
 
 ## Storage
 
-An NFS server is setup by default. This is a required machine as it's used as backing storage for the `default` storage class created. Information on setting up that machine is listed [here](#NFSServer)
+An NFS server is setup by default. This is a required machine as it's used as backing storage for the `default` storage class created. Information on setting up that machine is listed [here](#nfs-server)
 
 ## PostgreSQL Servers
 
@@ -390,17 +418,17 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | :--- | ---: | ---: | ---: | ---: |
 | administrator_login | The administrator login for the PostgreSQL server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
 | administrator_password | The password associated with the administrator_login for the PostgreSQL server | string | "my$up3rS3cretPassw0rd" |  |
-| server_version | The version of the  PostgreSQL server instance | string | "11" | Supported values are 11 and 12 |
+| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [Viya 4 Administration Guide](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for SAS Viya. |
 | ssl_enforcement_enabled | Enforce SSL on connections to the PostgreSQL database | bool | true | |
 
-Here is an example of the `postgres_servers` variable with the `default` entry only overriding the `administrator_password` parameter and the `cps` entry overriding all of the parameters:
+Here is an example of the `postgres_servers` variable with the `default` entry only overriding the `administrator_password` parameter and the `another-server` entry overriding all of the parameters:
 
 ```terraform
 postgres_servers = {
   default = {
     administrator_password       = "D0ntL00kTh1sWay"
   },
-  another-server = {
+  another_server = {
     machine_type                           = "db-custom-8-30720"
     storage_gb                             = 10
     backups_enabled                        = true

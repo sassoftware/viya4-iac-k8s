@@ -1,6 +1,0 @@
----
-- hosts: localhost
-  connection: local
-  roles: 
-    - { role: k8s-metallb }
-  run_once: true

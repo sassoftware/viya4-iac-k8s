@@ -3,7 +3,7 @@
   ansible.builtin.package:
     name: nfs-common
     state: latest
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update

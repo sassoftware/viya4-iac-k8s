@@ -9,7 +9,7 @@ certificatesDir: /etc/kubernetes/pki
 kubernetesVersion: v{{ kubernetes_version }}
 apiServer:
   certSANs:
-  - "{{ kubernetes_vip_loadbalanced_dns }}"
+  - "{{ kubernetes_vip_fqdn }}"
   - "{{ kubernetes_vip_ip }}"
 {% for cp_host in groups["k8s_control_plane"] %}
   - "{{hostvars[cp_host]['ansible_fqdn']}}"
@@ -20,7 +20,7 @@ apiServer:
     #       for metrics-server. Need to verify
     authorization-mode: Node,RBAC
     enable-aggregator-routing: "true"
-controlPlaneEndpoint: "{{ kubernetes_vip_loadbalanced_dns }}:6443"
+controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
 networking:
   serviceSubnet: "{{ kubernetes_service_subnet }}"
   podSubnet: "{{ kubernetes_pod_subnet }}"

@@ -114,9 +114,9 @@ If you are creating virtual machines with vCenter or vSphere, the terraform.tfva
 For this example, the network setup is as follows:
 
 ```text
-CIDR Range       : 10.18.0.0/16
-Virtual IP       : 10.18.0.175
-LoadBalanced IPs : 10.18.0.100-10.18.0.125
+CIDR Range        : 10.18.0.0/16
+Virtual IP        : 10.18.0.175
+Load Balancer IPs : 10.18.0.100-10.18.0.125
 ```
 
 Refer to the file [terraform.tfvars](../examples/vsphere/terraform.tfvars) for more information.
@@ -281,7 +281,7 @@ node_pools = {
     node_labels = {
       "workload.sas.com/class" = "stateless"
     }
-},
+  },
   singlestore = {
     cpus    = 16
     memory  = 131072
@@ -336,7 +336,7 @@ postgres_servers = {
     server_num_cpu         = 8                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = "10.18.0.13"            # Assigned values for static IPs
+    server_ip              = "10.18.0.14"            # Assigned values for static IPs
     server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
@@ -521,7 +521,7 @@ kubernetes_loadbalancer : "kube_vip" # Load Balancer accepted values [kube_vip,m
 kubernetes_loadbalancer_addresses : []
 
 # Kubernetes - Control Plane
-control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
+control_plane_ssh_key_name : "cp_ssh"
 
 # Labels/Taints
 #
@@ -555,6 +555,8 @@ node_labels:
   compute:
     - launcher.sas.com/prepullImage=sas-programming-environment
     - workload.sas.com/class=compute
+  singlestore:
+    - workload.sas.com/class=singlestore
   stateful:
     - workload.sas.com/class=stateful
   stateless:
@@ -568,6 +570,8 @@ node_taints:
     - workload.sas.com/class=cas:NoSchedule
   compute:
     - workload.sas.com/class=compute:NoSchedule
+  singlestore:
+    - workload.sas.com/class=singlestore:NoSchedule
   stateful:
     - workload.sas.com/class=stateful:NoSchedule
   stateless:
@@ -578,6 +582,9 @@ jump_ip : ""
 
 # NFS Server
 nfs_ip  : ""
+
+# Container Registry
+cr_ip   : ""
 
 # PostgreSQL Servers
 ```
@@ -595,7 +602,7 @@ INGRESS_NGINX_CONFIG:
     service:
       externalTrafficPolicy: Cluster
       # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
-      loadBalancerSourceRanges: [] # Not supported on open source Kubernetes
+      loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
 ### Metrics Server

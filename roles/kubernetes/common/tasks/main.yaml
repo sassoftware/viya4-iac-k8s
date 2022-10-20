@@ -29,7 +29,7 @@
     state: latest
     update_cache: yes # Proxied command for apt : apt-get update
   when:
-    - ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
     - deployment_type == "bare_metal"
   tags:
     - install
@@ -120,7 +120,7 @@
     curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasroot2.crt -o /etc/ssl/certs/sasroot2.crt
     curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasinter.crt -o /etc/ssl/certs/sasinter.crt
     update-ca-certificates
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -132,6 +132,15 @@
   vars:
     packages:
     - sshpass
+  tags:
+    - install
+    - update
+
+- name: Installing helm
+  ansible.builtin.shell: |
+      curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 755 get-helm-3
+      ./get-helm-3 --version v{{ helm_version }} --no-sudo
   tags:
     - install
     - update
