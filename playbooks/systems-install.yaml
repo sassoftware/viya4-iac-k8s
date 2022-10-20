@@ -6,6 +6,7 @@
   roles:
     - { role: "systems/{{ deployment_type }}/init" }
     - { role: systems/common }
+    - { role: systems/dns }
 
 # NFS Server
 - hosts: nfs
@@ -33,7 +34,7 @@
   become: true
   become_user: root
   roles:
-    - { role: systems/container_registry }
+    - { role: systems/harbor/container_registry }
 
 # Kubernetes - Control Plane
 - hosts: k8s_control_plane
