@@ -428,7 +428,7 @@ postgres_servers = {
   default = {
     administrator_password       = "D0ntL00kTh1sWay"
   },
-  another-server = {
+  another_server = {
     machine_type                           = "db-custom-8-30720"
     storage_gb                             = 10
     backups_enabled                        = true
