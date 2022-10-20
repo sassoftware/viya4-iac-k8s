@@ -6,7 +6,6 @@
   roles:
     - { role: "systems/{{ deployment_type }}/init" }
     - { role: systems/common }
-    - { role: systems/dns }
 
 # NFS Server
 - hosts: nfs
