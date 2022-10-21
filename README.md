@@ -51,7 +51,7 @@ Regardless of which method you choose, the machines in your deployment must meet
 - At least 6 machines for the application nodes in your cluster
 - 1 machine to serve as a jump server
 - 1 machine to serve as an NFS server
-- (Optional) At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan to use an external database server with your cluster. 
+- (Optional) At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan to use an external database server with your cluster.
 
   You can instead use the internal PostgreSQL server, which is deployed by default on a node in the cluster.
 
@@ -106,7 +106,7 @@ The following software is required in order to run the SAS Viya IaC tools here o
 
 #### Docker Requirements
 
-If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of 
+If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of
 [Docker](https://docs.docker.com/get-docker/).
 
 ## Getting Started
@@ -129,7 +129,7 @@ cd viya4-iac-k8s
 
 #### vSphere/vCenter Machines
 
-Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements. 
+Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements.
 
 Create a file named `terraform.tfvars` in order to customize the input variable values that are documented in the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
 
@@ -139,7 +139,7 @@ You have the option to specify variable definitions that are not included in `te
 
 #### SAS Viya IaC Configuration Files
 
-In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya deployment. 
+In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya deployment.
 
 Modify the [ansible-vars.yaml file](./examples/bare-metal/sample-ansible-vars.yaml) to customize the configuration settings for your environment.
 
