@@ -33,7 +33,7 @@
   become: true
   become_user: root
   roles:
-    - { role: systems/harbor/container_registry }
+    - { role: systems/container_registry/harbor }
 
 # Kubernetes - Control Plane
 - hosts: k8s_control_plane
