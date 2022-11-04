@@ -51,7 +51,7 @@ Regardless of which method you choose, the machines in your deployment must meet
 - At least 6 machines for the application nodes in your cluster
 - 1 machine to serve as a jump server
 - 1 machine to serve as an NFS server
-- (Optional) At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan to use an external database server with your cluster. 
+- (Optional) At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan to use an external database server with your cluster.
 
   You can instead use the internal PostgreSQL server, which is deployed by default on a node in the cluster.
 
