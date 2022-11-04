@@ -46,16 +46,16 @@ cluster_lb_type = "metallb" # Load Balancer accepted values [kube_vip,metallb]
 #    kube-vip sample:
 #
 #      cluster_lb_addresses = [
-#        cidr-default: 192.168.0.200/29                      # CIDR-based IP range for use in the default Namespace
-#        range-development: 192.168.0.210-192.168.0.219      # Range-based IP range for use in the development Namespace
-#        cidr-finance: 192.168.0.220/29,192.168.0.230/29     # Multiple CIDR-based ranges for use in the finance Namespace
-#        cidr-global: 192.168.0.240/29                       # CIDR-based range which can be used in any Namespace
+#        cidr-default: 192.168.0.200/29,                  # CIDR-based IP range for use in the default Namespace
+#        range-development: 192.168.0.210-192.168.0.219,  # Range-based IP range for use in the development Namespace
+#        cidr-finance: 192.168.0.220/29,192.168.0.230/29, # Multiple CIDR-based ranges for use in the finance Namespace
+#        cidr-global: 192.168.0.240/29                    # CIDR-based range which can be used in any Namespace
 #      ]
 #
 #    metallb sample:
 #
 #      cluster_lb_addresses = [
-#        192.168.10.0/24
+#        192.168.10.0/24,
 #        192.168.9.1-192.168.9.5
 #      ]
 #

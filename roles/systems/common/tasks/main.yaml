@@ -38,9 +38,13 @@
     - install
     - update
 
-- name: Kill the unattended-upgrades task if it's running
+#
+# NOTE: This is not a typo here. The process is called unattended-upgrade
+#       Where all other references are plural
+#
+- name: Kill the unattended-upgrade task if it's running
   ansible.builtin.shell: |
-    killall -q -9 unattended-upgrades 2>&1 /dev/null
+    killall -q -9 unattended-upgrade 2>&1 /dev/null
   ignore_errors: true
   tags:
     - install
