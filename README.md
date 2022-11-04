@@ -106,9 +106,7 @@ The following software is required in order to run the SAS Viya IaC tools here o
 
 #### Docker Requirements
 
-If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of 
-
-[Docker](https://docs.docker.com/get-docker/).
+If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of [Docker](https://docs.docker.com/get-docker/).
 
 ## Getting Started
 
