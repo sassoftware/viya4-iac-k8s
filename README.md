@@ -128,9 +128,7 @@ cd viya4-iac-k8s
 
 #### vSphere/vCenter Machines
 
-Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements. 
-
-Create a file named `terraform.tfvars` in order to customize the input variable values that are documented in the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
+Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements. Create a file named `terraform.tfvars` in order to customize the input variable values that are documented in the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
 
 To get started, you can copy one of the example variable definition files that are provided in the `./examples` folder. For more information about the variables that are declared in each file, refer to the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
 
@@ -138,7 +136,7 @@ You have the option to specify variable definitions that are not included in `te
 
 #### SAS Viya IaC Configuration Files
 
-In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya deployment. 
+In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya deployment.
 
 Modify the [ansible-vars.yaml file](./examples/bare-metal/sample-ansible-vars.yaml) to customize the configuration settings for your environment.
 
