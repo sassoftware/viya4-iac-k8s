@@ -18,7 +18,7 @@ Create a file with the authentication variable values to use with container invo
 
 > **NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
 
-Now each time that you invoke the container, specify the file with the `--env-file` option in order to pass Microsoft Azure credentials to the container.
+Now each time that you invoke the container, specify the file with the `--env-file` option in order to pass login credentials to the container.
 
 An example of this file can be found in the `examples` directory [here](./../../examples/vsphere/.vsphere_creds.env).
 
@@ -28,7 +28,7 @@ Create a file with the authentication variable values to use with container invo
 
 > **NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
 
-Now each time you invoke the container, specify the file with the `--env-file` option to pass the Azure credentials to the container.
+Now each time you invoke the container, specify the file with the `--env-file` option to pass login credentials to the container.
 
 An example of this file can be found in the `examples` directory [here](./../../examples/bare-metal/.bare_metal_creds.env).
 
@@ -38,7 +38,7 @@ Add volume mounts to the `docker run` command for all files and directories that
 
 | Volume | Description |
 | :--- | :--- |
-| `--volume=$(pwd):/workspace` | Where `$(pwd)` is used to store the `terraform.tfvars`, the `ansible-vars.yaml`, and the `inventory` files and where the `terraform.tfstate`, the `inventory` and the kube config file will be written. |
+| `--volume=$(pwd):/workspace` | Where `$(pwd)` is used to store the terraform.tfvars file, the ansible-vars.yaml file, and the inventory file, and where the terraform.tfstate file, the inventory file, and the kubeconfig file will be written. |
 
 To grant Docker permission to write to the local directory, use the [`--user` option](https://docs.docker.com/engine/reference/run/#user) and the `--group-add root` option.
 
@@ -50,7 +50,7 @@ Prepare your `terraform.tfvars` file, as described in [Customize Input Values](.
 
 ## Running the Configuration Script
 
-This Docker image offers options for both vSphere/vCenter and bare-metal deployments. Each section below describes the requirements for each option.
+This Docker image offers options for deployments in both vSphere/vCenter and on bare-metal machines (physical machines or VMs). This section describes the requirements for each option.
 
 The encapsulated script supports the options that are described below. These options include actions for both infrastructure and cluster creation along with encapsulated tooling.
 
@@ -76,8 +76,8 @@ Usage: ./oss-k8s.sh [apply|setup|install|update|uninstall|cleanup|destroy|helm|k
 
   Tooling - Integrated tools
 
-    helm            - Helm                             : kubernetes
-    k               - kubectl                          : kubernetes
+    helm            - Helm                             : Kubernetes
+    k               - kubectl                          : Kubernetes
     tf              - Terraform                        : vSphere/vCenter
 ```
 
@@ -94,11 +94,11 @@ docker run --rm -it \
   viya4-iac-k8s apply setup install
 ```
 
-This command can take a few minutes to complete. When it has completed, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` file, and the `kubeconfig` file for the cluster, stored in `[prefix]-oss-kubeconfig.conf`, are written in the current directory, `$(pwd)`.
+This command can take a few minutes to complete. When it has completed, Terraform output values are written to the console. The inventory file, the ansible-vars.yaml file, and the kubeconfig file for the cluster, stored in the file [prefix]-oss-kubeconfig.conf, are written to the current directory, `$(pwd)`.
 
 ### Create Your Kubernetes Cluster Using Individual Machines - `bare_metal`
 
-To create your Kubernetes cluster, run the `viya4-iac-k8s` Docker image with the `install` command and the `bare_metal` option:
+To create your Kubernetes cluster, run the viya4-iac-k8s Docker image with the `install` command and the `bare_metal` option:
 
 ```bash
 docker run --rm -it \
@@ -111,7 +111,7 @@ docker run --rm -it \
 
 ### Display Terraform Outputs - vSphere/vCenter
 
-Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the `viya4-iac-k8s` Docker image with the `output` command:
+Once your resources have been created using the `oss-k8s.sh` command, you can display Terraform output values by running the viya4-iac-k8s Docker image with the `output` command:
 
 ```bash
 docker run --rm --group-add root \
