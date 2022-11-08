@@ -23,7 +23,7 @@ Table of Contents
 
 ## Operating System
 
-An Ubuntu Linux operating system is required for the machine that uses the tools in this repository to perform the tasks associated with standing up infrastructure for a SAS Viya deployment. 
+An Ubuntu Linux operating system is required for the machine that uses the tools in this repository to perform the tasks associated with standing up infrastructure for a SAS Viya deployment.
 
 | Operating System | Description |
 | --- | --- |
@@ -80,7 +80,7 @@ All systems require routable connectivity to each other.
 
 The CIDR block for your infrastructure must be able to accommodate at least the number of machines described in [Machines](#machines). In addition, the CIDR block must have the following:
 
-- the virtual IP address for the cluster entrypoint 
+- the virtual IP address for the cluster entrypoint
 - the cloud provider IP address source range that is required to support the LoadBalancer services that are created
 
 The following section outlines recommendations for IP address assignments. All machines can have static or floating IP addresses or a combination of these.
