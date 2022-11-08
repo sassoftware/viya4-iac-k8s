@@ -23,6 +23,16 @@
         - install
         - update
 
+    - name: Remove old template file(s)
+      ansible.builtin.file:
+        path: "/tmp/{{ item }}.yaml"
+        state: absent
+      with_items:
+        - metallb-ip-ap
+      tags:
+        - install
+        - update 
+
     - name: Create metallb IPAddressPool file
       ansible.builtin.template:
         src: "templates/{{ item }}.tmpl"

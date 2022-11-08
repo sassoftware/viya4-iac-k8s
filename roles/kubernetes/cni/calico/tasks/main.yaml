@@ -6,7 +6,7 @@
 #
 - name: Install Operator
   ansible.builtin.shell: |
-    kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.4/manifests/tigera-operator.yaml
   tags:
     - install
     - update
