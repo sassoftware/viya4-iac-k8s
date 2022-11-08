@@ -24,6 +24,7 @@ kubernetes_version         : ""
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"        # Choices : [calico]
+kubernetes_cni_version     : "3.24.4"        # Choices : [3.24.4]
 kubernetes_cri             : "containerd"    # Choices : [containerd|docker|cri-o] NOTE: cri-o is not currently functional
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""

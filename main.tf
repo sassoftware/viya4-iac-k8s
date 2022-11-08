@@ -204,6 +204,7 @@ resource "local_file" "ansible_vars" {
     cluster_name               = local.cluster_name
     cluster_version            = var.cluster_version
     cluster_cni                = var.cluster_cni
+    cluster_cni_version        = var.cluster_cni_version
     cluster_cri                = var.cluster_cri
     cluster_service_subnet     = var.cluster_service_subnet
     cluster_pod_subnet         = var.cluster_pod_subnet

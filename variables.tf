@@ -302,6 +302,11 @@ variable "cluster_cni" {
   default = "calico"
 }
 
+variable "cluster_cni_version" {
+  type    = string
+  default = "3.24.4"
+}
+
 variable "cluster_cri" {
   type    = string
   default = "containerd"

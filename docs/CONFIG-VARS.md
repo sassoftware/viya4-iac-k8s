@@ -332,6 +332,7 @@ Variables used to describe your machines.
 | kubernetes_upgrade_allowed | | bool | true | NOTE: Not currently used |
 | kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled **ONLY** change the `vm_arch` value above |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
+| kubernetes_cni_version | Kubernetes Container Network Interface (CNI) Version | string | "3.24.4" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes Pod subnet | string | "10.42.0.0/16" | |
