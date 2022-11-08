@@ -106,8 +106,7 @@ The following software is required in order to run the SAS Viya IaC tools here o
 
 #### Docker Requirements
 
-If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of
-[Docker](https://docs.docker.com/get-docker/).
+If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of [Docker](https://docs.docker.com/get-docker/).
 
 ## Getting Started
 
@@ -129,9 +128,7 @@ cd viya4-iac-k8s
 
 #### vSphere/vCenter Machines
 
-Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements.
-
-Create a file named `terraform.tfvars` in order to customize the input variable values that are documented in the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
+Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements. Create a file named `terraform.tfvars` in order to customize the input variable values that are documented in the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
 
 To get started, you can copy one of the example variable definition files that are provided in the `./examples` folder. For more information about the variables that are declared in each file, refer to the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
 
