@@ -50,7 +50,7 @@ In order to leverage vSphere or vCenter, the following items are required for us
 #### Resources
 
 | vSphere Item | Description |
-| --- | ---: |
+| --- | :--- |
 |vsphere_cluster | Name of the vSphere cluster |
 |vsphere_datacenter | Name of the vSphere data center |
 |vsphere_datastore | Name of the vSphere data store to use for the VMs |
@@ -144,6 +144,7 @@ system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on eac
 # Kubernetes - Cluster
 cluster_version        = "1.23.8"                        # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
+cluster_cni_version    = "3.24.4"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
 cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet

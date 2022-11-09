@@ -369,6 +369,8 @@ node_labels:
     - workload.sas.com/class=stateful
   stateless:
     - workload.sas.com/class=stateless
+  singlestore:
+    - workload.sas.com/class=singlestore
   system:
     - kubernetes.azure.com/mode=system
 ```
@@ -389,6 +391,8 @@ node_taints:
     - workload.sas.com/class=stateful:NoSchedule
   stateless:
     - workload.sas.com/class=stateless:NoSchedule
+  singlestore:
+    - workload.sas.com/class=singlestore:NoSchedule
 ```
 
 ### Ansible inventory file
@@ -442,7 +446,7 @@ postgres_servers = {
     backup_count                           = 7 # Number of backups to retain, not in days
     administrator_login                    = "pgadmin"
     administrator_password                 = "my$up3rS3cretPassw0rd"
-    server_version                         = "11"
+    server_version                         = "13"
     availability_type                      = "ZONAL"
     ssl_enforcement_enabled                = true
     database_flags                         = [{ name = "foo" value = "true"}, { name = "bar", value = "false"}]

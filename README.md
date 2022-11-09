@@ -13,7 +13,7 @@ This project helps you to automate the cluster-provisioning phase of SAS Viya de
   >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
   >>- Container Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
   >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.io/)
-  >>- Cloud controller manager: [kube-vip](https://kube-vip.io/docs/usage/cloud-provider/)
+  >>- Cluster load balancer: [kube-vip](https://kube-vip.io/docs/usage/cloud-provider/) or [metallb](https://metallb.universe.tf/configuration/#layer-2-configuration)
 >- Nodes with required labels and taints
 >- Infrastructure to deploy the SAS Viya CAS server in SMP or MPP mode
 
@@ -37,6 +37,7 @@ Use of these tools requires operational knowledge of the following technologies:
 - [Ansible](https://docs.ansible.com/ansible/latest/user_guide/index.html#getting-started)
 - [Helm](https://helm.sh/)
 - [kube-vip](https://kube-vip.io/)
+- [metallb](https://metallb.universe.tf/)
 - [Kubernetes](https://kubernetes.io/docs/concepts/)
 
 ### Machines
@@ -82,7 +83,7 @@ The following items are required to support the systems that are created in your
 - At least 3 floating IP addresses for the following components:
   - The Kubernetes cluster virtual IP address
   - The load balancer IP address
-  - A range of IP addresses for additional load balancers. These are used when exposing user interfaces for various SAS product offerings.
+  - A CIDR block or range of IP addresses for additional load balancers. These are used when exposing user interfaces for various SAS product offerings.
 
 A more comprehensive description of these items and their requirements can be found in the [Requirements](./docs/REQUIREMENTS.md) document.
 
@@ -167,3 +168,4 @@ Create and manage the required cluster resources for your SAS Viya 4 deployment.
   - [Kubernetes - CRI - Containerd](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime)
   - [Kubernetes - CNI - Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
 - [kube-vip](https://kube-vip.io/)
+- [metallb](https://metallb.universe.tf/)
