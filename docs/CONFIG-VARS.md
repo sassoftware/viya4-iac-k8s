@@ -20,7 +20,7 @@ Supported configuration variables are listed in the tables below.  All variables
       - [NFS Server](#nfs-server)
       - [PostgreSQL Server](#postgresql-server)
   - [Bare Metal](#bare-metal)
-    - [Ansible ansible-vars.yaml file](#ansible-ansible-varsyaml-file)
+    - [Ansible ansible-vars.yaml File](#ansible-ansible-varsyaml-file)
     - [Labels/Taints](#labelstaints)
       - [Labels](#labels)
       - [Taints](#taints)
@@ -73,6 +73,7 @@ Terraform input variables can be set in the following ways:
 | :--- | :--- | :--- | :--- | :--- |
 | cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
+| cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.4" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
 | cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | cluster_pod_subnet     | Kubernetes pod subnet | string | "10.42.0.0/16" | |
