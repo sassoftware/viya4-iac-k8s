@@ -92,7 +92,7 @@ Terraform input variables can be set in the following ways:
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: `kube_vip`, `metallb` |
-| cluster_lb_addresses | IP addresses used by the load balancer | list | [] | Values change depending on the load balancer that is selected. [This link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) provides more information about kube-vip load balancer addresses. [This link](https://metallb.universe.tf/configuration/#layer-2-configuration) provides more information about MetalLB load balancer addresses. |
+| cluster_lb_addresses | IP addresses used by the load balancer | list | null | Values change depending on the load balancer that is selected. [This link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) provides more information about kube-vip load balancer addresses. [This link](https://metallb.universe.tf/configuration/#layer-2-configuration) provides more information about MetalLB load balancer addresses. |
 
 #### Control Plane
 
@@ -110,7 +110,7 @@ Node pools are maps of objects. They represent information about each pool type,
 | cpus | Number of CPU cores | number | | |
 | memory | Memory in MB | number | | |
 | os_disk | Size of operating system disk in GB | number | | Operating system root disk. |
-| misc_disk | Size of extra disks in GB | number | | Miscellaneous disks that are used for the local-storage storage class. |
+| misc_disk | Size of extra disks in GB | number | | Miscellaneous disks that are used for the local-storage storage class. At this time, these disk are empty partitions created and attached to your VM once created. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. |
 | ip_addresses | List of static IP addresses to be used in creating control_plane nodes | list(string) |  | Setting this variable creates nodes with static IP addresses assigned from this list. It cannot be used if the `count` field is used. |
 | node_taints |  | list(string) | | |
 | node_labels |  | map(string) | | |
@@ -347,6 +347,8 @@ The following variables are used to describe the machine targets for the SAS Viy
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
+
+**NOTE**: For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used.
 
 ### Labels/Taints
 
