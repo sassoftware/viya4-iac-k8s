@@ -37,7 +37,7 @@ Use of these tools requires operational knowledge of the following technologies:
 - [Ansible](https://docs.ansible.com/ansible/latest/user_guide/index.html#getting-started)
 - [Helm](https://helm.sh/)
 - [kube-vip](https://kube-vip.io/)
-- [metallb](https://metallb.universe.tf/)
+- [MetalLB](https://metallb.universe.tf/)
 - [Kubernetes](https://kubernetes.io/docs/concepts/)
 
 ### Machines
@@ -168,4 +168,4 @@ Create and manage the required cluster resources for your SAS Viya 4 deployment.
   - [Kubernetes - CRI - Containerd](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime)
   - [Kubernetes - CNI - Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
 - [kube-vip](https://kube-vip.io/)
-- [metallb](https://metallb.universe.tf/)
+- [MetalLB](https://metallb.universe.tf/)
