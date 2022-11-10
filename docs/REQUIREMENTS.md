@@ -150,7 +150,7 @@ cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service su
 cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
-# Kubernetes - Cluster Virtual IP Address and Cloud Provider
+# Kubernetes - Cluster VIP
 cluster_vip_version = "0.5.5"
 cluster_vip_ip      = "10.18.0.175"
 cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
