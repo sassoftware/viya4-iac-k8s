@@ -44,8 +44,8 @@ kubernetes_vip_fqdn                 : ""
 # Load Balancer Type
 #
 # NOTE: To support Single Store usage in the viya4-iac-k8s code base
-#       you need to set the value of the cluster_lb_type to metallb
-#       Setting this value to anything other than metallb will
+#       you need to set the value of the kubernetes_loadbalancer to
+#       metallb. Setting this value to anything other than metallb will
 #       create a cluster that will not work with Single Store.
 #
 kubernetes_loadbalancer : "" # Load Balancer accepted values [kube_vip,metallb]
