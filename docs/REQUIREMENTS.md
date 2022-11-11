@@ -283,22 +283,6 @@ node_pools = {
       "workload.sas.com/class" = "stateless"
     }
   },
-  singlestore = {
-    cpus    = 16
-    memory  = 131072
-    os_disk = 100
-    misc_disks = [
-      250,
-      250,
-      500,
-      500,
-    ]
-    count       = 3
-    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
-    node_labels = {
-      "workload.sas.com/class" = "singlestore"
-    }
-  },
 }
 
 # Jump server
