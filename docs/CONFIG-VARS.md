@@ -83,7 +83,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_vip_version   | kube-vip version | string | "0.5.5" | Currently kube-vip is the only supported Kubernetes virtual IP address. The minimum supported version is 0.5.5. |
+| cluster_vip_version   | kube-vip version | string | "0.5.6" | Currently kube-vip is the only supported Kubernetes virtual IP address. The minimum supported version is 0.5.6. |
 | cluster_vip_ip    | kube-vip IP address | string | | IP address assigned to the FQDN value. You must access the cluster via the FQDN value supplied. |
 | cluster_vip_fqdn   | kube-vip DNS | string | | FQDN used in the creation of the kubeconfig file, which is used to access the cluster. |
 
@@ -337,7 +337,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes pod subnet | string | "10.42.0.0/16" | |
-| kubernetes_vip_version | kube-vip version | string | "0.5.5" | |
+| kubernetes_vip_version | kube-vip version | string | "0.5.6" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_fqdn | kube-vip DNS | string | | |
 | kubernetes_loadbalancer | Load balancer provider | string | "kube_vip" | Choices are `kube_vip` or `metallb`.

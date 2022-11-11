@@ -151,7 +151,7 @@ cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP
-cluster_vip_version = "0.5.5"
+cluster_vip_version = "0.5.6"
 cluster_vip_ip      = "10.18.0.175"
 cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
 
@@ -482,7 +482,7 @@ kubernetes_pod_subnet      : ""
 #   VIP IP : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "0.5.5"
+kubernetes_vip_version              : "0.5.6"
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
 

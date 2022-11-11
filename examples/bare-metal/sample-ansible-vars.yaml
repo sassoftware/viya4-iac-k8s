@@ -35,7 +35,7 @@ kubernetes_pod_subnet      : ""
 #
 #   VIP IP                      : https://kube-vip.io/docs/installation/static/
 #
-kubernetes_vip_version              : "0.5.5"
+kubernetes_vip_version              : "0.5.6"
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
 
