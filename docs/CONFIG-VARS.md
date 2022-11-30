@@ -348,7 +348,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
 
-**NOTE**: For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used.
+**NOTE**: For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used. Be sure to alter your manifest files to take advantage of this new storage class where its needed.
 
 ### Labels/Taints
 

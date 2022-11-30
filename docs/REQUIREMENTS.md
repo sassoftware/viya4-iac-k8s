@@ -586,13 +586,11 @@ The following items **MUST** be added to your ansible-vars.yaml file if you are 
 INGRESS_NGINX_CONFIG:
   controller:
     service:
-      externalTrafficPolicy: Cluster
       # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
 ### Metrics Server
-METRICS_SERVER_CHART_VERSION: 5.10.14
 METRICS_SERVER_CONFIG:
   apiService:
     create: true
@@ -611,7 +609,6 @@ METRICS_SERVER_CONFIG:
 ### NFS Subdir External Provisioner - SAS default storage class
 # Updates to support open source Kubernetes 
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
-NFS_CLIENT_CHART_VERSION: 4.0.17
 ```
 
 ## Third-Party Tools
