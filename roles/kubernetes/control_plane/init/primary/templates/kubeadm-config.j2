@@ -3,6 +3,10 @@
 # TODO: Review all items here for actual need
 #       with bare metal/vm installations.
 #
+# Resource Links: https://kubernetes.io/docs/reference/config-api/
+#
+# kubeadm Configuration : https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta2/
+#
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
 certificatesDir: /etc/kubernetes/pki
@@ -26,6 +30,9 @@ networking:
   podSubnet: "{{ kubernetes_pod_subnet }}"
 clusterName: "{{ kubernetes_cluster_name }}"
 ---
+#
+# Kubelet Configration : https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+#
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 authentication:
@@ -37,6 +44,8 @@ cgroupDriver: systemd
 # NOTE: metricsBindAddress, enableProfiling, clusterCIDR
 #       were added in an attempt to help with node metrics
 #       pod metrics seem fine at this point
+#
+# kube-proxy Configuration : https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/
 #
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
