@@ -15,6 +15,10 @@ Table of Contents
     - [CIDR Block](#cidr-block)
     - [Static IP Addresses](#static-ip-addresses)
     - [Floating IP Addresses](#floating-ip-addresses)
+  - [Storage](#storage)
+    - [Configuration and Restrictions](#configuration-and-restrictions)
+    - [Bare metal and virtual machine storage example](#bare-metal-and-virtual-machine-storage-example)
+    - [Terraform storage example](#terraform-storage-example)
   - [Examples](#examples)
     - [vCenter/vSphere Sample tfvars File](#vcentervsphere-sample-tfvars-file)
     - [Physical Machine or VM Sample Inventory File](#physical-machine-or-vm-sample-inventory-file)
@@ -102,6 +106,64 @@ These IP addresses are part of your network but are not assigned. Floating IP ad
 - Control Plane
 - Cluster nodes
 - Additional load balancers that are created
+
+## Storage
+
+This section outlines how storage is used by the tooling to create the `local-storage` storage class for use in kubernetes. Currently there are two such products that are used in the SAS Viya 4 system that require local storage, these are **OpenSearch** and **SingleStore**. If these products are going to be in use within your cluster you will need to have local storage active.
+
+### Configuration and Restrictions
+
+1. The disks must be represented as empty partitions - `/dev/sdb`, `/dev/sdc`, etc. and attached to the machine or VM.
+2. The empty partitions cannot be formatted or pre-configured. They must simply be attached and in their raw state.
+3. You must supply an empty partition for each local storage entity needed. Currently if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need need to have these disks available for use.
+
+### Bare metal and virtual machine storage example
+
+The sample output shows how ones bare-metal machine would have its partitions listed for use:
+
+```bash
+root@staging-oss-singlestore-03:~# lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+loop0    7:0    0   62M  1 loop /snap/core20/1587
+loop1    7:1    0 63.2M  1 loop /snap/core20/1695
+loop2    7:2    0 79.9M  1 loop /snap/lxd/22923
+loop3    7:3    0  103M  1 loop /snap/lxd/23541
+loop4    7:4    0 49.6M  1 loop /snap/snapd/17883
+sda      8:0    0  100G  0 disk
+├─sda1   8:1    0    1M  0 part
+└─sda2   8:2    0  100G  0 part /
+sdb      8:16   0  250G  0 disk
+sdc      8:32   0  250G  0 disk
+sdd      8:48   0  500G  0 disk
+sde      8:64   0  500G  0 disk
+```
+
+You can see in the above example where the listing of the block devices for the machine `foo` shows partitions sbc, sdc, sdd, and sde are ready for use. They are disk attached to the machine and in their raw state ready for use.
+
+### Terraform storage example
+
+Here is a sample entry that would be included in your terraform tfvars file to define the disk layout example shown in the above [Bare metal and virtual machine storage example](#bare-metal-and-virtual-machine-storage-example). These `misc_disks` correlate to the `sdb`, `sdc`, `sdd` add `sde` disks in the above example.
+
+```yaml
+  singlestore = {
+    cpus    = 16
+    memory  = 131072
+    os_disk = 100
+    misc_disks = [
+      250,
+      250,
+      500,
+      500,
+    ]
+    count       = 3
+    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "singlestore"
+    }
+  },
+```
+
+This snippet shows the four `misc_disks` created on the single store virtual machines.
 
 ## Examples
 

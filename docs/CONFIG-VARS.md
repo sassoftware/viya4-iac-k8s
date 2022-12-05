@@ -110,7 +110,7 @@ Node pools are maps of objects. They represent information about each pool type,
 | cpus | Number of CPU cores | number | | |
 | memory | Memory in MB | number | | |
 | os_disk | Size of operating system disk in GB | number | | Operating system root disk. |
-| misc_disk | Size of extra disks in GB | number | | Miscellaneous disks that are used for the local-storage storage class. At this time, these disk are empty partitions created and attached to your VM once created. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. |
+| misc_disk | Size of extra disks in GB | number | | Miscellaneous disks that are used for the local-storage storage class. At this time, these disk are empty partitions created and attached to your VM once created. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. Requirements and information on this can be found [here](./REQUIREMENTS.md#storage) |
 | ip_addresses | List of static IP addresses to be used in creating control_plane nodes | list(string) |  | Setting this variable creates nodes with static IP addresses assigned from this list. It cannot be used if the `count` field is used. |
 | node_taints |  | list(string) | | |
 | node_labels |  | map(string) | | |
