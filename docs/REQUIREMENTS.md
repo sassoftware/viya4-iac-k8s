@@ -639,7 +639,14 @@ cr_ip   : ""
 
 ## Deployment
 
-The following items **MUST** be added to your ansible-vars.yaml file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository to deploy SAS Viya:
+The following items **MUST** be added to your ansible-vars.yaml file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository to deploy SAS Viya.
+
+You must adjust the `externalTrafficPolicy` value based on the load balancer selection chosen. The valid values are listed below:
+
+| Load Balancer type | externalTrafficPolicy entry |
+| --- | ---: |
+| `kube_vip` | `externalTrafficPolicy: Cluster` |
+| `metallb` | `externalTrafficPolicy: Local` |
 
 ```yaml
 ## 3rd Party
@@ -648,7 +655,7 @@ The following items **MUST** be added to your ansible-vars.yaml file if you are 
 INGRESS_NGINX_CONFIG:
   controller:
     service:
-      externalTrafficPolicy: Cluster
+      externalTrafficPolicy: Cluster or Local # Refer to Load Balancer type table above
       # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
