@@ -304,7 +304,7 @@ variable "cluster_cni" {
 
 variable "cluster_cni_version" {
   type    = string
-  default = "3.24.4"
+  default = "3.24.5"
 }
 
 variable "cluster_cri" {
@@ -324,7 +324,7 @@ variable "cluster_pod_subnet" {
 
 variable "cluster_vip_version" {
   type    = string
-  default = "0.5.6"
+  default = "0.5.7"
 }
 
 variable "cluster_vip_ip" {

@@ -22,4 +22,4 @@ METRICS_SERVER_CONFIG:
     labels:
       kubernetes.io/cluster-service: "true"
       kubernetes.io/name: "Metrics-server"
-  replicas: 1
+  replicas: 3

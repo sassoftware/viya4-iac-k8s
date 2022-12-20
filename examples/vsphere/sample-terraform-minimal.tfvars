@@ -21,14 +21,14 @@ system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on
 # Kubernetes - Cluster
 cluster_version        = "1.23.8"       # Kubernetes Version
 cluster_cni            = "calico"       # Kuberentes Container Network Interface (CNI)
-cluster_cni_version    = "3.24.4"       # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.24.5"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
 cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
 cluster_domain         = ""             # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP
-cluster_vip_version = "0.5.6"
+cluster_vip_version = "0.5.7"
 cluster_vip_ip      = ""
 cluster_vip_fqdn    = ""
 
