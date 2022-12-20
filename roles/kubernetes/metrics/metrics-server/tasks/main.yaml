@@ -1,0 +1,40 @@
+---
+- name: Check for metrics-server service
+  community.kubernetes.k8s_info:
+    api_version: v1
+    kind: Service
+    name: metrics-server
+    namespace: kube-system
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  register: metrics_service
+  tags:
+    - install
+    - update
+    - uninstall
+
+- name: Deploy metrics-server
+  community.kubernetes.helm:
+    name: "{{ METRICS_SERVER_NAME }}"
+    namespace: "{{ METRICS_SERVER_NAMESPACE }}"
+    chart_repo_url: "{{ METRICS_SERVER_CHART_URL }}"
+    chart_ref: "{{ METRICS_SERVER_CHART_NAME }}"
+    chart_version: "{{ METRICS_SERVER_CHART_VERSION }}"
+    values: "{{ METRICS_SERVER_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
+  tags:
+    - install
+    - update
+  when:
+    - "('resources' not in metrics_service) or ((metrics_service.resources | length) == 0)"
+
+- name: Remove metrics-server
+  community.kubernetes.helm:
+    name: "{{ METRICS_SERVER_NAME }}"
+    namespace: "kube-system"
+    values: "{{ METRICS_SERVER_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    wait: true
+  tags:
+    - uninstall
