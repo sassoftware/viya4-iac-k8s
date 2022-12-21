@@ -660,22 +660,6 @@ INGRESS_NGINX_CONFIG:
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
-### Metrics Server
-METRICS_SERVER_CONFIG:
-  apiService:
-    create: true
-  extraArgs:
-    kubelet-insecure-tls: true
-    kubelet-preferred-address-types: InternalIP,ExternalIP,Hostname,InternalDNS,ExternalDNS
-    kubelet-use-node-status-port: true
-    requestheader-allowed-names: aggregator
-    metric-resolution: 15s
-    cert-dir: /tmp
-  service:
-    labels:
-      kubernetes.io/cluster-service: "true"
-      kubernetes.io/name: "Metrics-server"
-
 ### NFS Subdir External Provisioner - SAS default storage class
 # Updates to support open source Kubernetes 
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
