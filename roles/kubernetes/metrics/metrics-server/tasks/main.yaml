@@ -1,6 +1,6 @@
 ---
 - name: Deploy metrics-server
-  community.kubernetes.helm:
+  kubernetes.core.helm:
     name: "{{ METRICS_SERVER_NAME }}"
     namespace: "{{ METRICS_SERVER_NAMESPACE }}"
     chart_repo_url: "{{ METRICS_SERVER_CHART_URL }}"
@@ -14,7 +14,7 @@
     - update
 
 - name: Remove metrics-server
-  community.kubernetes.helm:
+  kubernetes.core.helm:
     name: "{{ METRICS_SERVER_NAME }}"
     namespace: "kube-system"
     values: "{{ METRICS_SERVER_CONFIG }}"
