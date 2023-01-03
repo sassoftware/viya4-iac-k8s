@@ -13,3 +13,10 @@
   become_user: root
   roles:
     - { role: kubernetes/control_plane/removal }
+
+# Clean up toolbox items
+- hosts: k8s
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/toolbox }

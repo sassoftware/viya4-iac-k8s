@@ -114,7 +114,7 @@ This section outlines how storage is used by the tooling to create the `local-st
 ### Configuration and Restrictions
 
 1. The disks must be represented as empty partitions - `/dev/sdb`, `/dev/sdc`, etc. and attached to the machine or VM.
-2. The empty partitions cannot be formatted or pre-configured. They must simply be attached and in their raw state.
+2. The empty partitions cannot be formatted or pre-configured. These partitions must simply be attached and in their raw state.
 3. You must supply an empty partition for each local storage entity needed. Currently if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need need to have these disks available for use.
 
 ### Bare metal and virtual machine storage example
@@ -138,7 +138,7 @@ sdd      8:48   0  500G  0 disk
 sde      8:64   0  500G  0 disk
 ```
 
-You can see in the above example where the listing of the block devices for the machine `foo` shows partitions sbc, sdc, sdd, and sde are ready for use. They are disk attached to the machine and in their raw state ready for use.
+You can see in the above example where the listing of the block devices for the machine `staging-oss-singlestore-03` shows partitions `sbc`, `sdc`, `sdd`, and `sde` are ready for use. They are disk attached to the machine and in their raw state ready for use.
 
 ### Terraform storage example
 

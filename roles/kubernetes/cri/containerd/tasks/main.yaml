@@ -79,21 +79,52 @@
     - install
     - update
 
-# TODO: Verify this needs an OS guard for package. Currently
-#       only tested with Ubuntu 22.04 LTS
-#
-# Installing containerd
-- name: Installing containerd
+- name: Installing the Docker gpg key for containerd.io
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+    state: present
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Adding the Docker repo for containerd.io
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Installing containerd.io
   ansible.builtin.package:
     name: "{{ packages }}"
     state: present
   vars:
     packages:
-    - containerd
+    - containerd.io
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
+
+# TODO: Verify this needs an OS guard for package. Currently
+#       only tested with Ubuntu 22.04 LTS
+#
+# Installing containerd
+# - name: Installing containerd
+#   ansible.builtin.package:
+#     name: "{{ packages }}"
+#     state: present
+#   vars:
+#     packages:
+#     - containerd
+#   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+#   tags:
+#     - install
+#     - update
 
 - name: Create /etc/containerd directory
   ansible.builtin.file:
