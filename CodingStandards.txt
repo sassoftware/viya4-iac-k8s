@@ -1,28 +1,28 @@
 Coding standards and guidelines for IaC repos.
 
-All items are specific to a given element. Elements can be root level terraform
-files or module level terraform files.
+All items are specific to a given element. Elements can be root level Terraform
+files or module level Terraform files.
 
-For Terraform related files the standards are:
+For Terraform-related files the standards are:
 
-  - Variables defined live in the root variables.yaml file for that element.
+  - Variables defined are stored in the root variables.yaml file for that element.
 
-  - Outputs defined live in the root outputs.yaml file for that element.
+  - Outputs defined are stored in the root outputs.yaml file for that element.
   
-  - Locals defined live in the root locals.yaml file for that element.
+  - Locals defined are stored in the root locals.yaml file for that element.
   
     * Locals are created when one is using a module, resources, or outputs that require any extra logic.
     * Locals hide the extra logic to keep the main code base more readable.
 
-  - Modules defined live at the root level of the project in the modules directory.
+  - Modules defined are stored in the root level of the project in the modules directory.
 
   - Documentation lives at the root level of the project in the docs directory.
 
-  - Examples live at the root level of the project in the examples directory.
+  - Examples are stored in the root level of the project in the examples directory.
   
-  - Template files live in the root templates directory for that element.
+  - Template files are stored in the root templates directory for that element.
 
-  Example directory structure and files following these standards:
+  Here is an example directory structure and files following these standards:
 
     .
     ├── docs
@@ -47,7 +47,7 @@ For Terraform related files the standards are:
     ├── variables.tf
     └── versions.tf
 
-When coding has finished you must run the 
+When coding has completed, run the following command:
 
   - terraform fmt -recursive
 
