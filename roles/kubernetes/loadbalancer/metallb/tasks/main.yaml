@@ -1,8 +1,8 @@
 ---
 # NOTE: The usage and setting of the iac_inventory_dir variable
-#       is only needed given this task is run on localhost
-#       an implied localhost and this keeps the magic inventory_file
-#       and inventory_dir from having values.
+#       is only required if this task is run on localhost or on
+#       an implied localhost, which prevents the magic inventory_file
+#       and inventory_dir variables from having values.
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 #

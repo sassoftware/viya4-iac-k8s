@@ -1,6 +1,6 @@
 ---
-# Task to remove all docker artifacts
-- name: Remove all docker container, volumes, networks
+# Task to remove all Docker artifacts
+- name: Remove all Docker container, volumes, networks
   ansible.builtin.shell: |
     docker system prune -af --volumes
   ignore_errors: true

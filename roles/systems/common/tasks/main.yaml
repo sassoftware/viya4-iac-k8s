@@ -98,7 +98,7 @@
     - install
     - update
 
-- name: Install python and pip packages
+- name: Install Python and PIP packages
   ansible.builtin.package:
     name: "{{ item }}"
     state: latest
@@ -111,7 +111,7 @@
     - install
     - update
 
-- name: Update alternatives for python and pip
+- name: Update alternatives for Python and PIP
   ansible.builtin.shell: |
     update-alternatives --install /usr/bin/python python /usr/bin/python3 1
     update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1

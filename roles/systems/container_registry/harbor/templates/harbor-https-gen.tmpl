@@ -47,7 +47,7 @@ if [[ ! -d /data/cert ]]; then
   mkdir -p /data/cert/
 fi
 
-# Copy cert and key into the cert folder on your harbor host
+# Copy cert and key into the cert folder on your Harbor host
 cp ${ cr_fqdn }.crt /data/cert/
 cp ${ cr_fqdn }.key /data/cert/
 

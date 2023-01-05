@@ -19,7 +19,7 @@
         - install
         - update
 
-    - name: Apply kube-vip Cloud Provider config map
+    - name: Apply kube-vip Cloud Provider configMap
       ansible.builtin.shell: |
         kubectl apply -f /tmp/kube-vip-cm.yaml
       tags:
