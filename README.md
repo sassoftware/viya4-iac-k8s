@@ -7,7 +7,7 @@ backing store has been addressed with [this issue](https://github.com/sassoftwar
 
 ## Overview
 
-This project helps you to automate the cluster-provisioning phase of SAS Viya deployment. It contains Terraform scripts to provision cloud infrastructure resources for VMware, and it contains Ansible files to apply the elements of a Kubernetes cluster that are required to deploy SAS Viya 4 product offerings. Here is a list of resources that this project can create:
+This project helps you to automate the cluster-provisioning phase of SAS Viya platform deployment. It contains Terraform scripts to provision cloud infrastructure resources for VMware, and it contains Ansible files to apply the elements of a Kubernetes cluster that are required to deploy SAS Viya 4 product offerings. Here is a list of resources that this project can create:
 
 >- An open source [Kubernetes](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) cluster with the following components:
   >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
@@ -19,9 +19,9 @@ This project helps you to automate the cluster-provisioning phase of SAS Viya de
 
 [<img src="./docs/images/viya4-iac-k8s-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-k8s-diag.png?raw=true)
 
-To learn about all phases and options of the SAS Viya deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://go.documentation.sas.com/doc/en/itopscdc/default/itopscon/p1qungdpndaksyn156ng6duptma0.htm?fromDefault=) in _SAS&reg; Viya&reg; Operations_.
+To learn about all phases and options of the SAS Viya platform deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://go.documentation.sas.com/doc/en/itopscdc/default/itopscon/p1qungdpndaksyn156ng6duptma0.htm?fromDefault=) in _SAS&reg; Viya&reg; Platform Operations_.
 
-Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya in your cloud environment. For more information about SAS Viya requirements and documentation for the deployment process, refer to the [SAS Viya Operations Guide](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
+Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya in platform your cloud environment. For more information about SAS Viya platform requirements and documentation for the deployment process, refer to [SAS Viya Platform Operations](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
 
 This project supports infrastructure that is built on **physical machines** ("bare metal" machines or Linux VMs) or on **VMware vSphere or vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Microsoft Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
 
@@ -137,7 +137,7 @@ You have the option to specify variable definitions that are not included in `te
 
 #### SAS Viya IaC Configuration Files
 
-In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya deployment.
+In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya platform deployment.
 
 Modify the [ansible-vars.yaml file](./examples/bare-metal/sample-ansible-vars.yaml) to customize the configuration settings for your environment.
 
