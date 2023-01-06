@@ -21,7 +21,7 @@ This project helps you to automate the cluster-provisioning phase of SAS Viya pl
 
 To learn about all phases and options of the SAS Viya platform deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://go.documentation.sas.com/doc/en/itopscdc/default/itopscon/p1qungdpndaksyn156ng6duptma0.htm?fromDefault=) in _SAS&reg; Viya&reg; Platform Operations_.
 
-Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya in platform your cloud environment. For more information about SAS Viya platform requirements and documentation for the deployment process, refer to [SAS Viya Platform Operations](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
+Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya platform in your cloud environment. For more information about SAS Viya platform requirements and documentation for the deployment process, refer to [SAS Viya Platform Operations](https://go.documentation.sas.com/doc/en/itopscdc/default/itopswn/titlepage.htm).
 
 This project supports infrastructure that is built on **physical machines** ("bare metal" machines or Linux VMs) or on **VMware vSphere or vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Microsoft Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
 
