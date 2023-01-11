@@ -27,7 +27,7 @@ Table of Contents
 
 ## Operating System
 
-An Ubuntu Linux operating system is required for the machine that uses the tools in this repository to perform the tasks associated with standing up infrastructure for a SAS Viya deployment.
+An Ubuntu Linux operating system is required for the machine that uses the tools in this repository to perform the tasks associated with standing up infrastructure for a SAS Viya platform deployment.
 
 | Operating System | Description |
 | --- | --- |
@@ -35,9 +35,9 @@ An Ubuntu Linux operating system is required for the machine that uses the tools
 
 ## Machines
 
-The following table lists the minimum machine requirements that are needed to support a Kubernetes cluster and supporting elements for a SAS Viya 4 software installation. These machines must be running a recent version of Linux and must all be on the same network. Each machine should have a DNS entry associated with its assigned IP address; this is not required, but it makes setup easier.
+The following table lists the minimum machine requirements that are needed to support a Kubernetes cluster and supporting elements for a SAS Viya platform software installation. These machines must be running a recent version of Linux and must all be on the same network. Each machine should have a DNS entry associated with its assigned IP address; this is not required, but it makes setup easier.
 
-**NOTE**: The PostgreSQL server that is described in the following table is listed as 1 machine. If you plan to use the internal PostgreSQL server for SAS Viya, this server is not required, but you will need to adjust the capacity of your compute nodes in order to ensure that they can handle the resource requirements of the PostgreSQL processes.
+**NOTE**: The PostgreSQL server that is described in the following table is listed as 1 machine. If you plan to use the internal PostgreSQL server for the SAS Viya platform, this server is not required, but you will need to adjust the capacity of your compute nodes in order to ensure that they can handle the resource requirements of the PostgreSQL processes.
 
 | Machine | CPU | Memory | Disk | Information | Minimum Count |
 | ---: | ---: | ---: | ---: | --- | ---: |
@@ -45,7 +45,7 @@ The following table lists the minimum machine requirements that are needed to su
 | **Nodes** | xx | xx GB | xx GB | Nodes in the Kubernetes cluster. The number of machines varies, depending on multiple factors. Suggested capacities and information can be found in the sample files. | 3 |
 | **Jump Server** | 4 | 8 GB | 100 GB | Bastion box that is used to access NFS mounts, share data, etc. | 1 |
 | **NFS Server** | 8 | 16 GB | 500 GB | Required server that is used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster. | 1 |
-| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya deployment. | 1..n |
+| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya platform deployment. | 1..n |
 
 ### VMware vSphere or vCenter
 
@@ -74,7 +74,7 @@ The current repository supports the provisioning of vSphere VMs. The following t
 
 ### Physical Machines or Linux VMs
 
-In order to provision physical machines for a SAS Viya deployment, you must set up ALL systems with the required elements that were listed previously. These systems must have full network access to each other.
+In order to provision physical machines for a SAS Viya platform deployment, you must set up ALL systems with the required elements that were listed previously. These systems must have full network access to each other.
 
 ## Network
 
@@ -109,7 +109,7 @@ These IP addresses are part of your network but are not assigned. Floating IP ad
 
 ## Storage
 
-This section outlines how storage is used by the tooling to create the `local-storage` storage class for use in kubernetes. Currently there are two such products that are used in the SAS Viya 4 system that require local storage, these are **OpenSearch** and **SingleStore**. If these products are going to be in use within your cluster you will need to have local storage active.
+This section outlines how storage is used by the tooling to create the `local-storage` storage class for use in kubernetes. Currently there are two such products that are used in the SAS Viya platform system that require local storage, these are **OpenSearch** and **SingleStore**. If these products are going to be in use within your cluster you will need to have local storage active.
 
 ### Configuration and Restrictions
 
@@ -172,7 +172,7 @@ This section provides an example configuration based on the physical-machine and
 
 ### vCenter/vSphere Sample tfvars File
 
-If you are creating virtual machines with vCenter or vSphere, the terraform.tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
+If you are creating virtual machines with vCenter or vSphere, the terraform.tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya platform deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
 
 For this example, the network setup is as follows:
 
@@ -640,7 +640,7 @@ cr_ip   : ""
 
 ## Deployment
 
-The following items **MUST** be added to your ansible-vars.yaml file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository to deploy SAS Viya.
+The following items **MUST** be added to your ansible-vars.yaml file if you are using the [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git) repository to deploy the SAS Viya platform.
 
 You must adjust the `externalTrafficPolicy` value based on the load balancer selection chosen. The valid values are listed below:
 
@@ -668,7 +668,7 @@ NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 
 ## Third-Party Tools
 
-The third-party applications that are listed in the following table are supported for the deployment of SAS Viya into a cluster configured by viya4-iac-kubernetes:
+The third-party applications that are listed in the following table are supported for the deployment of the SAS Viya platform into a cluster configured by viya4-iac-kubernetes:
 
 | Application | Minimum Version |
 | ---: | ---: |
