@@ -116,7 +116,7 @@ This section outlines how storage is used by the tooling to create the `local-st
 1. The disks must be represented as empty partitions - `/dev/sdb`, `/dev/sdc`, etc. and attached to the machine or VM.
 2. The empty partitions cannot be formatted or pre-configured. These partitions must simply be attached and in their raw state.
 3. You must supply an empty partition for each local storage entity needed. Currently if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need need to have these disks available for use.
-4. You will need to updated ANY transformer being used for the **OpenSearch** or **SingleStore** products to mirror these values. Using `local-storage` as the storage class and adjusting the storage size to mirror the partition created for use.
+4. You will need to update ANY transformer being used for the **OpenSearch** or **SingleStore** products to mirror these values. Using `local-storage` as the storage class and adjusting the storage size to mirror the partition created for use.
 
 ### Bare metal and virtual machine storage example
 
