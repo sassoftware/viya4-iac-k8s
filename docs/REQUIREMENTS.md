@@ -228,7 +228,7 @@ cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
 # Examples for each provider can be found here:
 #
 #  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
-#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#  MetalLB address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
 #
 #    kube-vip sample:
 #
@@ -239,7 +239,7 @@ cluster_lb_type = "kube_vip" # Load Balancer type [kube_vip,metallb]
 #        cidr-global: 192.168.0.240/29                       # CIDR-based range which can be used in any Namespace
 #      ]
 #
-#    metallb sample:
+#    MetalLB sample:
 #
 #      cluster_lb_addresses = [
 #        192.168.10.0/24
@@ -546,7 +546,7 @@ kubernetes_loadbalancer : "kube_vip" # Load Balancer accepted values [kube_vip,m
 # Examples for each load balancer type can be found here:
 #
 #  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
-#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#  MetalLB address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
 #
 #    kube-vip sample:
 #
@@ -556,7 +556,7 @@ kubernetes_loadbalancer : "kube_vip" # Load Balancer accepted values [kube_vip,m
 #        - "cidr-finance: 192.168.0.220/29,192.168.0.230/29" # Multiple CIDR-based ranges for use in the finance Namespace
 #        - "cidr-global: 192.168.0.240/29"                   # CIDR-based range which can be used in any Namespace
 #
-#    metallb sample:
+#    MetalLB sample:
 #
 #      kubernetes_loadbalancer_addresses :
 #        - "192.168.10.0/24"

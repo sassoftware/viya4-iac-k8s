@@ -6,7 +6,7 @@
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 #
-- name: Setting up metallb loadbalancer
+- name: Setting up MetalLB loadbalancer
   block:
     - name: Installing metallb
       kubernetes.core.helm:
@@ -33,7 +33,7 @@
         - install
         - update 
 
-    - name: Create metallb IPAddressPool file
+    - name: Create MetalLB IPAddressPool file
       ansible.builtin.template:
         src: "templates/{{ item }}.tmpl"
         dest: "/tmp/{{ item }}.yaml"
@@ -44,7 +44,7 @@
         - install
         - update
 
-    - name: Apply metallb IPAddressPool
+    - name: Apply MetalLB IPAddressPool
       ansible.builtin.shell: |
         kubectl apply -f /tmp/metallb-ip-ap.yaml
       tags:
@@ -54,7 +54,7 @@
     - install
     - update
 
-- name: Remove metallb
+- name: Remove MetalLB
   kubernetes.core.helm:
     name: "{{ METALLB_NAME }}"
     namespace: "{{ METALLB_NAMESPACE }}"
