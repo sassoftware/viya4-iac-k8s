@@ -71,7 +71,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
@@ -115,7 +115,7 @@ Node pools are maps of objects. They represent information about each pool type,
 | node_taints |  | list(string) | | |
 | node_labels |  | map(string) | | |
 
-There is no default type for SAS Viya node pools. However, examples that are based on SAS recommendations are listed in the example files. Below is a sample of a basic cluster `node_pools` definition that you could use in your terraform.tfvars file.
+There is no default type for SAS Viya platform node pools. However, examples that are based on SAS recommendations are listed in the example files. Below is a sample of a basic cluster `node_pools` definition that you could use in your terraform.tfvars file.
 
 **NOTE**: These node pools are required for the `node_pools` variable:
 
@@ -292,7 +292,7 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 
 1. If you enable `server_ssl` without defining either `server_ssl_cert_file` or `server_ssl_cert_file`, the system's default SSL certificate and key are used instead. By default, on Ubuntu systems we create a copy of those files and name them `ssl-cert-sas-${PG_HOST}.pem` and `ssl-cert-sas-${PG_HOST}.key`.
     - The Ansible tasks that are performed include copying the certificate and key from the PostgreSQL VM into your local workspace directory.
-2. If you are planning to use the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a SAS Viya deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls) configured, make sure that the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable in the viya4-deployment ansible-vars.yaml file points to a directory that contains the server_ssl_cert_file.
+2. If you are planning to use the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a SAS Viya platform deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls) configured, make sure that the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable in the viya4-deployment ansible-vars.yaml file points to a directory that contains the server_ssl_cert_file.
 
 Sample:
 
@@ -316,7 +316,7 @@ postgres_servers = {
 
 ### Ansible ansible-vars.yaml File
 
-The following variables are used to describe the machine targets for the SAS Viya deployment.
+The following variables are used to describe the machine targets for the SAS Viya platform deployment.
 
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
@@ -397,7 +397,7 @@ node_taints:
 
 ### Ansible inventory file
 
-The inventory file represents the machines that you will be using in your Kubernetes deployment of SAS Viya. An example and information about this file can be found [here](../examples/bare-metal/sample-inventory).
+The inventory file represents the machines that you will be using in your Kubernetes deployment of the SAS Viya platform. An example and information about this file can be found [here](../examples/bare-metal/sample-inventory).
 
 ## Storage
 
@@ -426,7 +426,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | :--- | ---: | ---: | ---: | ---: |
 | administrator_login | The administrator login account for the PostgreSQL server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
 | administrator_password | The password associated with the administrator_login for the PostgreSQL server | string | "my$up3rS3cretPassw0rd" |  |
-| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [Viya 4 System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for SAS Viya. |
+| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | ssl_enforcement_enabled | Enforce SSL on connections to the PostgreSQL database | bool | true | |
 
 Here is an example of the `postgres_servers` variable where the `default` entry only overrides the `administrator_password` parameter, and the `another-server` entry overrides all parameters:
