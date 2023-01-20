@@ -13,7 +13,7 @@ This project helps you to automate the cluster-provisioning phase of SAS Viya pl
   >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd), [Docker](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#docker), and [cri-o](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o) [not ready]
   >>- Container Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
   >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.io/)
-  >>- Cluster load balancer: [kube-vip](https://kube-vip.io/docs/usage/cloud-provider/) or [metallb](https://metallb.universe.tf/configuration/#layer-2-configuration)
+  >>- Cluster load balancer: [kube-vip](https://kube-vip.io/docs/usage/cloud-provider/) or [MetalLB](https://metallb.universe.tf/configuration/#layer-2-configuration)
 >- Nodes with required labels and taints
 >- Infrastructure to deploy the SAS Viya CAS server in SMP or MPP mode
 

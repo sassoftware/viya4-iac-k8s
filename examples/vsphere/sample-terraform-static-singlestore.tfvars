@@ -48,7 +48,7 @@ cluster_lb_type = "metallb" # Load Balancer accepted values [kube_vip,metallb]
 # Examples for each load balancer type can be found here:
 #
 #  kube-vip address format : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
-#  metallb address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
+#  MetalLB address format  : https://metallb.universe.tf/configuration/#layer-2-configuration
 #
 #    kube-vip sample:
 #
@@ -59,7 +59,7 @@ cluster_lb_type = "metallb" # Load Balancer accepted values [kube_vip,metallb]
 #        "cidr-global: 192.168.0.240/29"                    # CIDR-based range which can be used in any Namespace
 #      ]
 #
-#    metallb sample:
+#    MetalLB sample:
 #
 #      cluster_lb_addresses = [
 #        "192.168.10.0/24",
