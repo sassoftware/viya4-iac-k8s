@@ -91,7 +91,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: `kube_vip`, `metallb` |
+| cluster_lb_type | Load balancer used in the cluster | string | "kube_vip" | Valid values: `kube_vip`, `metallb`. If you will be using SingleStore in your cluster it is required that you set this value to `metallb`. |
 | cluster_lb_addresses | IP addresses used by the load balancer | list | null | Values change depending on the load balancer that is selected. [This link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) provides more information about kube-vip load balancer addresses. [This link](https://metallb.universe.tf/configuration/#layer-2-configuration) provides more information about MetalLB load balancer addresses. |
 
 #### Control Plane
