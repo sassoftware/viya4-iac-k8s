@@ -41,7 +41,7 @@ cluster_vip_fqdn    = ""
 #       Setting this value to anything other than metallb will
 #       create a cluster that will not work with Single Store.
 #
-cluster_lb_type = "metallb" # Load Balancer accepted values [kube_vip,metallb]
+cluster_lb_type = "metallb" # Load Balancer accepted values when using SingleStore [metallb]
 
 # Load Balancer Addresses
 #
