@@ -260,7 +260,7 @@ jump_ip        = ""   # Assigned values for static IP addresses
 | nfs_num_cpu | # of CPUs | number | 4 | |
 | nfs_memory | Memory in MB | number | 8092 | |
 | nfs_disk_size | Size of disk in GB | number | 250 | |
-| nfs_ip | Static IP for jump server | string | | |
+| nfs_ip | Static IP for NFS server | string | | |
 
 Sample:
 
