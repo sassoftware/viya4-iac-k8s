@@ -3,6 +3,7 @@
 #       Currently supported operating systems:
 #
 #       - Ubuntu 20.04 LTS
+#       - Ubuntu 22.04 LTS
 #
 
 # SSH keys assign to the 'root' user on your systems
@@ -23,6 +24,37 @@
     key: "{{ lookup('file', '{{item}}') }}"
     state: present
   with_fileglob: "{{ system_ssh_keys_dir }}/*.pub"
+  tags:
+    - install
+    - update
+
+- name: Disable and turn off unattended-upgrades
+  ansible.builtin.systemd:
+    name: unattended-upgrades.service
+    enabled: no
+    state: stopped
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+#
+# NOTE: This is not a typo here. The process is called unattended-upgrade
+#       Where all other references are plural
+#
+- name: Kill the unattended-upgrade task if it's running
+  ansible.builtin.shell: |
+    killall -q -9 unattended-upgrade 2>&1 /dev/null
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+- name: Uninstalling unattended-upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: absent
+    purge: yes
   tags:
     - install
     - update
@@ -61,7 +93,38 @@
     curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasroot2.crt -o /etc/ssl/certs/sasroot2.crt
     curl -skf http://delphi.unx.sas.com/dumpster/smitty2/certs/sasinter.crt -o /etc/ssl/certs/sasinter.crt
     update-ca-certificates
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
+
+- name: Install Python and PIP packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python3
+    - python3-dev
+    - python3-pip
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Update alternatives for Python and PIP
+  ansible.builtin.shell: |
+    update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Turn off swap
+  ansible.builtin.shell: |
+    swapoff -a
+    sed -i '/swap/d' /etc/fstab
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update  

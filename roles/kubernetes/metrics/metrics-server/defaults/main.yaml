@@ -1,0 +1,25 @@
+## Metrics-server
+METRICS_SERVER_NAME: metrics-server
+METRICS_SERVER_NAMESPACE: kube-system
+METRICS_SERVER_CHART_NAME: metrics-server
+METRICS_SERVER_CHART_URL: https://kubernetes-sigs.github.io/metrics-server/
+METRICS_SERVER_CHART_VERSION: 3.8.3
+METRICS_SERVER_CONFIG:
+  apiService:
+    create: true
+  serviceAccount:
+    create: true
+  rbac:
+    create: true
+  defaultArgs:
+    - --kubelet-insecure-tls
+    - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname,InternalDNS,ExternalDNS
+    - --kubelet-use-node-status-port
+    - --requestheader-allowed-names=aggregator
+    - --metric-resolution=15s
+    - --cert-dir=/tmp
+  service:
+    labels:
+      kubernetes.io/cluster-service: "true"
+      kubernetes.io/name: "Metrics-server"
+  replicas: 3

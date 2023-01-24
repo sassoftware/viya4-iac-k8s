@@ -1,35 +1,48 @@
 ---
-- name: Register Git HASH information
-  ansible.builtin.shell: |
-    cd "{{ k8s_tool_base }}"
-    "{{ k8s_tool_base }}/files/tools/iac_git_info.sh"
-  register: git_hash
-  tags:
-    - install
-    - update
+#
+# This task is only run when deployment_type == 'vsphere'
+#
+# NOTE: There is no equivalent for 'bare-metal' as the
+#       infrastructure has been setup by the customer.
+#
+#       This code only handles infrastructure creation
+#       on VMWare. All other infrastructure creation
+#       is handled externally and therefore will not
+#       have this code applied.
+#
+- block:
+  - name: Register Git HASH information
+    ansible.builtin.shell: |
+      cd "{{ k8s_tool_base }}"
+      "{{ k8s_tool_base }}/files/tools/iac_git_info.sh"
+    register: git_hash
+    tags:
+      - install
+      - update
 
-- name: Register IAC Tooling information
-  ansible.builtin.shell: |
-    cd "{{ k8s_tool_base }}"
-    "{{ k8s_tool_base }}/files/tools/iac_tooling_version.sh"
-  register: iac_tooling_version
-  tags:
-    - install
-    - update
+  - name: Register IAC Tooling information
+    ansible.builtin.shell: |
+      cd "{{ k8s_tool_base }}"
+      "{{ k8s_tool_base }}/files/tools/iac_tooling_version.sh"
+    register: iac_tooling_version
+    tags:
+      - install
+      - update
 
-- name: Create the sas-iac-buildinfo ConfigMap manifest file
-  ansible.builtin.template:
-    src: "templates/sas-iac-buildinfo-cm.tmpl"
-    dest: "{{ iac_inventory_dir }}/sas-iac-buildinfo-cm.yaml"
-    mode: '0600'
-  tags:
-    - install
-    - update
+  - name: Create the sas-iac-buildinfo ConfigMap manifest file
+    ansible.builtin.template:
+      src: "templates/sas-iac-buildinfo-cm.tmpl"
+      dest: "{{ iac_inventory_dir }}/sas-iac-buildinfo-cm.yaml"
+      mode: '0600'
+    tags:
+      - install
+      - update
 
-- name: Apply sas-iac-buildinfo ConfigMap into cluster
-  ansible.builtin.shell: |
-    export KUBECONFIG="{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    kubectl apply -f "{{ iac_inventory_dir }}/sas-iac-buildinfo-cm.yaml"
-  tags:
-    - install
-    - update
+  - name: Apply sas-iac-buildinfo ConfigMap into cluster
+    ansible.builtin.shell: |
+      export KUBECONFIG="{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+      kubectl apply -f "{{ iac_inventory_dir }}/sas-iac-buildinfo-cm.yaml"
+    tags:
+      - install
+      - update
+  when: deployment_type == 'vsphere'

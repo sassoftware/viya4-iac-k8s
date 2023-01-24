@@ -1,0 +1,54 @@
+Coding standards and guidelines for IaC repos.
+
+All items are specific to a given element. Elements can be root level Terraform
+files or module level Terraform files.
+
+For Terraform-related files the standards are:
+
+  - Variables defined are stored in the root variables.yaml file for that element.
+
+  - Outputs defined are stored in the root outputs.yaml file for that element.
+  
+  - Locals defined are stored in the root locals.yaml file for that element.
+  
+    * Locals are created when one is using a module, resources, or outputs that require any extra logic.
+    * Locals hide the extra logic to keep the main code base more readable.
+
+  - Modules defined are stored in the root level of the project in the modules directory.
+
+  - Documentation lives at the root level of the project in the docs directory.
+
+  - Examples are stored in the root level of the project in the examples directory.
+  
+  - Template files are stored in the root templates directory for that element.
+
+  Here is an example directory structure and files following these standards:
+
+    .
+    ├── docs
+    ├── examples
+    ├── files
+    ├── modules
+    │   ├── foo
+    |   |   ├─ main.tf
+    |   |   ├─ locals.tf
+    |   |   ├─ variables.tf
+    |   |   └─ outputs.tf
+    │   └── bar
+    |       ├─ main.tf
+    |       ├─ locals.tf
+    |       ├─ variables.tf
+    |       └─ outputs.tf
+    ├── templates
+    ├── locals.tf
+    ├── main.tf
+    ├── outputs.tf
+    ├── provider.tf
+    ├── variables.tf
+    └── versions.tf
+
+When coding has completed, run the following command:
+
+  - terraform fmt -recursive
+
+This ensures everyone on the team has the same and consistent file formatting prior to pushing the code into git.

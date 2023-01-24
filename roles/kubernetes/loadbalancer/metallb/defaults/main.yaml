@@ -1,0 +1,18 @@
+## sig-storage-local-static-provisioner
+METALLB_NAME: metallb
+METALLB_NAMESPACE: kube-system
+METALLB_CHART_NAME: metallb
+METALLB_CHART_URL: https://metallb.github.io/metallb
+METALLB_CHART_VERSION: 0.13.7
+METALLB_KUBE_CONFIG: ~/.kube/config
+METALLB_CONFIG:
+  controller:
+    tolerations:
+      - key: workload.sas.com/class
+        operator: Exists
+        effect: NoSchedule
+  speaker:
+    tolerations:
+      - key: workload.sas.com/class
+        operator: Exists
+        effect: NoSchedule

@@ -204,14 +204,16 @@ resource "local_file" "ansible_vars" {
     cluster_name               = local.cluster_name
     cluster_version            = var.cluster_version
     cluster_cni                = var.cluster_cni
+    cluster_cni_version        = var.cluster_cni_version
     cluster_cri                = var.cluster_cri
     cluster_service_subnet     = var.cluster_service_subnet
     cluster_pod_subnet         = var.cluster_pod_subnet
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
-    kube_vip_version           = var.kube_vip_version
-    kube_vip_ip                = var.kube_vip_ip
-    kube_vip_dns               = var.kube_vip_dns == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.kube_vip_dns) > 0 ? var.kube_vip_dns : "${local.cluster_name}-vip.${var.cluster_domain}"
-    kube_vip_range             = var.kube_vip_range
+    cluster_vip_version        = var.cluster_vip_version
+    cluster_vip_ip             = var.cluster_vip_ip
+    cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
+    cluster_lb_type            = var.cluster_lb_type
+    cluster_lb_addresses       = local.loadbalancer_addresses
     nfs_ip                     = var.create_nfs ? var.nfs_ip : null
     jump_ip                    = var.create_jump ? var.jump_ip : null
     cr_ip                      = var.create_cr ? var.cr_ip : null

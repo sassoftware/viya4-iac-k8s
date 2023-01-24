@@ -3,13 +3,21 @@
 # TODO: Review all items here for actual need
 #       with bare metal/vm installations.
 #
+# Resource Links: https://kubernetes.io/docs/reference/config-api/
+#
+# kubeadm Configuration : https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta2/
+#
+{% if kubernetes_version is version('1.26.0', 'lt', version_type='semver') %}
 apiVersion: kubeadm.k8s.io/v1beta2
+{% else %}
+apiVersion: kubeadm.k8s.io/v1beta3
+{% endif %}
 kind: ClusterConfiguration
 certificatesDir: /etc/kubernetes/pki
 kubernetesVersion: v{{ kubernetes_version }}
 apiServer:
   certSANs:
-  - "{{ kubernetes_vip_loadbalanced_dns }}"
+  - "{{ kubernetes_vip_fqdn }}"
   - "{{ kubernetes_vip_ip }}"
 {% for cp_host in groups["k8s_control_plane"] %}
   - "{{hostvars[cp_host]['ansible_fqdn']}}"
@@ -20,12 +28,15 @@ apiServer:
     #       for metrics-server. Need to verify
     authorization-mode: Node,RBAC
     enable-aggregator-routing: "true"
-controlPlaneEndpoint: "{{ kubernetes_vip_loadbalanced_dns }}:6443"
+controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
 networking:
   serviceSubnet: "{{ kubernetes_service_subnet }}"
   podSubnet: "{{ kubernetes_pod_subnet }}"
 clusterName: "{{ kubernetes_cluster_name }}"
 ---
+#
+# Kubelet Configuration : https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+#
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 authentication:
@@ -37,6 +48,8 @@ cgroupDriver: systemd
 # NOTE: metricsBindAddress, enableProfiling, clusterCIDR
 #       were added in an attempt to help with node metrics
 #       pod metrics seem fine at this point
+#
+# kube-proxy Configuration : https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/
 #
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
