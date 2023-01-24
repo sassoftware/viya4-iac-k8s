@@ -290,7 +290,7 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 
 **NOTES**:
 
-1. If you enable `server_ssl` without defining either `server_ssl_cert_file` or `server_ssl_cert_file`, the system's default SSL certificate and key are used instead. By default, on Ubuntu systems we create a copy of those files and name them `ssl-cert-sas-${PG_HOST}.pem` and `ssl-cert-sas-${PG_HOST}.key`.
+1. If you enable `server_ssl` without defining either `server_ssl_cert_file` or `server_ssl_key_file`, the system's default SSL certificate and key are used instead. By default, on Ubuntu systems we create a copy of those files and name them `ssl-cert-sas-${PG_HOST}.pem` and `ssl-cert-sas-${PG_HOST}.key`.
     - The Ansible tasks that are performed include copying the certificate and key from the PostgreSQL VM into your local workspace directory.
 2. If you are planning to use the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a SAS Viya platform deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls) configured, make sure that the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable in the viya4-deployment ansible-vars.yaml file points to a directory that contains the server_ssl_cert_file.
 
