@@ -71,7 +71,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.23.8" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.24.10" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
@@ -329,7 +329,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
 | deployment_type | Type of deployment to be performed | string | "bare_metal" | Specify `bare_metal` or `vsphere`. |
 | kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled. **ONLY** change the `prefix` value described previously. |
-| kubernetes_version | Kubernetes version | string | "1.23.8" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
+| kubernetes_version | Kubernetes version | string | "1.24.10" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
 | kubernetes_upgrade_allowed | | bool | true | **NOTE:** Not currently used. |
 | kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled. **ONLY** change the `vm_arch` value described previously. |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
