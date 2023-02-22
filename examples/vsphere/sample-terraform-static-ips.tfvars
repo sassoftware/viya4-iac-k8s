@@ -19,8 +19,8 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on each system
 
 # Kubernetes - Cluster
-cluster_version        = "1.24.10"       # Kubernetes Version
-cluster_cni            = "calico"       # Kuberentes Container Network Interface (CNI)
+cluster_version        = "1.24.10"      # Kubernetes Version
+cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
 cluster_cni_version    = "3.24.5"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
@@ -85,7 +85,7 @@ control_plane_ssh_key_name = "cp_ssh"
 #
 node_pools = {
   # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
-  #                      Other varaibles may be altered
+  #                      Other variables may be altered
   control_plane = {
     cpus    = 2
     memory  = 4096
@@ -99,7 +99,7 @@ node_pools = {
     node_labels = {}
   },
   # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
-  #                      Other varaibles may be altered
+  #                      Other variables may be altered
   system = {
     cpus    = 8
     memory  = 16384

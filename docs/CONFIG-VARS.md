@@ -340,7 +340,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | kubernetes_vip_version | kube-vip version | string | "0.5.7" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_fqdn | kube-vip DNS | string | | |
-| kubernetes_loadbalancer | Load balancer provider | string | "kube_vip" | Choices are `kube_vip` or `metallb`.
+| kubernetes_loadbalancer | Load balancer provider | string | "kube_vip" | Choices are `kube_vip` or `metallb`. |
 | kubernetes_loadbalancer_addresses | Load balancer IP addresses | string | [] | Values depend on the load balancer that is selected. [This link](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) provides more information about kube-vip load balancer addresses. [This link](https://metallb.universe.tf/configuration/#layer-2-configuration) provides more information about MetalLB load balancer addresses. |
 | node_labels | Labels applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | node_taints | Taints applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
