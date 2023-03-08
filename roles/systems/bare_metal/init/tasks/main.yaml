@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 # NOTE: Should make this more generic for other OS types
 - name: Set owner and group for Ubuntu OS
   ansible.builtin.set_fact:
