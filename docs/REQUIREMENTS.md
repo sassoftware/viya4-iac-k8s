@@ -666,6 +666,13 @@ INGRESS_NGINX_CONFIG:
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 ```
 
+You must set the value for `V4M_STORAGECLASS` to `local-storage` in your ansible-vars.yaml file as shown below prior to installing `cluster-logging` or `cluster-monitoring` with [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git).
+
+```yaml
+## Logging and Monitoring
+V4M_STORAGECLASS = local-storage
+```
+
 ## Third-Party Tools
 
 The third-party applications that are listed in the following table are supported for the deployment of the SAS Viya platform into a cluster configured by viya4-iac-kubernetes:
