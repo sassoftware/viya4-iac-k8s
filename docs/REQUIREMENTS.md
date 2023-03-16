@@ -115,7 +115,7 @@ This section outlines how storage is used by the tooling to create the `local-st
 
 1. The disks must be represented as empty partitions - `/dev/sdb`, `/dev/sdc`, etc. and attached to the machine or VM.
 2. The empty partitions cannot be formatted or pre-configured. These partitions must simply be attached and in their raw state.
-3. You must supply an empty partition for each local storage entity needed. Currently if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need need to have these disks available for use.
+3. You must supply an empty partition for each local storage entity needed. Currently if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need to have these disks available for use.
 4. You will need to update ANY transformer being used for the **OpenSearch** or **SingleStore** products to mirror these values. Using `local-storage` as the storage class and adjusting the storage size to mirror the partition created for use.
 
 ### Bare metal and virtual machine storage example
@@ -172,7 +172,7 @@ This section provides an example configuration based on the physical-machine and
 
 ### vCenter/vSphere Sample tfvars File
 
-If you are creating virtual machines with vCenter or vSphere, the terraform.tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya platform deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
+If you are creating virtual machines with vCenter or vSphere, the terraform .tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya platform deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
 
 For this example, the network setup is as follows:
 
@@ -205,7 +205,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.23.8"                        # Kubernetes version
+cluster_version        = "1.24.10"                        # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cni_version    = "3.24.5"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
