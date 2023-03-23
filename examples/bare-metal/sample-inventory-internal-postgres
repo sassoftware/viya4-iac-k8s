@@ -1,0 +1,75 @@
+# This example file has the postgres host groups omitted
+# Use this file if you are planning on performing a SAS Viya Platform
+# deployment with internal postgres.
+
+#
+# Kubernetes - Control Plane nodes
+#
+# This list is the FQDN/IP of the nodes used for the control plane
+#
+# NOTE: For HA/kube-vip to work you need at least 3 nodes
+#
+[k8s_control_plane]
+FIXME - ENTER YOUR KUBERNETES CONTROL PLANE NODE IPs/FQDNs HERE!
+
+#
+# Kubernetes - Nodes
+#
+# This list is the FQDN/IP of the nodes used for the generic nodes
+#
+# NOTE: For HA to work you need at least 3 nodes
+#
+[k8s_node]
+FIXME - ENTER YOUR KUBERNETES COMPUTE NODE IPs/FQDNs HERE!
+
+#
+# Kubernetes Nodes - alias - DO NOT MODIFY
+#
+[k8s:children]
+k8s_control_plane
+k8s_node
+
+#
+# Jump Server
+#
+[jump_server]
+FIXME - ENTER YOUR JUMP SERVER IP/FQDN HERE!
+
+#
+# Jump Server - alias - DO NOT MODIFY
+#
+[jump:children]
+jump_server
+
+#
+# NFS Server
+#
+[nfs_server]
+FIXME - ENTER YOUR NFS SERVER IP/FQDN HERE!
+
+#
+# NFS Server - alias - DO NOT MODIFY
+#
+[nfs:children]
+nfs_server
+
+#
+# Container Registry
+#
+[cr_server]
+FIXME - ENTER YOUR CR SERVER IP/FQDN HERE!
+
+#
+# Container Registry - alias - DO NOT MODIFY
+#
+[cr:children]
+cr_server
+
+#
+# All systems
+#
+[all:children]
+k8s
+jump
+nfs
+cr
