@@ -28,7 +28,7 @@ terraform show my-viya4-iac.plan
 
 ## Terraform - Apply
 
-After any errors are resolved and you are satisfied with the plan, run the ```terraform apply``` command to create resources on the cloud provider. When a plan file is not provided, Terraform generates a plan at that time that might differ from previous ```plan``` runs.
+After any errors are resolved, and you are satisfied with the plan, run the ```terraform apply``` command to create resources on the cloud provider. When a plan file is not provided, Terraform generates a plan at that time that might differ from previous ```plan``` runs.
 
 ```bash
 # run apply to create resources based on the plan

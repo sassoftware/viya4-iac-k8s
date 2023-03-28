@@ -281,7 +281,7 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 | server_memory | Memory in MB | number | 16385 | |
 | server_disk_size | Size of disk in GB | number | 250 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field. |
-| server_version | PostgreSQL version | number | 12 | |
+| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | server_ssl | Enable/disable SSL | string | "off" | |
 | server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
 | server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
@@ -402,54 +402,3 @@ The inventory file represents the machines that you will be using in your Kubern
 ## Storage
 
 An NFS server is set up by default. This is a required machine that is used as backing storage for the `default` storage class that is created. Information on setting up that machine is provided [here](#nfs-server).
-
-## PostgreSQL Servers
-
-When setting up ***external database servers***, you must provide information about those servers in the `postgres_servers` variable block. Each entry in the variable block represents a ***single database server***.
-
-This code only configures database servers. No databases are created during the infrastructure setup.
-
-The variable has the following format:
-
-```terraform
-postgres_servers = {
-  default = {},
-  ...
-}
-```
-
-**NOTE**: The `default = {}` element is always required when creating external databases. This is the system's default database server.
-
-Each server element, like `foo = {}`, can contain none, some, or all of the parameters listed below:
-
-| Name | Description | Type | Default | Notes |
-| :--- | ---: | ---: | ---: | ---: |
-| administrator_login | The administrator login account for the PostgreSQL server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
-| administrator_password | The password associated with the administrator_login for the PostgreSQL server | string | "my$up3rS3cretPassw0rd" |  |
-| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
-| ssl_enforcement_enabled | Enforce SSL on connections to the PostgreSQL database | bool | true | |
-
-Here is an example of the `postgres_servers` variable where the `default` entry only overrides the `administrator_password` parameter, and the `another-server` entry overrides all parameters:
-
-```terraform
-postgres_servers = {
-  default = {
-    administrator_password       = "D0ntL00kTh1sWay"
-  },
-  another_server = {
-    machine_type                           = "db-custom-8-30720"
-    storage_gb                             = 10
-    backups_enabled                        = true
-    backups_start_time                     = "21:00"
-    backups_location                       = null
-    backups_point_in_time_recovery_enabled = false
-    backup_count                           = 7 # Number of backups to retain, not in days
-    administrator_login                    = "pgadmin"
-    administrator_password                 = "my$up3rS3cretPassw0rd"
-    server_version                         = "13"
-    availability_type                      = "ZONAL"
-    ssl_enforcement_enabled                = true
-    database_flags                         = [{ name = "foo" value = "true"}, { name = "bar", value = "false"}]
-  }
-}
-```

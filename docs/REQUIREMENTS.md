@@ -109,13 +109,13 @@ These IP addresses are part of your network but are not assigned. Floating IP ad
 
 ## Storage
 
-This section outlines how storage is used by the tooling to create the `local-storage` storage class for use in kubernetes. Currently there are two such products that are used in the SAS Viya platform system that require local storage, these are **OpenSearch** and **SingleStore**. If these products are going to be in use within your cluster you will need to have local storage active.
+This section outlines how storage is used by the tooling to create the `local-storage` storage class for use in kubernetes. Currently, there are two such products that are used in the SAS Viya platform system that require local storage, these are **OpenSearch** and **SingleStore**. If these products are going to be in use within your cluster you will need to have local storage active.
 
 ### Configuration and Restrictions
 
 1. The disks must be represented as empty partitions - `/dev/sdb`, `/dev/sdc`, etc. and attached to the machine or VM.
 2. The empty partitions cannot be formatted or pre-configured. These partitions must simply be attached and in their raw state.
-3. You must supply an empty partition for each local storage entity needed. Currently if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need to have these disks available for use.
+3. You must supply an empty partition for each local storage entity needed. Currently, if your deployment will include any products that utilize **OpenSearch** or **SingleStore**, you'll need to have these disks available for use.
 4. You will need to update ANY transformer being used for the **OpenSearch** or **SingleStore** products to mirror these values. Using `local-storage` as the storage class and adjusting the storage size to mirror the partition created for use.
 
 ### Bare metal and virtual machine storage example
@@ -182,9 +182,9 @@ Virtual IP        : 10.18.0.175
 Load Balancer IPs : 10.18.0.100-10.18.0.125
 ```
 
-Refer to the file [terraform.tfvars](../examples/vsphere/terraform.tfvars) for more information.
+Refer to the file [terraform.tfvars](../examples/vsphere/sample-terraform-dhcp.tfvars) for more information.
 
-```yaml
+```terraform
 # General items
 ansible_user     = "ansadmin"
 ansible_password = "!Th!sSh0uldNotBUrP@ssw0rd#"
@@ -205,7 +205,7 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.24.10"                        # Kubernetes version
+cluster_version        = "1.24.10"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cni_version    = "3.24.5"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
@@ -399,9 +399,9 @@ With this example, because you are using physical (bare-metal) machines or gener
 
 This example is using the `192.168.0.0/16` CIDR block for the cluster. The cluster prefix is `viya4-oss`. The cluster virtual IP address is `192.168.0.1`.
 
-Refer to the [inventory file](../examples/bare-metal/inventory) for more information.
+Refer to the [inventory file](../examples/bare-metal/sample-inventory) for more information.
 
-```yaml
+```ini
 #
 # Kubernetes - Control Plane nodes
 #
@@ -472,6 +472,8 @@ postgres_server_version=12
 postgres_server_ssl=off                 # NOTE: Values - [on,off]
 postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
 postgres_administrator_password="Un33d2ChgM3n0W!"
+postgres_system_setting_max_prepared_transactions="1024"
+postgres_system_setting_max_connections="1024"
 
 # NOTE: Add entries here for each PostgreSQL server listed previously
 [postgres:children]
@@ -666,7 +668,7 @@ INGRESS_NGINX_CONFIG:
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 
 ## Logging and Monitoring
-V4M_STORAGECLASS = local-storage
+V4M_STORAGECLASS: local-storage
 ```
 
 You must explicitly set the value for `V4M_STORAGECLASS` in your ansible-vars.yaml file as shown above to a pre-existing Storage Class (for example: `local-storage`) prior to installing `cluster-logging` or `cluster-monitoring` with [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git).
