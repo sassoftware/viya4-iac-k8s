@@ -247,16 +247,17 @@ variable "postgres_server_defaults" {
   description = ""
   type        = any
   default = {
-    server_num_cpu         = 8                       # 8 CPUs
-    server_memory          = 16384                   # 16 GiB
-    server_disk_size       = 250                     # 250 GiB
-    server_ip              = ""                      # Assigned values for static IPs
-    server_version         = 13                      # PostgreSQL version
-    server_ssl             = "off"                   # SSL flag
-    server_ssl_cert_file   = ""                      # PostgreSQL SSL certificate file
-    server_ssl_key_file    = ""                      # PostgreSQL SSL key file
-    administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
-    administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
+    server_num_cpu           = 8                       # 8 CPUs
+    server_memory            = 16384                   # 16 GiB
+    server_disk_size         = 250                     # 250 GiB
+    server_ip                = ""                      # Assigned values for static IPs
+    server_version           = 13                      # PostgreSQL version
+    server_ssl               = "off"                   # SSL flag
+    server_ssl_cert_file     = ""                      # PostgreSQL SSL certificate file
+    server_ssl_key_file      = ""                      # PostgreSQL SSL key file
+    administrator_login      = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
+    administrator_password   = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
+    postgres_system_settings = [{ name = "max_prepared_transactions", value = "1024" }, { name = "max_connections", value = "1024" }]
   }
 }
 
