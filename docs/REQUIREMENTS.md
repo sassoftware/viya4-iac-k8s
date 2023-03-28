@@ -664,14 +664,13 @@ INGRESS_NGINX_CONFIG:
 ### NFS Subdir External Provisioner - SAS default storage class
 # Updates to support open source Kubernetes 
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
-```
 
-You must explicitly set the value for `V4M_STORAGECLASS` in your ansible-vars.yaml file as shown below to a pre-existing Storage Class (for example: `local-storage`) prior to installing `cluster-logging` or `cluster-monitoring` with [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git).
-
-```yaml
 ## Logging and Monitoring
 V4M_STORAGECLASS = local-storage
 ```
+
+You must explicitly set the value for `V4M_STORAGECLASS` in your ansible-vars.yaml file as shown above to a pre-existing Storage Class (for example: `local-storage`) prior to installing `cluster-logging` or `cluster-monitoring` with [viya4-deployment](https://github.com/sassoftware/viya4-deployment.git).
+
 While other storage classes can be used, the `local-storage` class is **recommended** for the Viya Monitoring and Logging tools.
 
 ## Third-Party Tools
