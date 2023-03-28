@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 data "vsphere_datastore" "datastore" {
   name          = var.datastore
   datacenter_id = var.datacenter_id
