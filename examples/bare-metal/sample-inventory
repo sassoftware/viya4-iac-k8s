@@ -76,7 +76,6 @@ postgres_administrator_login="postgres" # NOTE: Do not change this value at this
 postgres_administrator_password="<postgres_server_administrator_password>"
 postgres_system_setting_max_prepared_transactions="1024"
 postgres_system_setting_max_connections="1024"
-# postgres_system_setting_ # configure any any other setting from https://www.postgresql.org/docs/13/runtime-config.html
 
 # NOTE: Add entries here for each postgres server listed above
 [postgres:children]

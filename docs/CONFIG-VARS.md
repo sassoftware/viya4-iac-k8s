@@ -303,6 +303,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
 | administrator_login | Admin user | string | "postgres" | |
 | administrator_password | Admin password | string | "my$up3rS3cretPassw0rd" | |
+| postgres_system_settings | Configure PostgreSQL system settings | list(object({})) | `[{ name = "max_prepared_transactions", value = "1024" }, { name = "max_connections", value = "1024" }]` | Currently `max_prepared_transactions` and `max_connections` are supported configuration values |
 
 # TODO ADD THE SYSTEM SETTINGS HERE
 **NOTES**:
@@ -420,6 +421,23 @@ node_taints:
 ### Ansible inventory file
 
 The inventory file represents the machines that you will be using in your Kubernetes deployment of the SAS Viya platform. An example and information about this file can be found [here](../examples/bare-metal/sample-inventory).
+
+The following variables are used to describe the machine targets for the SAS Viya platform deployment.
+
+**Note:** If this file was generated as part of Terraform infrastructure creation through VMware vSphere/vCenter, these fields will be prepopulated with values you set in your terraform.tfvars file. For bare-metal, if you already have your machines, and are going to populating the inventory file yourself to you can start with the [sample-inventory](../examples/bare-metal/sample-inventory) file in this project to help you get started. 
+
+| Name | Description | Type | Notes |
+|:---|---:|---:|---:|
+| postgres_ip | Static IP address for PostgreSQL server | string | This field is required if you are configuring a PostgreSQL server |
+| postgres_server_version | The version of the PostgreSQL server | string | Refer to the [SAS Viya Platform Administration Guide](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
+| postgres_server_ssl | Enable/disable SSL | string | Specify `off` or `on` |
+| postgres_server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
+| postgres_server_ssl_key_file | Path to the PostgreSQL SSL key file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
+| postgres_administrator_login | PostgreSQL admin user | string | |
+| postgres_administrator_password | PostgreSQL admin password | string | |
+| postgres_system_setting_max_prepared_transactions | Allows you to configure the `max_prepared_transactions` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/caltuning/n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
+| postgres_system_setting_max_connections | Allows you to configure the `max_connections` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/caltuning/n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
+
 
 ## Storage
 
