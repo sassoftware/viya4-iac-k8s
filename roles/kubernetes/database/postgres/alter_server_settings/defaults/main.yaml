@@ -3,5 +3,5 @@
 
 # default PG System settings we will set if the user does
 # not define their own values
-postgres_system_setting_max_prepared_transactions: ""
-postgres_system_setting_max_connections: ""
+postgres_system_setting_max_prepared_transactions: "1024"
+postgres_system_setting_max_connections: "1024"

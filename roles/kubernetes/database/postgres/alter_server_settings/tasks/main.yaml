@@ -10,6 +10,7 @@
     - update
 
 # This should be able to support any other PostgreSQL server settings
+# but noting that is an experimental feature
 - name: Update PostgreSQL server settings script
   ansible.builtin.shell: |
     echo 'ALTER SYSTEM SET {{ item | replace("postgres_system_setting_","") }} = {{ vars[item] }};' >> /tmp/postgres_system.psql
