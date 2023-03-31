@@ -305,7 +305,6 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | administrator_password | Admin password | string | "my$up3rS3cretPassw0rd" | |
 | postgres_system_settings | Configure PostgreSQL system settings | list(object({})) | `[{ name = "max_prepared_transactions", value = "1024" }, { name = "max_connections", value = "1024" }]` | Currently `max_prepared_transactions` and `max_connections` are supported configuration values |
 
-# TODO ADD THE SYSTEM SETTINGS HERE
 **NOTES**:
 
 1. If you enable `server_ssl` without defining either `server_ssl_cert_file` or `server_ssl_key_file`, the system's default SSL certificate and key are used instead. By default, on Ubuntu systems we create a copy of those files and name them `ssl-cert-sas-${PG_HOST}.pem` and `ssl-cert-sas-${PG_HOST}.key`.
