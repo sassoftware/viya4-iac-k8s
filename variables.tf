@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # Generic
 #
@@ -122,7 +125,8 @@ variable "node_pool_defaults" {
   default = {
     cpus         = 2
     memory       = 4096
-    disk         = 25
+    os_disk      = 25
+    misc_disks   = []
     count        = 0
     ip_addresses = []
     node_taints  = []
@@ -213,6 +217,31 @@ variable "nfs_disk_size" {
   default = 250
 }
 
+# container registry
+variable "create_cr" {
+  type    = bool
+  default = false
+}
+variable "cr_ip" {
+  type    = string
+  default = null
+}
+
+variable "cr_memory" {
+  type    = number
+  default = 8092
+}
+
+variable "cr_num_cpu" {
+  type    = number
+  default = 4
+}
+
+variable "cr_disk_size" {
+  type    = number
+  default = 160
+}
+
 # postgres
 variable "postgres_server_defaults" {
   description = ""
@@ -222,8 +251,10 @@ variable "postgres_server_defaults" {
     server_memory          = 16384                   # 16 GiB
     server_disk_size       = 250                     # 250 GiB
     server_ip              = ""                      # Assigned values for static IPs
-    server_version         = 12                      # PostgreSQL version
+    server_version         = 13                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
+    server_ssl_cert_file   = ""                      # PostgreSQL SSL certificate file
+    server_ssl_key_file    = ""                      # PostgreSQL SSL key file
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
   }
@@ -260,18 +291,23 @@ variable "system_ssh_keys_dir" {
 }
 
 variable "cluster_domain" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "cluster_version" {
   type    = string
-  default = "1.22.10"
+  default = "1.24.10"
 }
 
 variable "cluster_cni" {
   type    = string
   default = "calico"
+}
+
+variable "cluster_cni_version" {
+  type    = string
+  default = "3.24.5"
 }
 
 variable "cluster_cri" {
@@ -289,28 +325,33 @@ variable "cluster_pod_subnet" {
   default = "10.42.0.0/16"
 }
 
-variable "kube_vip_version" {
+variable "cluster_vip_version" {
   type    = string
-  default = "0.4.4"
+  default = "0.5.7"
 }
 
-variable "kube_vip_interface" {
+variable "cluster_vip_ip" {
   type    = string
   default = null
 }
 
-variable "kube_vip_ip" {
+variable "cluster_vip_fqdn" {
   type    = string
   default = null
 }
 
-variable "kube_vip_dns" {
+variable "cluster_lb_type" {
   type    = string
-  default = null
+  default = "kube_vip"
+
+  validation {
+    condition     = contains(["kube_vip", "metallb"], lower(var.cluster_lb_type))
+    error_message = "ERROR: Valid values for the cluster_lb_type are: kube_vip, metallb"
+  }
 }
 
-variable "kube_vip_range" {
-  type    = string
+variable "cluster_lb_addresses" {
+  type    = list(any)
   default = null
 }
 

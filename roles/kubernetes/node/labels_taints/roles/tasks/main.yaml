@@ -1,7 +1,10 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 - name: Label/Taints for cluster nodes
   ansible.builtin.shell: |
-    kubectl label nodes {{ ansible_nodename }} node-role.kubernetes.io/node= --overwrite
+    kubectl label nodes {{ ansible_hostname }} node-role.kubernetes.io/node= --overwrite
   delegate_to: "{{groups['k8s_control_plane'][0]}}"
   tags:
     - install

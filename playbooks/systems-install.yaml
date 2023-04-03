@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 # Tasks that run on all nodes for initialization and common tasks
 - hosts: all
@@ -27,6 +30,13 @@
   become_user: root
   roles:
     - { role: systems/postgres }
+
+# Container Registry Server
+- hosts: cr
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/container_registry/harbor }
 
 # Kubernetes - Control Plane
 - hosts: k8s_control_plane

@@ -1,0 +1,68 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# NOTE: The usage and setting of the iac_inventory_dir variable
+#       is only required if this task is run on localhost or on
+#       an implied localhost, which prevents the magic inventory_file
+#       and inventory_dir variables from having values.
+#
+#       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
+#
+- name: Setting up MetalLB loadbalancer
+  block:
+    - name: Installing metallb
+      kubernetes.core.helm:
+        name: "{{ METALLB_NAME }}"
+        namespace: "{{ METALLB_NAMESPACE }}"
+        chart_repo_url: "{{ METALLB_CHART_URL }}"
+        chart_ref: "{{ METALLB_CHART_NAME }}"
+        chart_version: "{{ METALLB_CHART_VERSION }}"
+        values: "{{ METALLB_CONFIG }}"
+        kubeconfig: "{{ METALLB_KUBE_CONFIG }}"
+        create_namespace: true
+        wait: true
+      tags:
+        - install
+        - update
+
+    - name: Remove old template file(s)
+      ansible.builtin.file:
+        path: "/tmp/{{ item }}.yaml"
+        state: absent
+      with_items:
+        - metallb-ip-ap
+      tags:
+        - install
+        - update 
+
+    - name: Create MetalLB IPAddressPool file
+      ansible.builtin.template:
+        src: "templates/{{ item }}.tmpl"
+        dest: "/tmp/{{ item }}.yaml"
+        mode: '0600'
+      with_items:
+        - metallb-ip-ap
+      tags:
+        - install
+        - update
+
+    - name: Apply MetalLB IPAddressPool
+      ansible.builtin.shell: |
+        kubectl apply -f /tmp/metallb-ip-ap.yaml
+      tags:
+        - install
+        - update
+  tags:
+    - install
+    - update
+
+- name: Remove MetalLB
+  kubernetes.core.helm:
+    name: "{{ METALLB_NAME }}"
+    namespace: "{{ METALLB_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
+    state: absent
+  tags:
+    - uninstall

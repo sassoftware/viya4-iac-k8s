@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 # NOTE: The usage and setting of the iac_inventory_dir variable
 #       is only needed given this task is run on localhost
@@ -6,7 +9,7 @@
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 #
-- name: Setting up default storage for cluster using nfs-subdir-external-provisioner 
+- name: Setting up default storage for the cluster using nfs-subdir-external-provisioner 
   kubernetes.core.helm:
     name: "{{ NFS_CLIENT_NAME }}"
     namespace: "{{ NFS_CLIENT_NAMESPACE }}"

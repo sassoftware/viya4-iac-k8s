@@ -1,0 +1,10 @@
+# Reference Link: https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevip
+  namespace: kube-system
+data:
+{% for address in kubernetes_loadbalancer_addresses %}
+  {{ address }}
+{% endfor %}

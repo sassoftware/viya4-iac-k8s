@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 # TODO: Might need rpcbind here for NFS 3.x Version 4.x does not need this
 - name: Install nfs-common for nfs-subdir-external-provisioner
@@ -6,7 +9,7 @@
     state: latest
   with_items:
     - nfs-common
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -24,7 +27,7 @@
   ansible.builtin.set_fact:
     owner: nobody
     group: nogroup
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "20.04"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -36,6 +39,7 @@
     owner: "{{ owner }}"
     group: "{{ group }}"
     mode: 0777
+  ignore_errors: true
   tags:
     - install
     - update

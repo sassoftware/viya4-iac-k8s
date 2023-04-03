@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 variable "name" {
   type = string
 }
@@ -60,6 +63,11 @@ variable "num_cpu" {
 
 variable "disk_size" {
   type = string
+}
+
+variable "misc_disks" {
+  type    = list(any)
+  default = null
 }
 
 variable "dns_servers" {

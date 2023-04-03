@@ -1,7 +1,10 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 - name: Applying labels
   ansible.builtin.shell: |
-    kubectl label nodes {{ ansible_nodename }} {{ label }} --overwrite 
+    kubectl label nodes {{ ansible_hostname }} {{ label }} --overwrite 
   with_items: "{{ labels }}"
   loop_control:
     loop_var: label

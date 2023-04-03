@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 # oIFS="$IFS"; IFS=" ," ; set -- $1 ; IFS="$oIFS"
 
 # Catch errors
@@ -58,14 +62,14 @@ terraform_prep() {
 
 terraform_up() {
     terraform_prep
-    terraform apply -parallelism=15 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
-    echo "Wait for OS startup - Sleeping for 45 seconds"
-    sleep 45
+    terraform apply -parallelism=20 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
+    echo "Wait for OS startup - Sleeping for 60 seconds"
+    sleep 60
 }
 
 terraform_down() {
     terraform_prep
-    terraform destroy -parallelism=15 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
+    terraform destroy -parallelism=20 -state $TFSTATE -auto-approve -var "deployment_type=$SYSTEM" -var-file $TFVARS
 }
 
 # bare_metal items (ansible)
@@ -139,6 +143,7 @@ fi
 #   cleanup   - System and software cleanup
 #   destroy   - IaC Destruction
 #
+
 
 # Determine what arguments have been passed and store
 # those values in a known order
@@ -315,6 +320,7 @@ for item in "${arguments[@]}"; do
     clean_up
     rm -rf "$TFSTATE" 2>&1 > /dev/null
     rm -rf "$TFSTATE.backup" 2>&1 > /dev/null
+    rm -rf $BASEDIR/ssl-cert-sas-*-pgsql.{key,pem} 2>&1 > /dev/null
     break
   fi
 done

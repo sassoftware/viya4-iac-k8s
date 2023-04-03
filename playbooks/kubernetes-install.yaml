@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 #
 # Kubernetes Playbook - Installs all elements needed for a stable
@@ -24,9 +27,9 @@
   become: true
   become_user: root
   roles:
-    - { role: kubernetes/loadbalancer/kube_vip/primary } # kube-vip : https://kube-vip.chipzoller.dev/docs/installation/static/
+    - { role: kubernetes/vip/primary }                # kube-vip : https://kube-vip.io/docs/installation/static/
     - { role: kubernetes/control_plane/init/primary }
-    - { role: "kubernetes/cni/{{ kubernetes_cni }}" }     # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
+    - { role: "kubernetes/cni/{{ kubernetes_cni }}" } # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
 
 # Secure kubernetes items
 - hosts: localhost
@@ -39,7 +42,7 @@
   become_user: root
   roles:
     - { role: kubernetes/control_plane/init/secondary }
-    - { role: kubernetes/loadbalancer/kube_vip/secondary }
+    - { role: kubernetes/vip/secondary }
 
 # Compute nodes
 - hosts: k8s_node
@@ -49,12 +52,12 @@
     - { role: kubernetes/node/baseline }
     - { role: kubernetes/node/init }
 
-# Cloud load balancer - kube-vip
+# Kubernetes loadbalancer
 - hosts: k8s_control_plane[0]
   become: true
   become_user: root
   roles:
-    - { role: kubernetes/loadbalancer/kube_vip/cloud_provider }
+    - { role: "kubernetes/loadbalancer/{{ kubernetes_loadbalancer }}" }
 
 # Label/Taint Kubernetes nodes
 - hosts: k8s
@@ -81,7 +84,13 @@
 # Setup default storage class for cluster
 - hosts: localhost
   roles:
+    - { role: kubernetes/storage/sig-storage-local-static-provisioner }
     - { role: kubernetes/storage/nfs-subdir-external-provisioner }
+
+# Setup metrics-server for cluster
+- hosts: localhost
+  roles:
+    - { role: kubernetes/metrics/metrics-server }
 
 # Misc cluster related items
 - hosts: localhost

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -e
+
+# CA Private Key
+openssl genrsa -out ca.key 4096
+
+# CA Certificate
+openssl req -x509 -new -nodes -sha512 -days 3650 \
+ -subj "/C=${ cr_country }/ST=${ cr_state }/L=${ cr_city }/O=${ cr_org }/OU=${ cr_user }/CN=${ cr_fqnd }" \
+ -key ca.key \
+ -out ca.crt
+
+# Private domain key
+openssl genrsa -out ${ cr_fqdn }.key 4096
+
+# Cert signing request (CSR)
+openssl req -sha512 -new \
+    -subj "/C=${ cr_country }/ST=${ cr_state }/L=${ cr_city }/O=${ cr_org }/OU=${ cr_user }/CN=${ cr_fqnd }" \
+    -key ${ cr_fqdn }.key \
+    -out ${ cr_fqdn }.csr
+
+# x509 v3 extension
+cat > v3.ext <<-EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1=${ cr_fqdn }.com
+DNS.2=${ cr_fqdn_no_domain }
+DNS.3=${ cr_host }
+DNS.4=${ cr_ip }
+EOF
+
+# Certificate for Harbor host
+openssl x509 -req -sha512 -days 3650 \
+    -extfile v3.ext \
+    -CA ca.crt -CAkey ca.key -CAcreateserial \
+    -in ${ cr_fqdn }.csr \
+    -out ${ cr_fqdn }.crt
+
+# Make the /data/cert directory
+if [[ ! -d /data/cert ]]; then
+  mkdir -p /data/cert/
+fi
+
+# Copy cert and key into the cert folder on your Harbor host
+cp ${ cr_fqdn }.crt /data/cert/
+cp ${ cr_fqdn }.key /data/cert/
+
+# Convert crt and cert for use by Docker
+openssl x509 -inform PEM -in ${ cr_fqdn }.crt -out ${ cr_fqdn }.cert
+
+# Create the Docker cert folder
+if [[ ! -d /etc/docker/certs.d/${ cr_fqdn } ]]; then
+  mkdir -p /etc/docker/certs.d/${ cr_fqdn }/
+fi
+
+# Copy the server crt, key and CA files into the Docker cert folder on Harbor host
+cp ${ cr_fqdn }.cert /etc/docker/certs.d/${ cr_fqdn }/
+cp ${ cr_fqdn }.key /etc/docker/certs.d/${ cr_fqdn }/
+cp ca.crt /etc/docker/certs.d/${ cr_fqdn }/
+
+# Copy sytem to OS location for trust
+cp ${ cr_fqdn }.crt /usr/local/share/ca-certificates/${ cr_fqdn }.crt
+update-ca-certificates
+
+# Restart the docker service
+systemctl restart docker

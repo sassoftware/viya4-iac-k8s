@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 data "vsphere_datastore" "datastore" {
   name          = var.datastore
   datacenter_id = var.datacenter_id
@@ -38,9 +41,19 @@ resource "vsphere_virtual_machine" "static" {
   }
 
   disk {
-    label            = "disk0"
+    label            = "os-disk-01"
     size             = var.disk_size
     thin_provisioned = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
+    unit_number      = 0
+  }
+  dynamic "disk" {
+    for_each = var.misc_disks != null ? length(var.misc_disks) > 0 ? { for k, v in var.misc_disks : k => v } : {} : {}
+    content {
+      label            = format("misc-disk-%02d", disk.key + 1)
+      size             = disk.value
+      thin_provisioned = true
+      unit_number      = disk.key + 1
+    }
   }
 
   clone {
@@ -84,9 +97,19 @@ resource "vsphere_virtual_machine" "dhcp" {
   }
 
   disk {
-    label            = "disk0"
+    label            = "os-disk-01"
     size             = var.disk_size
     thin_provisioned = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
+    unit_number      = 0
+  }
+  dynamic "disk" {
+    for_each = var.misc_disks != null ? length(var.misc_disks) > 0 ? { for k, v in var.misc_disks : k => v } : {} : {}
+    content {
+      label            = format("misc-disk-%02d", disk.key + 1)
+      size             = disk.value
+      thin_provisioned = true
+      unit_number      = disk.key + 1
+    }
   }
 
   clone {

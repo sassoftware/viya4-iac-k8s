@@ -1,3 +1,6 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 locals {
 
   # Systems
@@ -21,6 +24,9 @@ locals {
   ## Nodes
   nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }
   node_ips = flatten(sort(flatten([for item in values(merge(module.system, module.node)) : values(item)])))
+
+  ## Load Balancer addresses and data items for kube-vip and MetalLB
+  loadbalancer_addresses = var.cluster_lb_addresses != null ? length(var.cluster_lb_addresses) > 0 ? [for v in var.cluster_lb_addresses : v] : null : null
 
   # PostgreSQL
   postgres_servers = var.postgres_servers == null ? {} : { for k, v in var.postgres_servers : k => merge(var.postgres_server_defaults, v, ) }
