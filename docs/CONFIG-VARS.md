@@ -423,7 +423,7 @@ The inventory file represents the machines that you will be using in your Kubern
 
 The following variables are used to describe the machine targets for the SAS Viya platform deployment.
 
-**Note:** If this file was generated as part of Terraform infrastructure creation through VMware vSphere/vCenter, these fields will be prepopulated with values you set in your terraform.tfvars file. For bare-metal, if you already have your machines, and are going to populating the inventory file yourself to you can start with the [sample-inventory](../examples/bare-metal/sample-inventory) file in this project to help you get started. 
+**Note:** If this file was generated as part of Terraform infrastructure creation through VMware vSphere/vCenter, these fields will be prepopulated with values you set in your terraform.tfvars file. For bare-metal, if you already have your machines, and are going to be populating the inventory file yourself, you can start with the [sample-inventory](../examples/bare-metal/sample-inventory) file in this project to help you get started. 
 
 | Name | Description | Type | Notes |
 |:---|---:|---:|---:|
