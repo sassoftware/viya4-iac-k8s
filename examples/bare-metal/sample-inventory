@@ -74,6 +74,8 @@ postgres_server_version="<postgres_server_version>"
 postgres_server_ssl="<postgres_server_ssl_enabled" # NOTE: Values - [on,off]
 postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
 postgres_administrator_password="<postgres_server_administrator_password>"
+postgres_system_setting_max_prepared_transactions="1024"
+postgres_system_setting_max_connections="1024"
 
 # NOTE: Add entries here for each postgres server listed above
 [postgres:children]

@@ -100,6 +100,9 @@ postgres_administrator_login="${server_data.administrator_login}"
 postgres_administrator_password="${server_data.administrator_password}"
 postgres_server_ssl_cert_file="${server_data.server_ssl_cert_file}"
 postgres_server_ssl_key_file="${server_data.server_ssl_key_file}"
+%{ for system_setting in server_data.postgres_system_settings ~}
+postgres_system_setting_${system_setting.name}="${system_setting.value}"
+%{ endfor ~}
 
 %{ endfor ~}
 [postgres:children]
