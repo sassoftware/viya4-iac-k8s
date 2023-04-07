@@ -4,7 +4,7 @@
 ---
 - name: Applying labels
   ansible.builtin.shell: |
-    kubectl label nodes {{ ansible_hostname }} {{ label }} --overwrite
+    kubectl label nodes -l 'kubernetes.io/hostname in ({{ ansible_hostname }},{{ ansible_fqdn }})' {{ label }} --overwrite
   with_items: "{{ labels }}"
   loop_control:
     loop_var: label
