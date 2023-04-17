@@ -107,7 +107,7 @@
     state: present
   vars:
     packages:
-    - containerd.io
+    - "containerd.io{% if containerd_version is defined and containerd_version %}={{containerd_version}}{%endif%}"
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
