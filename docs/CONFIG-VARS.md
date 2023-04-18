@@ -367,6 +367,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | node_labels | Labels applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | node_taints | Taints applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
+| containerd_version | Version of containerd to be installed  | string | "" | If not specified, the latest from the [Docker repository](https://download.docker.com/linux/ubuntu/dists/) will be used |
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
 

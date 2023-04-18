@@ -1,0 +1,7 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Allows users to overwrite containerd version
+# if left as an empty string the latest version from
+# the docker repo is used.
+containerd_version: ""
