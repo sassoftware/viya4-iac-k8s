@@ -2,6 +2,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Allows users to overwrite containerd version
-# if left as an empty string the latest version from
-# the docker repo is used.
+# Set as an empty string to use the latest upstream version
 containerd_version: "1.6.20-1"
