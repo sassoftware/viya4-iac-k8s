@@ -4,4 +4,4 @@
 # Allows users to overwrite containerd version
 # if left as an empty string the latest version from
 # the docker repo is used.
-containerd_version: ""
+containerd_version: "1.6.20-1"
