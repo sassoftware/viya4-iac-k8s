@@ -18,7 +18,7 @@ Supported configuration variables are listed in the tables below.  All variables
       - [Node Pools](#node-pools)
       - [Jump Server](#jump-server)
       - [NFS Server](#nfs-server)
-      - [PostgreSQL Server](#postgresql-server)
+      - [PostgreSQL Server](#postgresql-servers)
   - [Bare Metal](#bare-metal)
     - [Ansible ansible-vars.yaml File](#ansible-ansible-varsyaml-file)
     - [Labels/Taints](#labelstaints)
@@ -26,7 +26,6 @@ Supported configuration variables are listed in the tables below.  All variables
       - [Taints](#taints)
     - [Ansible inventory file](#ansible-inventory-file)
   - [Storage](#storage)
-  - [PostgreSQL Servers](#postgresql-servers)
 
 ## VMware vSphere/vCenter
 
@@ -273,7 +272,24 @@ nfs_disk_size = 500   # 500 GB
 nfs_ip        = ""    # Assigned values for static IP addresses
 ```
 
-#### PostgreSQL Server
+#### PostgreSQL Servers
+
+When setting up ***external database servers***, you must provide information about those servers in the `postgres_servers` variable block. Each entry in the variable block represents a ***single database server***.
+
+This code only configures database servers. No databases are created during the infrastructure setup.
+
+The variable has the following format:
+
+```terraform
+postgres_servers = {
+  default = {},
+  ...
+}
+```
+
+**NOTE**: The `default = {}` element is always required when creating external databases. This is the system's default database server.
+
+Each server element, like `foo = {}`, can contain none, some, or all of the parameters listed 
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -281,12 +297,13 @@ nfs_ip        = ""    # Assigned values for static IP addresses
 | server_memory | Memory in MB | number | 16385 | |
 | server_disk_size | Size of disk in GB | number | 250 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field. |
-| server_version | PostgreSQL version | number | 12 | |
+| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | server_ssl | Enable/disable SSL | string | "off" | |
 | server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
 | server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
 | administrator_login | Admin user | string | "postgres" | |
 | administrator_password | Admin password | string | "my$up3rS3cretPassw0rd" | |
+| postgres_system_settings | Configure PostgreSQL system settings | list(object({})) | `[{ name = "max_prepared_transactions", value = "1024" }, { name = "max_connections", value = "1024" }]` | Currently `max_prepared_transactions` and `max_connections` are supported configuration values |
 
 **NOTES**:
 
@@ -294,20 +311,25 @@ nfs_ip        = ""    # Assigned values for static IP addresses
     - The Ansible tasks that are performed include copying the certificate and key from the PostgreSQL VM into your local workspace directory.
 2. If you are planning to use the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a SAS Viya platform deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls) configured, make sure that the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable in the viya4-deployment ansible-vars.yaml file points to a directory that contains the server_ssl_cert_file.
 
-Sample:
+Here is an example of the `postgres_servers` variable where the `default` entry only overrides the `administrator_password` parameter, and the `another-server` entry overrides all parameters:
 
-```bash
-# Postgres Servers
+```terraform
 postgres_servers = {
   default = {
+    administrator_password       = "D0ntL00kTh1sWay"
+    server_ip                    = "10.10.10.10"     # Assigned values for static IPs
+  },
+  another_server = {
     server_num_cpu         = 8                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
-    server_ip              = ""                      # Assigned values for static IP addresses - REQUIRED
+    server_ip              = "10.10.10.11"           # Assigned values for static IPs
     server_version         = 13                      # PostgreSQL version
-    server_ssl             = "off"                   # SSL flag
+    server_ssl             = "on"                    # SSL flag
+    server_ssl_cert_file   = "./ssl_cert.pem"        # Path to the PostgreSQL SSL certificate file
+    server_ssl_key_file    = "./ssl_cert.key"        # Path to the PostgreSQL SSL key file
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
-    administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
+    administrator_password = "D0ntL00kTh1sWay"       # PostgreSQL admin user password
   }
 }
 ```
@@ -399,57 +421,23 @@ node_taints:
 
 The inventory file represents the machines that you will be using in your Kubernetes deployment of the SAS Viya platform. An example and information about this file can be found [here](../examples/bare-metal/sample-inventory).
 
+The following variables are used to describe the machine targets for the SAS Viya platform deployment.
+
+**Note:** If this file was generated as part of Terraform infrastructure creation through VMware vSphere/vCenter, these fields will be prepopulated with values you set in your terraform.tfvars file. For bare-metal, if you already have your machines, and are going to be populating the inventory file yourself, you can start with the [sample-inventory](../examples/bare-metal/sample-inventory) file in this project to help you get started. 
+
+| Name | Description | Type | Notes |
+|:---|---:|---:|---:|
+| postgres_ip | Static IP address for PostgreSQL server | string | This field is required if you are configuring a PostgreSQL server |
+| postgres_server_version | The version of the PostgreSQL server | string | Refer to the [SAS Viya Platform Administration Guide](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
+| postgres_server_ssl | Enable/disable SSL | string | Specify `off` or `on` |
+| postgres_server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
+| postgres_server_ssl_key_file | Path to the PostgreSQL SSL key file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
+| postgres_administrator_login | PostgreSQL admin user | string | |
+| postgres_administrator_password | PostgreSQL admin password | string | |
+| postgres_system_setting_max_prepared_transactions | Allows you to configure the `max_prepared_transactions` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/caltuning/n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
+| postgres_system_setting_max_connections | Allows you to configure the `max_connections` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/caltuning/n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
+
+
 ## Storage
 
 An NFS server is set up by default. This is a required machine that is used as backing storage for the `default` storage class that is created. Information on setting up that machine is provided [here](#nfs-server).
-
-## PostgreSQL Servers
-
-When setting up ***external database servers***, you must provide information about those servers in the `postgres_servers` variable block. Each entry in the variable block represents a ***single database server***.
-
-This code only configures database servers. No databases are created during the infrastructure setup.
-
-The variable has the following format:
-
-```terraform
-postgres_servers = {
-  default = {},
-  ...
-}
-```
-
-**NOTE**: The `default = {}` element is always required when creating external databases. This is the system's default database server.
-
-Each server element, like `foo = {}`, can contain none, some, or all of the parameters listed below:
-
-| Name | Description | Type | Default | Notes |
-| :--- | ---: | ---: | ---: | ---: |
-| administrator_login | The administrator login account for the PostgreSQL server. Changing this forces a new resource to be created. | string | "pgadmin" | | |
-| administrator_password | The password associated with the administrator_login for the PostgreSQL server | string | "my$up3rS3cretPassw0rd" |  |
-| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
-| ssl_enforcement_enabled | Enforce SSL on connections to the PostgreSQL database | bool | true | |
-
-Here is an example of the `postgres_servers` variable where the `default` entry only overrides the `administrator_password` parameter, and the `another-server` entry overrides all parameters:
-
-```terraform
-postgres_servers = {
-  default = {
-    administrator_password       = "D0ntL00kTh1sWay"
-  },
-  another_server = {
-    machine_type                           = "db-custom-8-30720"
-    storage_gb                             = 10
-    backups_enabled                        = true
-    backups_start_time                     = "21:00"
-    backups_location                       = null
-    backups_point_in_time_recovery_enabled = false
-    backup_count                           = 7 # Number of backups to retain, not in days
-    administrator_login                    = "pgadmin"
-    administrator_password                 = "my$up3rS3cretPassw0rd"
-    server_version                         = "13"
-    availability_type                      = "ZONAL"
-    ssl_enforcement_enabled                = true
-    database_flags                         = [{ name = "foo" value = "true"}, { name = "bar", value = "false"}]
-  }
-}
-```

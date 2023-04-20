@@ -2,14 +2,26 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-#TODO: Added variables for max_connections, max_prepared_transactions
-- name: Alter PostgreSQL server max_connections and max_prepared_transactions
+- name: Create PostgreSQL server settings script
   ansible.builtin.shell: |
-    echo 'ALTER SYSTEM SET max_connections = 1024;' > /tmp/postgres_system.psql
-    echo 'ALTER SYSTEM SET max_prepared_transactions = 1024;' >> /tmp/postgres_system.psql
-    psql -f /tmp/postgres_system.psql
+    rm -f /tmp/postgres_system.psql && touch /tmp/postgres_system.psql
   tags:
     - install
     - update
 
+# This should be able to support any other PostgreSQL server settings
+# but noting that is an experimental feature
+- name: Update PostgreSQL server settings script
+  ansible.builtin.shell: |
+    echo 'ALTER SYSTEM SET {{ item | replace("postgres_system_setting_","") }} = {{ vars[item] }};' >> /tmp/postgres_system.psql
+  with_items: "{{ lookup('ansible.builtin.varnames', '^postgres_system_setting_.+', wantlist=True) }}"
+  tags:
+    - install
+    - update
 
+- name: Apply PostgreSQL server settings script
+  ansible.builtin.shell: |
+    psql -f /tmp/postgres_system.psql
+  tags:
+    - install
+    - update
