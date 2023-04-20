@@ -73,7 +73,7 @@ Terraform input variables can be set in the following ways:
 | cluster_version        | Kubernetes version | string | "1.25.8" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
-| cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | Specify `containerd` or `docker` (only supported on K8s <=1.23). |
+| cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
 | cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | cluster_pod_subnet     | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | cluster_domain         | Cluster domain suffix for DNS | string | | |
@@ -357,7 +357,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 | kubernetes_cni_version | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
-| kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | Specify `containerd` or `docker` (only supported on K8s <=1.23). |
+| kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | kubernetes_vip_version | kube-vip version | string | "0.5.7" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
