@@ -367,11 +367,14 @@ The following variables are used to describe the machine targets for the SAS Viy
 | node_labels | Labels applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | node_taints | Taints applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
-| containerd_version | Version of containerd to be installed  | string | "1.6.20-1" | Set as an empty string to use the latest upstream version from the [Docker repository](https://download.docker.com/linux/ubuntu/dists/) |
+|containerd_version | Version of containerd to be installed  | string | "1.6.20-1" | Set as an empty string to use the latest upstream version from the Docker APT repository. See notes below on how to determine which containerd versions are available |
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
 
-**NOTE**: For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used. Be sure to alter your manifest files to take advantage of this new storage class where its needed.
+**NOTES**: 
+
+* For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used. Be sure to alter your manifest files to take advantage of this new storage class where its needed.
+* To determine which versions of containerd are available in the Docker APT repository, select one of the following links based on your Ubuntu dist, [Jammy (22)](https://download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/) or [Focal (20)](https://download.docker.com/linux/ubuntu/dists/focal/stable/binary-amd64/). On that page select "Packages" and the text file that is downloaded will contain all the versions of containerd available in the repository.
 
 ### Labels/Taints
 
