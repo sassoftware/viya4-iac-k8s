@@ -9,7 +9,7 @@ RUN apt update && apt upgrade -y \
 FROM baseline as tool_builder
 ARG HELM_VERSION=3.10.0
 ARG KUBECTL_VERSION=1.25.8
-ARG TERRAFORM_VERSION=1.3.2
+ARG TERRAFORM_VERSION=1.4.5
 
 WORKDIR /build
 
