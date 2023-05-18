@@ -1,0 +1,13 @@
+# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Allows users to overwrite containerd version
+# Set as an empty string to use the latest upstream version
+#
+# To determine which versions of containerd are available in the Docker APT repository
+# select one of the following links based on your Ubuntu dist:
+# Jammy 22 https://download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/
+# Focal 20 https://download.docker.com/linux/ubuntu/dists/focal/stable/binary-amd64/
+# On that page select "Packages" and the text file that is downloaded will contain all the versions of
+# containerd available in the repository.
+containerd_version: "1.6.20-1"

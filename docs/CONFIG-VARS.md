@@ -70,7 +70,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.24.10" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.25.8" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
@@ -351,7 +351,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
 | deployment_type | Type of deployment to be performed | string | "bare_metal" | Specify `bare_metal` or `vsphere`. |
 | kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled. **ONLY** change the `prefix` value described previously. |
-| kubernetes_version | Kubernetes version | string | "1.24.10" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
+| kubernetes_version | Kubernetes version | string | "1.25.8" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
 | kubernetes_upgrade_allowed | | bool | true | **NOTE:** Not currently used. |
 | kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled. **ONLY** change the `vm_arch` value described previously. |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
@@ -367,10 +367,14 @@ The following variables are used to describe the machine targets for the SAS Viy
 | node_labels | Labels applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | node_taints | Taints applied to nodes in your cluster | map(list(string)) | | See [Labels/Taints](#labelstaints) below for more information. |
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
+|containerd_version | Version of containerd to be installed  | string | "1.6.20-1" | Set as an empty string to use the latest upstream version from the Docker APT repository. See notes below on how to determine which containerd versions are available |
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
 
-**NOTE**: For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used. Be sure to alter your manifest files to take advantage of this new storage class where its needed.
+**NOTES**: 
+
+* For bare metal systems in order to leverage the `local-storage` storage class created by these scripts you need to have empty partitions attached to your machines. These disks are used for the `local-storage` storage class created for those applications that need local vs networked storage to run proficiently. If they are not present this storage class cannot be used. Be sure to alter your manifest files to take advantage of this new storage class where its needed.
+* To determine which versions of containerd are available in the Docker APT repository, select one of the following links based on your Ubuntu dist, [Jammy (22)](https://download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/) or [Focal (20)](https://download.docker.com/linux/ubuntu/dists/focal/stable/binary-amd64/). On that page select "Packages" and the text file that is downloaded will contain all the versions of containerd available in the repository.
 
 ### Labels/Taints
 
