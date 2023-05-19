@@ -431,7 +431,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 
 | Name | Description | Type | Notes |
 |:---|---:|---:|---:|
-| postgres_server_name | Name of the PostgresSQL server | string | |
+| postgres_server_name | Name of the PostgreSQL server | string | |
 | postgres_server_version | The version of the PostgreSQL server | string | Refer to the [SAS Viya Platform Administration Guide](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | postgres_server_ssl | Enable/disable SSL | string | Specify `off` or `on` |
 | postgres_server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
