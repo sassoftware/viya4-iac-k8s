@@ -21,7 +21,7 @@
   ansible.builtin.copy:
     dest: /etc/apt/sources.list.d/kubernetes.list
     content: |
-      deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
+      deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg trusted=yes] https://apt.kubernetes.io/ kubernetes-xenial main
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
