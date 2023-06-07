@@ -20,6 +20,7 @@
     - docker-engine
     - docker.io
     - containerd
+    - containerd.io
     - runc
   ignore_errors: true
   tags:
