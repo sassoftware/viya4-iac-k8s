@@ -101,13 +101,18 @@
     - install
     - update
 
+- name: set containerd.io package debian revision if not specified
+  set_fact:
+    kubernetes_cri_version: "{{ kubernetes_cri_version }}-*"
+  when: kubernetes_cri_version | regex_search("^(\d+\.)(\d+\.)(\d+)$")
+
 - name: Installing containerd.io
   ansible.builtin.package:
     name: "{{ packages }}"
     state: present
   vars:
     packages:
-    - "containerd.io{% if containerd_version is defined and containerd_version %}={{containerd_version}}{%endif%}"
+    - "containerd.io{% if kubernetes_cri_version is defined and kubernetes_cri_version %}={{kubernetes_cri_version}}{%endif%}"
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
