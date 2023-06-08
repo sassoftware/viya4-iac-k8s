@@ -106,6 +106,9 @@
   set_fact:
     kubernetes_cri_version: "{{ kubernetes_cri_version }}-*"
   when: kubernetes_cri_version | regex_search("^(\d+\.)(\d+\.)(\d+)$")
+  tags:
+    - install
+    - update
 
 - name: Installing containerd.io
   ansible.builtin.package:
