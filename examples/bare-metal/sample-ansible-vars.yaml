@@ -26,7 +26,7 @@ kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"        # Choices : [calico]
 kubernetes_cni_version     : "3.24.5"        # Choices : [3.24.5]
 kubernetes_cri             : "containerd"    # Choices : [containerd]
-kubernetes_cri_version     : "1.6.20"        # Optionally set to an empty string for the latest version
+kubernetes_cri_version     : "1.6.20"        # Choices : [1.6.20]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
