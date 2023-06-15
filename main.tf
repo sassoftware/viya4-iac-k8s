@@ -209,6 +209,7 @@ resource "local_file" "ansible_vars" {
     cluster_cni                = var.cluster_cni
     cluster_cni_version        = var.cluster_cni_version
     cluster_cri                = var.cluster_cri
+    cluster_cri_version        = var.cluster_cri_version
     cluster_service_subnet     = var.cluster_service_subnet
     cluster_pod_subnet         = var.cluster_pod_subnet
     control_plane_ssh_key_name = var.control_plane_ssh_key_name

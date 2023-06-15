@@ -316,6 +316,11 @@ variable "cluster_cri" {
   default = "containerd"
 }
 
+variable "cluster_cri_version" {
+  type    = string
+  default = "1.6.20"
+}
+
 variable "cluster_service_subnet" {
   type    = string
   default = "10.43.0.0/16"
