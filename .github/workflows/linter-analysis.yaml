@@ -69,6 +69,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
+        # The latest ansible/ansible-lint-action removed the
+        # ability to specify configs from other dirs
       - name: Copy Config to Parent Level Directory
         run: cp $(pwd)/linting-configs/.ansible-lint .
 
@@ -78,7 +80,7 @@ jobs:
       - name: Updates requirements extension
         run: cp $(pwd)/requirements.yaml requirements.yml
 
-      - name: Install requirements.yml
+      - name: Install requirements.yaml
         run: ansible-galaxy install -r ./requirements.yaml
 
       - name: Run ansible-lint Action
