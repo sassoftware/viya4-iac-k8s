@@ -69,9 +69,10 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
+      - name: Copy Config to Parent Level Directory
+        run: cp $(pwd)/linting-configs/.ansible-lint .
+
       - name: Run ansible-lint Action
         uses: ansible/ansible-lint-action@v6.16.0
-        with:
-          args: "-c $(pwd)/linting-configs/.ansible-lint"
         env:
           ANSIBLE_ROLES_PATH: "./roles"
