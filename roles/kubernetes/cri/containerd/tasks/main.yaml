@@ -11,17 +11,17 @@
 
 # Task to Remove existing containerd installations
 - name: Uninstall old Docker/Containerd versions
-  ansible.builtin.package: 
+  ansible.builtin.package:
     name: "{{ packages }}"
     state: absent
   vars:
     packages:
-    - docker
-    - docker-engine
-    - docker.io
-    - containerd
-    - containerd.io
-    - runc
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - containerd.io
+      - runc
   ignore_errors: true
   tags:
     - install
@@ -33,12 +33,12 @@
     state: present
   vars:
     packages:
-    - apt-transport-https # Also needed for kubeadm tooling
-    - ca-certificates     # Also needed for kubeadm tooling
-    - curl                # Also needed for kubeadm tooling
-    - gnupg2
-    - lsb-release
-    - software-properties-common
+      - apt-transport-https # Also needed for kubeadm tooling
+      - ca-certificates     # Also needed for kubeadm tooling
+      - curl                # Also needed for kubeadm tooling
+      - gnupg2
+      - lsb-release
+      - software-properties-common
   tags:
     - install
     - update
@@ -142,7 +142,7 @@
   ansible.builtin.file:
     path: /etc/containerd
     state: directory
-    mode: '0755'
+    mode: "0755"
   tags:
     - install
     - update
@@ -180,7 +180,7 @@
 - name: Enabling and starting containerd to start now and on boot
   ansible.builtin.systemd:
     name: containerd.service
-    enabled: yes
+    enabled: true
     state: restarted
   tags:
     - install

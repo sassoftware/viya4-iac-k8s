@@ -24,12 +24,12 @@
 - name: Install postgres
   ansible.builtin.apt:
     pkg:
-    - "postgresql-{{ postgres_server_version }}"
-    - "postgresql-client-{{ postgres_server_version }}"
-    - python3-psycopg2
-    - acl
+      - "postgresql-{{ postgres_server_version }}"
+      - "postgresql-client-{{ postgres_server_version }}"
+      - python3-psycopg2
+      - acl
     state: present
-    update_cache: yes
+    update_cache: true
   tags:
     - install
     - update
@@ -108,7 +108,7 @@
         owner: root
         group: root
         mode: "0644"
-        remote_src: yes
+        remote_src: true
       register: cert_result
     - name: Copy Ubuntu default SSL Key
       ansible.builtin.copy:
@@ -117,18 +117,18 @@
         owner: root
         group: ssl-cert
         mode: "0640"
-        remote_src: yes
+        remote_src: true
       register: key_result
     - name: Fetch SSL Cert
       ansible.builtin.fetch:
         src: "{{ cert_result.dest }}"
         dest: "{{ inventory_dir }}/"
-        flat: yes
+        flat: true
     - name: Fetch SSL Key
       ansible.builtin.fetch:
         src: "{{ key_result.dest }}"
         dest: "{{ inventory_dir }}/"
-        flat: yes
+        flat: true
     - name: Set postgres_server_ssl_cert_file_dest and postgres_server_ssl_key_file_dest
       ansible.builtin.set_fact:
         postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
@@ -193,7 +193,7 @@
   ansible.builtin.systemd:
     name: postgresql
     state: restarted
-    enabled: yes
+    enabled: true
   tags:
     - install
     - update

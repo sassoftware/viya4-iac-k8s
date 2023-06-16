@@ -17,7 +17,7 @@
 - name: Start rpc-statd
   ansible.builtin.systemd:
     name: rpc-statd.service
-    enabled: yes
+    enabled: true
     state: started
   tags:
     - install
@@ -38,7 +38,7 @@
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-    mode: 0777
+    mode: "0777"
   ignore_errors: true
   tags:
     - install

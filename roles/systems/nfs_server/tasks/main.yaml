@@ -22,7 +22,7 @@
         state: directory
         owner: nobody
         group: nogroup
-        mode: 0777
+        mode: "0777"
       when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
 
     - name: Test for export mount point
@@ -55,7 +55,7 @@
         state: directory
         owner: nobody
         group: nogroup
-        mode: 0777
+        mode: "0777"
       when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
 
     - name: Test for export mount point
@@ -90,7 +90,7 @@
 - name: Start the nfs_kernel_server, portmap, and rpc-statd
   ansible.builtin.systemd:
     name: "{{ item }}"
-    enabled: yes
+    enabled: true
     state: restarted
   with_items:
     - nfs-server

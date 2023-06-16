@@ -69,7 +69,7 @@
 # Alter PostgreSQL server and add PostgreSQL databases
 - hosts: postgres
   become: true
-  become_user: postgres 
+  become_user: postgres
   roles:
     - { role: kubernetes/database/postgres/alter_server_settings }
     - { role: kubernetes/database/postgres/create_databases }

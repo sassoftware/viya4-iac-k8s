@@ -12,16 +12,16 @@
 
 # Task to Remove existing Docker installations
 - name: Uninstall old Docker versions
-  ansible.builtin.package: 
+  ansible.builtin.package:
     name: "{{ packages }}"
     state: absent
   vars:
     packages:
-    - docker
-    - docker-engine
-    - docker.io
-    - containerd
-    - runc
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
   ignore_errors: true
   tags:
     - install
@@ -33,11 +33,11 @@
     state: present
   vars:
     packages:
-    - apt-transport-https # Also needed for kubeadm tooling
-    - ca-certificates     # Also needed for kubeadm tooling
-    - curl                # Also needed for kubeadm tooling
-    - gnupg
-    - lsb-release
+      - apt-transport-https # Also needed for kubeadm tooling
+      - ca-certificates     # Also needed for kubeadm tooling
+      - curl                # Also needed for kubeadm tooling
+      - gnupg
+      - lsb-release
   tags:
     - install
     - update
@@ -70,9 +70,9 @@
     state: present
   vars:
     packages:
-    - docker-ce
-    - docker-ce-cli
-    - containerd.io
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
   tags:
     - install
     - update
@@ -100,7 +100,7 @@
   ansible.builtin.user:
     name: devops
     groups: docker
-    append: yes
+    append: true
   tags:
     - install
     - update
@@ -109,7 +109,7 @@
 - name: Setting up docker to start on boot
   ansible.builtin.systemd:
     name: docker.service
-    enabled: yes
+    enabled: true
   tags:
     - install
     - update
@@ -117,7 +117,7 @@
 - name: Setting up containerd to start on boot
   ansible.builtin.systemd:
     name: containerd.service
-    enabled: yes
+    enabled: true
   tags:
     - install
     - update
@@ -164,7 +164,7 @@
 
 - name: Restart systemd
   ansible.builtin.systemd:
-    daemon_reload: yes
+    daemon_reload: true
   tags:
     - install
     - update

@@ -16,7 +16,7 @@
   tags:
     - install
     - update
-    
+
 - name: Cloning sig-storage-local-static-provisioner
   ansible.builtin.git:
     repo: "{{ LOCAL_VOLUME_REPO }}"
@@ -26,7 +26,7 @@
     - install
     - update
 
-- name: Setting up local storage for the cluster using sig-storage-local-static-provisioner 
+- name: Setting up local storage for the cluster using sig-storage-local-static-provisioner
   kubernetes.core.helm:
     name: "{{ LOCAL_VOLUME_NAME }}"
     namespace: "{{ LOCAL_VOLUME_NAMESPACE }}"

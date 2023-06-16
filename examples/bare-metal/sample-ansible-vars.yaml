@@ -31,7 +31,7 @@ kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
 # Kubernetes - VIP : https://kube-vip.io
-# 
+#
 # Useful links:
 #
 #   VIP IP                      : https://kube-vip.io/docs/installation/static/
@@ -72,7 +72,7 @@ kubernetes_loadbalancer : "" # Load Balancer accepted values [kube_vip,metallb]
 #        - "192.168.10.0/24"
 #        - "192.168.9.1-192.168.9.5"
 #
-#  NOTE: If you are assigning a static IP using the loadBalancerIP value in your 
+#  NOTE: If you are assigning a static IP using the loadBalancerIP value in your
 #        load balancer controller when using `metallb` that IP must fall within the
 #        address range you provide below. If you are using `kube_vip` you do not
 #        have this limitation.
@@ -105,7 +105,7 @@ control_plane_ssh_key_name : "cp_ssh"
 #   NOTE: There are no quotes around the label and taint elements
 #         These are literal converted to strings when applying
 #         into the cluster
-#   
+#
 
 ## Labels
 node_labels:

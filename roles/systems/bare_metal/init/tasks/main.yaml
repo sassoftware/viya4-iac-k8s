@@ -1,3 +1,4 @@
+---
 # Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -17,7 +18,7 @@
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-    mode: 0777
+    mode: "0777"
   ignore_errors: true
   tags:
     - install
@@ -34,7 +35,7 @@
     dest: /tmp/link_devs.sh
     owner: root
     group: root
-    mode: '0700'
+    mode: "0700"
   tags:
     - install
 
