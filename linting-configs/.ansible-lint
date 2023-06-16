@@ -1,0 +1,54 @@
+---
+# .ansible-lint
+
+profile: moderate
+
+# parseable: true
+# quiet: true
+# strict: true
+# verbosity: 1
+
+# Enforce variable names to follow pattern below, in addition to Ansible own
+# requirements, like avoiding python identifiers. To disable add `var-naming`
+# to skip_list.
+var_naming_pattern: ^[a-zA-Z0-9_]*$
+
+use_default_rules: true
+
+# Ansible-lint is able to recognize and load skip rules stored inside
+# `.ansible-lint-ignore` (or `.config/ansible-lint-ignore.txt`) files.
+# To skip a rule just enter filename and tag, like "playbook.yml package-latest"
+# on a new line.
+skip_list:
+  - role-name # roles are dynamically selected based on user's choice so we do need to use paths
+#  - yaml[line-length]
+  #  - command-instead-of-shell
+  #  - command-instead-of-module
+#  - name[play] # some of our plays are dynamic so a static name would not work TODO
+
+
+# Ansible-lint does not automatically load rules that have the 'opt-in' tag.
+# You must enable opt-in rules by listing each rule 'id' below.
+enable_list:
+  - args
+  - empty-string-compare
+  - no-log-password
+  - no-same-owner
+  - yaml
+
+# Ansible-lint does not fail on warnings from the rules or tags listed below
+#warn_list:
+#  - skip_this_tag
+#  - experimental # experimental is included in the implicit list
+# - role-name
+# - yaml[document-start]  # you can also use sub-rule matches
+
+# Offline mode disables installation of requirements.yml and schema refreshing
+offline: false
+
+# Define required Ansible's variables to satisfy syntax check
+extra_vars:
+  kubernetes_cri: containerd
+  kubernetes_cni: calico
+  kubernetes_loadbalancer: kube_vip
+  deployment_type: vsphere
