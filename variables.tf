@@ -31,12 +31,6 @@ variable "vsphere_password" {
   default     = null
 }
 
-variable "vsphere_cluster" {
-  type        = string
-  description = "This is the name of the vSphere cluster."
-  default     = null
-}
-
 variable "vsphere_datacenter" {
   type        = string
   description = "This is the name of the vSphere data center."
@@ -89,6 +83,7 @@ variable "nat_ip" {
 }
 
 variable "netmask" {
+  type        = number
   description = "Netmask (if using static ips)"
   default     = 16
 }

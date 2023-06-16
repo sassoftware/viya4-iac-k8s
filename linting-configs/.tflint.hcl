@@ -16,12 +16,12 @@ plugin "terraform" {
   preset  = "recommended"
 }
 
-## We specify the versions and providers in the top level versions.tf.
-## This stops it from throwing a warning when scanning our modules
-## in viya4-iac-gcp/modules/
-#rule "terraform_required_version" {
-#  enabled = false
-#}
-#rule "terraform_required_providers" {
-#  enabled = false
-#}
+# We specify the versions and providers in the top level versions.tf.
+# This stops it from throwing a warning when scanning our modules
+# in ./modules
+rule "terraform_required_version" {
+  enabled = false
+}
+rule "terraform_required_providers" {
+  enabled = false
+}

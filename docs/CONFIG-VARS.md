@@ -52,7 +52,6 @@ Terraform input variables can be set in the following ways:
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | vsphere_server        | Name of the vSphere server | string | | |
-| vsphere_cluster       | Name of the vSphere cluster | string | | |
 | vsphere_datacenter    | Name of the vSphere data center | string | | |
 | vsphere_datastore     | Name of the vSphere data store to use for the VMs | string | | |
 | vsphere_resource_pool | Name of the vSphere resource pool to use for the VMs | string | | |

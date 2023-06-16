@@ -18,7 +18,7 @@ data "vsphere_virtual_machine" "template" {
 
 locals {
   static_config = (length(var.ip_addresses) > 0 ? true : false)
-  ip_addresses  = local.static_config ? var.ip_addresses : vsphere_virtual_machine.dhcp.*.default_ip_address
+  ip_addresses  = local.static_config ? var.ip_addresses : vsphere_virtual_machine.dhcp[*].default_ip_address
 }
 
 resource "vsphere_virtual_machine" "static" {
@@ -43,7 +43,7 @@ resource "vsphere_virtual_machine" "static" {
   disk {
     label            = "os-disk-01"
     size             = var.disk_size
-    thin_provisioned = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
+    thin_provisioned = data.vsphere_virtual_machine.template.disks[0].thin_provisioned
     unit_number      = 0
   }
   dynamic "disk" {
@@ -99,7 +99,7 @@ resource "vsphere_virtual_machine" "dhcp" {
   disk {
     label            = "os-disk-01"
     size             = var.disk_size
-    thin_provisioned = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
+    thin_provisioned = data.vsphere_virtual_machine.template.disks[0].thin_provisioned
     unit_number      = 0
   }
   dynamic "disk" {

@@ -7,7 +7,6 @@ netmask          = ""           # Network interface netmask
 
 # vSphere
 vsphere_server        = "" # Name of the vSphere server
-vsphere_cluster       = "" # Name of the vSphere cluster
 vsphere_datacenter    = "" # Name of the vSphere data center
 vsphere_datastore     = "" # Name of the vSphere data store to use for the VMs
 vsphere_resource_pool = "" # Name of the vSphere resource pool to use for the VMs

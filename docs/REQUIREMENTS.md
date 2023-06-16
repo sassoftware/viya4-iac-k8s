@@ -55,7 +55,6 @@ In order to leverage vSphere or vCenter, the following items are required for us
 
 | vSphere Item | Description |
 | --- | :--- |
-|vsphere_cluster | Name of the vSphere cluster |
 |vsphere_datacenter | Name of the vSphere data center |
 |vsphere_datastore | Name of the vSphere data store to use for the VMs |
 |vsphere_resource_pool | Name of the vSphere resource pool to use for the VMs |
@@ -193,7 +192,6 @@ gateway          = "10.18.0.1" # Gateway for servers
 netmask          = "16"        # Netmask providing network access to your gateway
 
 # vSphere
-vsphere_cluster       = "" # Name of the vSphere cluster
 vsphere_datacenter    = "" # Name of the vSphere data center
 vsphere_datastore     = "" # Name of the vSphere data store to use for the VMs
 vsphere_resource_pool = "" # Name of the vSphere resource pool to use for the VMs
