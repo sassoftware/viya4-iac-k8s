@@ -72,6 +72,12 @@ jobs:
       - name: Copy Config to Parent Level Directory
         run: cp $(pwd)/linting-configs/.ansible-lint .
 
+        # ansible-lint does not seem to recognize the .yaml
+        # extension for the requirements file and it is not
+        # configurable
+      - name: Updates requirements extension
+        run: cp $(pwd)/requirements.yaml requirements.yml
+
       - name: Install requirements.yml
         run: ansible-galaxy install -r ./requirements.yaml
 
