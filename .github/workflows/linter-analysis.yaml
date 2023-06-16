@@ -79,3 +79,4 @@ jobs:
         uses: ansible/ansible-lint-action@v6.16.0
         env:
           ANSIBLE_ROLES_PATH: "./roles"
+          ANSIBLE_COLLECTIONS_PATHS: "./collections"
