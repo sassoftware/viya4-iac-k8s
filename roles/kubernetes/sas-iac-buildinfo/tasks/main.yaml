@@ -13,7 +13,9 @@
 #       is handled externally and therefore will not
 #       have this code applied.
 #
-- block:
+- name: Setting up sas-iac-buildinfo
+  when: deployment_type == 'vsphere'
+  block:
     - name: Register Git HASH information
       ansible.builtin.shell: |
         cd "{{ k8s_tool_base }}"
@@ -48,4 +50,3 @@
       tags:
         - install
         - update
-  when: deployment_type == 'vsphere'

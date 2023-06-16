@@ -39,6 +39,11 @@
     - update
 
 - name: Enable cgroup v2 # https://rootlesscontaine.rs/getting-started/common/cgroup2/#enabling-cgroup-v2
+  vars:
+    option: systemd.unified_cgroup_hierarchy
+    value: "1"
+  tags:
+    - install
   block:
     - name: Retrieve contents of /etc/default/grub
       ansible.builtin.shell: cat /etc/default/grub
@@ -69,13 +74,11 @@
 
     - name: Update GRUB
       ansible.builtin.command: update-grub
-  vars:
-    option: systemd.unified_cgroup_hierarchy
-    value: "1"
-  tags:
-    - install
 
 - name: Enable CPU, CPUSET, and I/O delegation for non-root users
+  tags:
+    - install
+    - update
   block:
   - name: mkdir for user@.service.d
     ansible.builtin.file:
@@ -88,9 +91,6 @@
       content: |
         [Service]
         Delegate=cpu cpuset io memory pids
-  tags:
-    - install
-    - update
 
 # - name: Disable the firewalld - for RHEL based operating systems
 #   systemd:

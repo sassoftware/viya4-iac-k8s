@@ -10,6 +10,9 @@
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 #
 - name: Setting up MetalLB loadbalancer
+  tags:
+    - install
+    - update
   block:
     - name: Installing metallb
       kubernetes.core.helm:
@@ -53,9 +56,6 @@
       tags:
         - install
         - update
-  tags:
-    - install
-    - update
 
 - name: Remove MetalLB
   kubernetes.core.helm:
