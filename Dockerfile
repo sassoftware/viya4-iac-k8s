@@ -14,6 +14,7 @@ ARG TERRAFORM_VERSION=1.4.5-*
 
 WORKDIR /build
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
   && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/tf.list \
   && apt-get update \
@@ -38,7 +39,7 @@ COPY . /viya4-iac-k8s/
 
 ENV HOME=/viya4-iac-k8s
 
-RUN pip install -r ./requirements.txt \
+RUN pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy install -r ./requirements.yaml \
   && chmod 755 /viya4-iac-k8s/docker-entrypoint.sh /viya4-iac-k8s/oss-k8s.sh \
   && terraform init \
