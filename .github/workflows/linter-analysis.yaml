@@ -72,6 +72,9 @@ jobs:
       - name: Copy Config to Parent Level Directory
         run: cp $(pwd)/linting-configs/.ansible-lint .
 
+      - name: Install requirements.yml
+        run: ansible-galaxy install -r ./requirements.yaml
+
       - name: Run ansible-lint Action
         uses: ansible/ansible-lint-action@v6.16.0
         env:
