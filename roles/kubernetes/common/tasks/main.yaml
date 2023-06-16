@@ -80,17 +80,17 @@
     - install
     - update
   block:
-  - name: mkdir for user@.service.d
-    ansible.builtin.file:
-      path: /etc/systemd/system/user@.service.d
-      state: directory
-      mode: '0755'
-  - name: Adding delegation
-    ansible.builtin.copy:
-      dest: /etc/systemd/system/user@.service.d/delegate.conf
-      content: |
-        [Service]
-        Delegate=cpu cpuset io memory pids
+    - name: mkdir for user@.service.d
+      ansible.builtin.file:
+        path: /etc/systemd/system/user@.service.d
+        state: directory
+        mode: '0755'
+    - name: Adding delegation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/user@.service.d/delegate.conf
+        content: |
+          [Service]
+          Delegate=cpu cpuset io memory pids
 
 # - name: Disable the firewalld - for RHEL based operating systems
 #   systemd:
