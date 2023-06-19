@@ -27,6 +27,12 @@ enable_list:
   - no-same-owner
   - yaml
 
+# exclude_paths included in this file are parsed relative to this file's location
+# and not relative to the CWD of execution. CLI arguments passed to the --exclude
+# option are parsed relative to the CWD of execution.
+exclude_paths:
+  - examples/bare-metal/sample-ansible-vars.yaml # ignore this file, spacing is done for doc purposes
+
 # Offline mode disables installation of requirements.yml and schema refreshing
 offline: false
 
