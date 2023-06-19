@@ -1,3 +1,3 @@
 ignored:
-  # Specify version with apt-get install -y <package>=<version> : https://github.com/hadolint/hadolint/wiki/DL3008
-  - DL3008
+  - DL3008 # Specify version with apt-get install -y <package>=<version> : https://github.com/hadolint/hadolint/wiki/DL3008
+  - DL3015 # Require --no-install-recommends to get all required packages for sshpass

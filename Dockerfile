@@ -27,7 +27,7 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
 # Installation steps
 FROM baseline
 
-RUN apt-get update && apt-get -y install git sshpass jq --no-install-recommends \
+RUN apt-get update && apt-get -y install git sshpass jq \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=tool_builder /usr/local/bin/helm /usr/local/bin/helm
