@@ -1,0 +1,16 @@
+# This file contains ignores rule violations for ansible-lint in specific files
+
+examples/bare-metal/sample-ansible-vars.yaml yaml[colons]              # purposely spaced for doc purposes
+roles/kubernetes/common/tasks/main.yaml name[template]                 # task name is being templated, this can be ignored
+
+
+
+
+
+
+
+
+
+
+
+
