@@ -147,7 +147,7 @@ fi
 
 # Determine what arguments have been passed and store
 # those values in a known order
-for arg in "${ARGS[@]}"; do
+for arg in ${ARGS[@]}; do
   if [[ "$arg" == "apply" ]]; then
     arguments[0]=apply
   fi
@@ -185,7 +185,7 @@ update_items=( update )
 destruction_items=( uninstall cleanup destroy )
 external_items=( k tf helm )
 
-for item in "${arguments[@]}"; do
+for item in ${arguments[@]}; do
   if [[ " ${creation_items[*]} " =~ " $item " ]]; then
     creation_flag=true
   fi
@@ -197,7 +197,7 @@ for item in "${arguments[@]}"; do
   fi
 done
 
-for item in "${ARGS[@]}"; do
+for item in ${ARGS[@]}; do
   if [[ " ${external_items[*]} " =~ " $item " ]]; then
     external_flag=true
   fi
@@ -247,15 +247,15 @@ if [ "$external_flag" = true ] && [ "$validated_args" = true ]; then
   while [ "${#ARGS[@]}" -gt 0 ]; do
     case "$1" in
       helm )
-        helm "${@:2}"
+        helm ${@:2}
         exit "$?"
         ;;
       k|kubtctl )
-        kubectl "${@:2}"
+        kubectl ${@:2}
         exit "$?"
         ;;
       tf|terraform )
-        terraform $2 -state $TFSTATE "${@:3}"
+        terraform $2 -state $TFSTATE ${@:3}
         exit "$?"
         ;;
     esac
