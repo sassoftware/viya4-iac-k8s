@@ -4,6 +4,7 @@
 ---
 # Compute nodes
 - hosts: k8s_node
+  name: Kubernetes Uninstall - Compute Nodes
   become: true
   become_user: root
   serial: 1
@@ -12,6 +13,7 @@
 
 # Control plane
 - hosts: k8s_control_plane
+  name: Kubernetes Uninstall - Control Plane
   become: true
   become_user: root
   roles:
@@ -19,6 +21,7 @@
 
 # Clean up toolbox items
 - hosts: k8s
+  name: Kubernetes Uninstall - Toolbox Items
   become: true
   become_user: root
   roles:

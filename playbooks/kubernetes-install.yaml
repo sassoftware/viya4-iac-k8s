@@ -9,6 +9,7 @@
 
 # All systems
 - hosts: all
+  name: Kubernetes Setup - Common
   become: true
   become_user: root
   roles:
@@ -16,6 +17,7 @@
 
 # All kubernetes nodes
 - hosts: k8s
+  name: Kubernetes Setup - Nodes
   become: true
   become_user: root
   roles:
@@ -24,6 +26,7 @@
 
 # Primary control plane node
 - hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Primary Control Plane Node
   become: true
   become_user: root
   roles:
@@ -33,11 +36,13 @@
 
 # Secure kubernetes items
 - hosts: localhost
+  name: Kubernetes Setup - Kubeconfig
   roles:
     - { role: kubernetes/misc }
 
 # Secondary control plane nodes
 - hosts: k8s_control_plane[1:]
+  name: Kubernetes Setup - Secondary Control Plane Nodes
   become: true
   become_user: root
   roles:
@@ -46,6 +51,7 @@
 
 # Compute nodes
 - hosts: k8s_node
+  name: Kubernetes Setup - Compute Nodes
   become: true
   become_user: root
   roles:
@@ -54,6 +60,7 @@
 
 # Kubernetes loadbalancer
 - hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Load Balancer
   become: true
   become_user: root
   roles:
@@ -61,6 +68,7 @@
 
 # Label/Taint Kubernetes nodes
 - hosts: k8s
+  name: Kubernetes Setup - Labels and Taints
   become: true
   become_user: root
   roles:
@@ -68,6 +76,7 @@
 
 # Alter PostgreSQL server and add PostgreSQL databases
 - hosts: postgres
+  name: Postgres Setup - Configuration
   become: true
   become_user: postgres
   roles:
@@ -76,6 +85,7 @@
 
 # Restart PostgreSQL server
 - hosts: postgres
+  name: Postgres Setup - Restart
   become: true
   become_user: root
   roles:
@@ -83,16 +93,19 @@
 
 # Setup default storage class for cluster
 - hosts: localhost
+  name: Default Storage Class Setup
   roles:
     - { role: kubernetes/storage/sig-storage-local-static-provisioner }
     - { role: kubernetes/storage/nfs-subdir-external-provisioner }
 
 # Setup metrics-server for cluster
 - hosts: localhost
+  name: Metrics Server Setup
   roles:
     - { role: kubernetes/metrics/metrics-server }
 
 # Misc cluster related items
 - hosts: localhost
+  name: Setup - Misc
   roles:
     - { role: kubernetes/sas-iac-buildinfo }
