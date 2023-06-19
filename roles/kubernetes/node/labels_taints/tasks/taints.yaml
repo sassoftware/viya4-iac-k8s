@@ -8,7 +8,7 @@
   with_items: "{{ taints }}"
   loop_control:
     loop_var: taint
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   tags:
     - install
     - update

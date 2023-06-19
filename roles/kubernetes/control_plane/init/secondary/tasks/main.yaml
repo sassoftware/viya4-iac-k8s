@@ -20,7 +20,7 @@
   ansible.posix.synchronize:
     src: /etc/kubernetes/pki/{{ item }}
     dest: /etc/kubernetes/pki/{{ item }}
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   with_items:
     - ca.crt
     - ca.key
@@ -36,7 +36,7 @@
 - name: Generate control plane join command
   ansible.builtin.shell: kubeadm token create --print-join-command
   register: kubeadm_join_cmd
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   tags:
     - install
 

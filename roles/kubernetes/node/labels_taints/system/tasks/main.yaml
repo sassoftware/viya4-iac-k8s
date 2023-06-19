@@ -6,7 +6,7 @@
   ansible.builtin.shell: |
     kubectl label nodes {{ ansible_hostname }} kubernetes.azure.com/mode=system --overwrite
     kubectl label nodes {{ ansible_hostname }} node-role.kubernetes.io/system-node= --overwrite
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   tags:
     - install
     - update

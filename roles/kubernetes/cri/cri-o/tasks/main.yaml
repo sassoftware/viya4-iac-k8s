@@ -57,7 +57,7 @@
 
 - name: Installing the cri-o libcontainers-crio-archive-keyring key
   ansible.builtin.apt_key:
-    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version}}.{{ k8s_minor_version }}/{{ os }}/Release.key
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/Release.key
     keyring: /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
     state: present
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
