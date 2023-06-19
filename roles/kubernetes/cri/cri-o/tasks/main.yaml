@@ -78,7 +78,7 @@
     - install
     - update
 
-# 
+#
 # cri-o - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o
 #
 - name: Add module load file for cri-o

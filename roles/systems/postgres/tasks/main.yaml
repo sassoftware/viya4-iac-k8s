@@ -58,7 +58,7 @@
 
 - name: Postgres SSL with user supplied cert and key - verify both defined
   ansible.builtin.fail:
-    msg: "User has set postgres_server_ssl to on, but has only defined one of 'postgres_server_ssl_cert_file, 
+    msg: "User has set postgres_server_ssl to on, but has only defined one of 'postgres_server_ssl_cert_file,
           postgres_server_ssl_key_file'. Ensure that both these variables are set, or remove both of them from your
           inventory file to use the Ubuntu system default cert and key files."
   when:

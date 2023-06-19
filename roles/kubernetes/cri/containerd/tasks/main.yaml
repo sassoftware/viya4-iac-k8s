@@ -43,7 +43,7 @@
     - install
     - update
 
-# 
+#
 # containerd - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd
 #
 - name: Add module load file for containerd
@@ -168,7 +168,7 @@
 #     path: /etc/containerd/config.toml
 #     regexp: '(^\[metrics\][\s\S]*)\[plugins\]'
 #     replace: |-
-#       [metrics] 
+#       [metrics]
 #         address = "0.0.0.0:10257"
 #         grpc_histogram = true
 

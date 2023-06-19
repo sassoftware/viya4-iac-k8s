@@ -4,7 +4,7 @@
 ---
 - name: Applying taints
   ansible.builtin.shell: |
-    kubectl taint nodes {{ ansible_hostname }} {{ taint }} --overwrite 
+    kubectl taint nodes {{ ansible_hostname }} {{ taint }} --overwrite
   with_items: "{{ taints }}"
   loop_control:
     loop_var: taint

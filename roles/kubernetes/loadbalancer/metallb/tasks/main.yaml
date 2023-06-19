@@ -37,7 +37,7 @@
         - metallb-ip-ap
       tags:
         - install
-        - update 
+        - update
 
     - name: Create MetalLB IPAddressPool file
       ansible.builtin.template:

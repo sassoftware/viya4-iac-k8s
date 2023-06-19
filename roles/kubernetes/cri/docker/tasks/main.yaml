@@ -122,7 +122,7 @@
     - install
     - update
 
-# 
+#
 # containerd - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd
 #
 - name: Add module load file for containerd
