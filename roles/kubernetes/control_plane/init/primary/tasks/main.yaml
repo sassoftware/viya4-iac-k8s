@@ -14,7 +14,7 @@
     - update
 
 # TODO: pod-network-cidr can conflict locally check with IT to ensure correct range.
-- name: kubeadm init
+- name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
   tags:
     - install

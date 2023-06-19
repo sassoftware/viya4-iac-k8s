@@ -71,8 +71,8 @@
     repo: "{{ item }}"
     state: present
   with_items:
-      - deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /
-      - deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/ /
+    - deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /
+    - deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/ /
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install

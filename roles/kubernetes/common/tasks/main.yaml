@@ -80,7 +80,7 @@
     - install
     - update
   block:
-    - name: mkdir for user@.service.d
+    - name: Run mkdir for user@.service.d
       ansible.builtin.file:
         path: /etc/systemd/system/user@.service.d
         state: directory
