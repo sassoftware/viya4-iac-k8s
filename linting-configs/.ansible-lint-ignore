@@ -1,16 +1,19 @@
 # This file contains ignores rule violations for ansible-lint in specific files
 
-examples/bare-metal/sample-ansible-vars.yaml yaml[colons]              # purposely spaced for doc purposes
-roles/kubernetes/common/tasks/main.yaml name[template]                 # task name is being templated, this can be ignored
+examples/bare-metal/sample-ansible-vars.yaml yaml[colons] # purposely spaced for doc purposes
 
+roles/kubernetes/common/tasks/main.yaml name[template] # task name is being templated, this can be ignored
 
+roles/kubernetes/common/tasks/main.yaml command-instead-of-shell # shell should only be used when necessary, swap to command TODO future update requires functionality change
+roles/kubernetes/control_plane/init/secondary/tasks/main.yaml command-instead-of-shell
+roles/kubernetes/node/init/tasks/main.yaml command-instead-of-shell
+roles/systems/control_plane/tasks/main.yaml command-instead-of-shell
+roles/systems/jump_server/tasks/main.yaml command-instead-of-shell
+roles/systems/nfs_server/tasks/main.yaml command-instead-of-shell
+roles/systems/vsphere/init/tasks/main.yaml command-instead-of-shell
 
+roles/systems/common/tasks/main.yaml command-instead-of-module # there are some cases where command calls could be replaced with modules TODO future update requires functionality change
+roles/systems/jump_server/tasks/main.yaml command-instead-of-module
+roles/kubernetes/common/tasks/main.yaml command-instead-of-module
 
-
-
-
-
-
-
-
-
+roles/kubernetes/node/labels_taints/tasks/main.yaml deprecated-module # In future look for suitable replacement TODO future update requires functionality change
