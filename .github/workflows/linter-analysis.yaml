@@ -74,11 +74,6 @@ jobs:
       - name: Copy Config to Parent Level Directory
         run: cp $(pwd)/linting-configs/.ansible-lint .
 
-        # The ansible/ansible-lint-action only loads
-        # ignore file from the current directory
-      - name: Copy Config to Parent Level Directory
-        run: cp $(pwd)/linting-configs/.ansible-lint-ignore .
-
         # ansible-lint does not seem to recognize the .yaml
         # extension for the requirements file and it is not
         # configurable

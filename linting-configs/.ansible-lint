@@ -2,6 +2,8 @@
 # .ansible-lint
 
 profile: moderate
+verbosity: 1
+strict: true
 
 # Enforce variable names to follow pattern below, in addition to Ansible own
 # requirements, like avoiding python identifiers. To disable add `var-naming`
@@ -16,7 +18,11 @@ use_default_rules: true
 # on a new line.
 skip_list:
   - role-name # roles are dynamically selected based on user's choice so we do need to use paths
-  - yaml[line-length] # It's easier to understand/debug the underlying command when it's not broken up, excessively long lines that make sense to split up should be caught during code review,
+  - yaml[line-length] # it's easier to understand/debug the underlying command when it's not broken up, excessively long lines that make sense to split up should be caught during code review,
+  - name[template] # task name is being templated, this can be ignored
+  - command-instead-of-shell # shell should only be used when necessary, swap to command TODO future update requires functionality change
+  - command-instead-of-module # there are some cases where command calls could be replaced with modules TODO future update requires functionality change
+  - deprecated-module # In future look for suitable replacement TODO future update requires functionality change
 
 # Ansible-lint does not automatically load rules that have the 'opt-in' tag.
 # You must enable opt-in rules by listing each rule 'id' below.
