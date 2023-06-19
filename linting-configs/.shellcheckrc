@@ -2,6 +2,5 @@
 
 # Allow using `which` since it gives full paths and is common enough
 # https://github.com/koalaman/shellcheck/wiki/SC2230
-# https://www.shellcheck.net/wiki/SC2124 we want to assign the array as string
 # https://www.shellcheck.net/wiki/SC2068 we split the string back into an array
-disable=SC2230,SC2124,SC2068
+disable=SC2230,SC2068
