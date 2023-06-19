@@ -172,7 +172,6 @@ module "postgresql" {
   datacenter_id    = data.vsphere_datacenter.dc.id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
-  cluster_name     = local.cluster_name
   dns_servers      = var.dns_servers
   netmask          = var.netmask
   gateway          = var.gateway
