@@ -36,7 +36,7 @@
 
 # Secure kubernetes items
 - hosts: localhost
-  name: Kubernetes Setup - Kubeconfig
+  name: Kubernetes Setup - Secure Kubernetes Items
   roles:
     - { role: kubernetes/misc }
 
