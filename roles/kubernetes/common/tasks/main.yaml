@@ -30,7 +30,7 @@
   ansible.builtin.package:
     name: '*'
     state: latest
-    update_cache: yes # Proxied command for apt : apt-get update
+    update_cache: true # Proxied command for apt : apt-get update
   when:
     - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
     - deployment_type == "bare_metal"
@@ -39,11 +39,16 @@
     - update
 
 - name: Enable cgroup v2 # https://rootlesscontaine.rs/getting-started/common/cgroup2/#enabling-cgroup-v2
+  vars:
+    option: systemd.unified_cgroup_hierarchy
+    value: "1"
+  tags:
+    - install
   block:
     - name: Retrieve contents of /etc/default/grub
       ansible.builtin.shell: cat /etc/default/grub
       register: grub_content
-      changed_when: False
+      changed_when: false
 
     - name: Retrieve existing GRUB_CMDLINE_LINUX options, if any
       set_fact:
@@ -65,33 +70,28 @@
         line: 'GRUB_CMDLINE_LINUX="{{ grub_cmdline_updated }}"'
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
 
     - name: Update GRUB
       ansible.builtin.command: update-grub
-  vars:
-    option: systemd.unified_cgroup_hierarchy
-    value: "1"
-  tags:
-    - install
 
 - name: Enable CPU, CPUSET, and I/O delegation for non-root users
-  block:
-  - name: mkdir for user@.service.d
-    ansible.builtin.file:
-      path: /etc/systemd/system/user@.service.d
-      state: directory
-      mode: '0755'
-  - name: Adding delegation
-    ansible.builtin.copy:
-      dest: /etc/systemd/system/user@.service.d/delegate.conf
-      content: |
-        [Service]
-        Delegate=cpu cpuset io memory pids
   tags:
     - install
     - update
-  
+  block:
+    - name: Run mkdir for user@.service.d
+      ansible.builtin.file:
+        path: /etc/systemd/system/user@.service.d
+        state: directory
+        mode: '0755'
+    - name: Adding delegation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/user@.service.d/delegate.conf
+        content: |
+          [Service]
+          Delegate=cpu cpuset io memory pids
+
 # - name: Disable the firewalld - for RHEL based operating systems
 #   systemd:
 #     name: firewalld
@@ -115,7 +115,7 @@
 #     ansible_python_interpreter: /usr/bin/python3
 #   tags:
 #     - install
-    
+
 - name: Adding SAS certs
   become: true
   ansible.builtin.shell: |
@@ -134,16 +134,16 @@
     state: present
   vars:
     packages:
-    - sshpass
+      - sshpass
   tags:
     - install
     - update
 
 - name: Installing helm
   ansible.builtin.shell: |
-      curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-      chmod 755 get-helm-3
-      ./get-helm-3 --version v{{ helm_version }} --no-sudo
+    curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 755 get-helm-3
+    ./get-helm-3 --version v{{ helm_version }} --no-sudo
   tags:
     - install
     - update
@@ -152,7 +152,7 @@
   ansible.builtin.lineinfile:
     path: /etc/security/limits.conf
     insertbefore: '^# End of file'
-    line: "{{ item }}"    
+    line: "{{ item }}"
   with_items:
     - ''
     - '* soft     nproc          65535'

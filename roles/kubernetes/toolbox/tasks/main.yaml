@@ -27,7 +27,7 @@
     - install
     - update
 
-- name: Set kubernetes version facts for crictl 
+- name: Set kubernetes version facts for crictl
   set_fact:
     k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
   when: kubernetes_cri|lower != 'docker'
@@ -49,7 +49,7 @@
   ansible.builtin.get_url:
     url: https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ k8s_major_version }}.{{ k8s_minor_version }}.0/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
     dest: /tmp/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
-    mode: '0755'
+    mode: "0755"
   when: kubernetes_cri|lower != 'docker'
   tags:
     - install
@@ -59,7 +59,7 @@
   ansible.builtin.unarchive:
     src: /tmp/crictl-v{{ k8s_major_version }}.{{ k8s_minor_version }}.0-linux-amd64.tar.gz
     dest: /usr/local/bin
-    remote_src: yes
+    remote_src: true
   when: kubernetes_cri|lower != 'docker'
   tags:
     - install
@@ -108,11 +108,11 @@
 - name: Update apt package index and install kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-    - kubelet={{ kubernetes_version }}-00
-    - kubeadm={{ kubernetes_version }}-00
-    - kubectl={{ kubernetes_version }}-00
+      - kubelet={{ kubernetes_version }}-00
+      - kubeadm={{ kubernetes_version }}-00
+      - kubectl={{ kubernetes_version }}-00
     state: present
-    update_cache: yes
+    update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
@@ -129,7 +129,7 @@
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
-  
+
 - name: Mark the packages to purge as we control the version ;)
   ansible.builtin.dpkg_selections:
     name: "{{ item }}"
@@ -145,11 +145,11 @@
 - name: Update apt package index and remove kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-    - kubelet={{ kubernetes_version }}-00
-    - kubeadm={{ kubernetes_version }}-00
-    - kubectl={{ kubernetes_version }}-00
+      - kubelet={{ kubernetes_version }}-00
+      - kubeadm={{ kubernetes_version }}-00
+      - kubectl={{ kubernetes_version }}-00
     state: absent
-    update_cache: yes
+    update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - uninstall

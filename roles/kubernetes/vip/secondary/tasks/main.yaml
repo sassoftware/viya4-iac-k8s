@@ -3,9 +3,9 @@
 
 ---
 - name: Copy kube-vip manifest to secondary control planes
-  ansible.posix.synchronize: 
+  ansible.posix.synchronize:
     src: /etc/kubernetes/manifests/kube-vip.yaml
     dest: /etc/kubernetes/manifests/kube-vip.yaml
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   tags:
     - install

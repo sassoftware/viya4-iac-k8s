@@ -12,16 +12,16 @@
 
 # Task to Remove existing Docker installations
 - name: Uninstall old Docker versions
-  ansible.builtin.package: 
+  ansible.builtin.package:
     name: "{{ packages }}"
     state: absent
   vars:
     packages:
-    - docker
-    - docker-engine
-    - docker.io
-    - containerd
-    - runc
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
   ignore_errors: true
   tags:
     - install
@@ -33,11 +33,11 @@
     state: present
   vars:
     packages:
-    - apt-transport-https # Also needed for kubeadm tooling
-    - ca-certificates     # Also needed for kubeadm tooling
-    - curl                # Also needed for kubeadm tooling
-    - gnupg
-    - lsb-release
+      - apt-transport-https # Also needed for kubeadm tooling
+      - ca-certificates     # Also needed for kubeadm tooling
+      - curl                # Also needed for kubeadm tooling
+      - gnupg
+      - lsb-release
   tags:
     - install
     - update
@@ -70,10 +70,10 @@
     state: present
   vars:
     packages:
-    - docker-ce
-    - docker-ce-cli
-    - docker-compose
-    - containerd.io
+      - docker-ce
+      - docker-ce-cli
+      - docker-compose
+      - containerd.io
   tags:
     - install
     - update
@@ -101,8 +101,8 @@
   ansible.builtin.user:
     name: "{{ item }}"
     groups: docker
-    append: yes
-  with_items: 
+    append: true
+  with_items:
     - devops
     - ubuntu
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
@@ -114,7 +114,7 @@
 - name: Setting up docker to start on boot
   ansible.builtin.systemd:
     name: docker.service
-    enabled: yes
+    enabled: true
   tags:
     - install
     - update
@@ -122,12 +122,12 @@
 - name: Setting up containerd to start on boot
   ansible.builtin.systemd:
     name: containerd.service
-    enabled: yes
+    enabled: true
   tags:
     - install
     - update
 
-# 
+#
 # containerd - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd
 #
 - name: Add module load file for containerd
@@ -169,7 +169,7 @@
 
 - name: Restart systemd
   ansible.builtin.systemd:
-    daemon_reload: yes
+    daemon_reload: true
   tags:
     - install
     - update
@@ -178,7 +178,7 @@
   ansible.builtin.get_url:
     url: https://github.com/goharbor/harbor/releases/download/v2.6.0/harbor-offline-installer-v2.6.0.tgz
     dest: /tmp/harbor-offline-installer-v2.6.0.tgz
-    mode: '0755'
+    mode: "0755"
   tags:
     - install
     - update
@@ -187,7 +187,7 @@
   ansible.builtin.unarchive:
     src: /tmp/harbor-offline-installer-v2.6.0.tgz
     dest: /tmp
-    remote_src: yes
+    remote_src: true
   tags:
     - install
     - update

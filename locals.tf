@@ -18,8 +18,8 @@ locals {
   control_plane_ips   = flatten(sort(flatten([for item in values(module.control_plane) : values(item)])))
 
   ## System nodes
-  system_nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
-  system_node_ips = flatten(sort(flatten([for item in values(module.system) : values(item)])))
+  system_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
+  # system_node_ips = flatten(sort(flatten([for item in values(module.system) : values(item)]))) not used, ref for future use
 
   ## Nodes
   nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }

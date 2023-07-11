@@ -34,7 +34,7 @@
 - name: Disable and turn off unattended-upgrades
   ansible.builtin.systemd:
     name: unattended-upgrades.service
-    enabled: no
+    enabled: false
     state: stopped
   ignore_errors: true
   tags:
@@ -57,7 +57,7 @@
   ansible.builtin.apt:
     name: unattended-upgrades
     state: absent
-    purge: yes
+    purge: true
   tags:
     - install
     - update
@@ -67,11 +67,11 @@
   ansible.builtin.package:
     name: '*'
     state: latest
-    update_cache: yes
+    update_cache: true
   tags:
     - install
     - update
-    
+
 # TODO: Add code here to support RHEL/CentOS for code
 # - name: Disable the firewalld # CentOS ONLY
 #   systemd:
@@ -88,7 +88,7 @@
 #     exit 0
 #   tags:
 #     - install
- 
+
 # Add SAS Certificates to support SAS Viya
 - name: Adding SAS certs
   ansible.builtin.shell: |
@@ -130,4 +130,4 @@
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
-    - update  
+    - update

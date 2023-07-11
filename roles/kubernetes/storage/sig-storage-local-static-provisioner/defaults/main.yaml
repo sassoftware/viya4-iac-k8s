@@ -1,6 +1,7 @@
 # Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+---
 ## sig-storage-local-static-provisioner
 LOCAL_VOLUME_NAME: sig-storage-local-static-provisioner-sas
 LOCAL_VOLUME_NAMESPACE: kube-system
@@ -24,49 +25,49 @@ LOCAL_VOLUME_CONFIG:
       storageClass: true
   daemonset:
     tolerations:
-    - effect: NoSchedule
-      key: workload.sas.com/class
-      operator: Equal
-      value: cas
-    - effect: NoSchedule
-      key: workload.sas.com/class
-      operator: Equal
-      value: stateless
-    - effect: NoSchedule
-      key: workload.sas.com/class
-      operator: Equal
-      value: stateful
-    - effect: NoSchedule
-      key: workload.sas.com/class
-      operator: Equal
-      value: singlestore
+      - effect: NoSchedule
+        key: workload.sas.com/class
+        operator: Equal
+        value: cas
+      - effect: NoSchedule
+        key: workload.sas.com/class
+        operator: Equal
+        value: stateless
+      - effect: NoSchedule
+        key: workload.sas.com/class
+        operator: Equal
+        value: stateful
+      - effect: NoSchedule
+        key: workload.sas.com/class
+        operator: Equal
+        value: singlestore
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: workload.sas.com/class
-              operator: In
-              values:
-              - stateful
-              - stateless
-              - cas
-              - singlestore
-            matchFields: []
-          weight: 100
-        - preference:
-            matchExpressions:
-            - key: workload.sas.com/class
-              operator: NotIn
-              values:
-              - compute
-            matchFields: []
-          weight: 50
+          - preference:
+              matchExpressions:
+                - key: workload.sas.com/class
+                  operator: In
+                  values:
+                    - stateful
+                    - stateless
+                    - cas
+                    - singlestore
+              matchFields: []
+            weight: 100
+          - preference:
+              matchExpressions:
+                - key: workload.sas.com/class
+                  operator: NotIn
+                  values:
+                    - compute
+              matchFields: []
+            weight: 50
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.azure.com/mode
-              operator: NotIn
-              values:
-              - system
-            matchFields: []
+            - matchExpressions:
+                - key: kubernetes.azure.com/mode
+                  operator: NotIn
+                  values:
+                    - system
+              matchFields: []

@@ -16,12 +16,12 @@
     state: present
   vars:
     packages:
-    - apt-transport-https # Also needed for kubeadm tooling
-    - ca-certificates     # Also needed for kubeadm tooling
-    - curl                # Also needed for kubeadm tooling
-    - gnupg2
-    - lsb-release
-    - software-properties-common
+      - apt-transport-https # Also needed for kubeadm tooling
+      - ca-certificates     # Also needed for kubeadm tooling
+      - curl                # Also needed for kubeadm tooling
+      - gnupg2
+      - lsb-release
+      - software-properties-common
   tags:
     - install
     - update
@@ -44,7 +44,7 @@
   tags:
     - install
     - update
-  
+
 - name: Installing the cri-o libcontainers-archive-keyring key
   ansible.builtin.apt_key:
     url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/Release.key
@@ -57,7 +57,7 @@
 
 - name: Installing the cri-o libcontainers-crio-archive-keyring key
   ansible.builtin.apt_key:
-    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version}}.{{ k8s_minor_version }}/{{ os }}/Release.key
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/Release.key
     keyring: /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
     state: present
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
@@ -71,14 +71,14 @@
     repo: "{{ item }}"
     state: present
   with_items:
-      - deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /
-      - deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/ /
+    - deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /
+    - deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/ /
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
 
-# 
+#
 # cri-o - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cri-o
 #
 - name: Add module load file for cri-o
@@ -125,8 +125,8 @@
     state: present
   vars:
     packages:
-    - cri-o
-    - cri-o-runc
+      - cri-o
+      - cri-o-runc
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
@@ -143,7 +143,7 @@
   ansible.builtin.copy:
     src: files/10-cri-ipv4-bridge.conf
     dest: /etc/cni/net.d/10-cri-ipv4-bridge.conf
-    mode: '0644'
+    mode: "0644"
   tags:
     - install
     - update
@@ -151,7 +151,7 @@
 - name: Enabling and starting cri-o to start now and on boot
   ansible.builtin.systemd:
     name: cri-o.service
-    enabled: yes
+    enabled: true
     state: restarted
   tags:
     - install

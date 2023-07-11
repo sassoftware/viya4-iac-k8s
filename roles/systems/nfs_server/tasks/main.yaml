@@ -15,6 +15,9 @@
     - update
 
 - name: Setting up /export nfs mount point
+  tags:
+    - install
+    - update
   block:
     - name: Create nfs mount point
       ansible.builtin.file:
@@ -22,7 +25,7 @@
         state: directory
         owner: nobody
         group: nogroup
-        mode: 0777
+        mode: "0777"
       when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
 
     - name: Test for export mount point
@@ -43,11 +46,11 @@
         regexp: '^/export'
         line: /export    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: exports_file_rc.stdout != "0"
+
+- name: Setting up /srv/nfs/kubernetes/sc/default nfs mount point
   tags:
     - install
     - update
-
-- name: Setting up /srv/nfs/kubernetes/sc/default nfs mount point
   block:
     - name: Create nfs mount point
       ansible.builtin.file:
@@ -55,7 +58,7 @@
         state: directory
         owner: nobody
         group: nogroup
-        mode: 0777
+        mode: "0777"
       when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
 
     - name: Test for export mount point
@@ -76,9 +79,6 @@
         regexp: '^/srv/nfs/kubernetes/sc/default'
         line: /srv/nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: kubernetes_sc_default_file_rc.stdout != "0"
-  tags:
-    - install
-    - update
 
 - name: Export file system
   ansible.builtin.shell: exportfs -a
@@ -90,7 +90,7 @@
 - name: Start the nfs_kernel_server, portmap, and rpc-statd
   ansible.builtin.systemd:
     name: "{{ item }}"
-    enabled: yes
+    enabled: true
     state: restarted
   with_items:
     - nfs-server

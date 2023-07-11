@@ -1,7 +1,7 @@
 # Base layer
 FROM ubuntu:22.04 as baseline
-RUN apt-get update && apt-get upgrade -y \
-  && apt-get install -y python3 python3-dev python3-pip curl unzip gnupg \
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+  && apt-get install -y python3 python3-dev python3-pip curl unzip gnupg --no-install-recommends \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
   && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -14,13 +14,14 @@ ARG TERRAFORM_VERSION=1.4.5-*
 
 WORKDIR /build
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
   && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/tf.list \
   && apt-get update \
-  && curl -sLO https://storage.googleapis.com/kubernetes-release/release/v{$KUBECTL_VERSION}/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
+  && curl -sLO https://storage.googleapis.com/kubernetes-release/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
   && curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 755 get-helm-3 \
   && ./get-helm-3 --version v$HELM_VERSION --no-sudo \
-  && apt-get install -y terraform=$TERRAFORM_VERSION \
+  && apt-get install -y terraform=$TERRAFORM_VERSION --no-install-recommends \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Installation steps
@@ -38,7 +39,7 @@ COPY . /viya4-iac-k8s/
 
 ENV HOME=/viya4-iac-k8s
 
-RUN pip install -r ./requirements.txt \
+RUN pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy install -r ./requirements.yaml \
   && chmod 755 /viya4-iac-k8s/docker-entrypoint.sh /viya4-iac-k8s/oss-k8s.sh \
   && terraform init \

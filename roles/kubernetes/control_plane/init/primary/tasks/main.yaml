@@ -6,7 +6,7 @@
   ansible.builtin.template:
     src: "templates/{{ item }}.j2"
     dest: "/etc/kubernetes/{{ item }}.yaml"
-    mode: '0600'
+    mode: "0600"
   with_items:
     - kubeadm-config
   tags:
@@ -14,7 +14,7 @@
     - update
 
 # TODO: pod-network-cidr can conflict locally check with IT to ensure correct range.
-- name: kubeadm init 
+- name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
   tags:
     - install
@@ -23,7 +23,7 @@
   ansible.builtin.file:
     path: ~/.kube
     state: directory
-    mode: '0755'
+    mode: "0755"
   tags:
     - install
 
@@ -41,8 +41,8 @@
     dest: ~/.kube/config
     owner: root
     group: root
-    mode: '0600'
-    remote_src: yes
+    mode: "0600"
+    remote_src: true
   tags:
     - install
 
@@ -50,6 +50,6 @@
   ansible.builtin.fetch:
     src: /etc/kubernetes/admin.conf
     dest: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    flat: yes
+    flat: true
   tags:
     - install

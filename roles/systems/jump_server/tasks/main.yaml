@@ -16,7 +16,7 @@
   tags:
     - install
     - update
-    
+
 - name: Install nfs-common package
   ansible.builtin.package:
     name: nfs-common
@@ -32,7 +32,7 @@
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-    mode: 0777
+    mode: "0777"
   tags:
     - install
     - update
@@ -43,7 +43,7 @@
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-    mode: 0777
+    mode: "0777"
   tags:
     - install
     - update
@@ -92,7 +92,7 @@
     path: /viya-share/pvs
     owner: "{{ owner }}"
     group: "{{ group }}"
-    mode: 0777
+    mode: "0777"
     state: directory
   tags:
     - install
