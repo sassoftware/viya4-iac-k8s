@@ -3,15 +3,16 @@
 
 ---
 - name: Generate control plane shared ssh key pair
-  ansible.builtin.shell: |
-    rm -rf ~/.ssh/{{ control_plane_ssh_key_name }}
-    ssh-keygen -t rsa -q -N '' -b 4096 -f ~/.ssh/{{ control_plane_ssh_key_name }}
+  ansible.builtin.command: "{{ item }}"
+  with_items:
+    - rm -rf ~/.ssh/{{ control_plane_ssh_key_name }}
+    - ssh-keygen -t rsa -q -N '' -b 4096 -f ~/.ssh/{{ control_plane_ssh_key_name }}
   tags:
     - install
     - update
 
 - name: Get the ssh key file content
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cat ~/.ssh/{{ control_plane_ssh_key_name }}.pub
   register: ssh_key
   tags:
