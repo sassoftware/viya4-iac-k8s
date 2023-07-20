@@ -3,7 +3,7 @@
 
 ---
 # TODO: Make "SharedServices" a variable
-- name: Create SharedServices database 
+- name: Create SharedServices database
   ansible.builtin.shell: |
     echo 'CREATE DATABASE "SharedServices";' >> /tmp/postgres_databases.psql
     echo 'GRANT ALL PRIVILEGES ON DATABASE "SharedServices" TO {{ postgres_administrator_login }} ;' >> /tmp/postgres_databases.psql
@@ -12,4 +12,3 @@
   tags:
     - install
     - update
-

@@ -16,7 +16,7 @@
   tags:
     - install
     - update
-    
+
 - name: Expand Root Partition - growpart
   ansible.builtin.shell: "growpart /dev/sda {{ partition_number }}" # CentOS - 1 # Ubuntu - 2
   register: grow_result
@@ -48,7 +48,7 @@
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-    mode: 0777
+    mode: "0777"
   ignore_errors: true
   tags:
     - install
@@ -65,7 +65,7 @@
     dest: /tmp/link_devs.sh
     owner: root
     group: root
-    mode: '0700'
+    mode: "0700"
   tags:
     - install
 

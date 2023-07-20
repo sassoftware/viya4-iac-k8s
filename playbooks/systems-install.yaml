@@ -4,6 +4,7 @@
 ---
 # Tasks that run on all nodes for initialization and common tasks
 - hosts: all
+  name: Systems Install - Common
   become: true
   become_user: root
   roles:
@@ -12,6 +13,7 @@
 
 # NFS Server
 - hosts: nfs
+  name: System Install - NFS Server
   become: true
   become_user: root
   roles:
@@ -19,6 +21,7 @@
 
 # Jump Server
 - hosts: jump
+  name: System Install - Jump Server
   become: true
   become_user: root
   roles:
@@ -26,6 +29,7 @@
 
 # Postgres Server
 - hosts: postgres
+  name: System Install - Postgres Server
   become: true
   become_user: root
   roles:
@@ -33,6 +37,7 @@
 
 # Container Registry Server
 - hosts: cr
+  name: System Install - CR
   become: true
   become_user: root
   roles:
@@ -40,6 +45,7 @@
 
 # Kubernetes - Control Plane
 - hosts: k8s_control_plane
+  name: System Install - Control Plane
   become: true
   become_user: root
   roles:
@@ -47,6 +53,7 @@
 
 # Kubernetes - Compute nodes
 - hosts: k8s_node
+  name: System Install - Compute Nodes
   become: true
   become_user: root
   roles:

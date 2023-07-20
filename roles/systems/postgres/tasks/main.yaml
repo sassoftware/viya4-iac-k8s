@@ -24,12 +24,12 @@
 - name: Install postgres
   ansible.builtin.apt:
     pkg:
-    - "postgresql-{{ postgres_server_version }}"
-    - "postgresql-client-{{ postgres_server_version }}"
-    - python3-psycopg2
-    - acl
+      - "postgresql-{{ postgres_server_version }}"
+      - "postgresql-client-{{ postgres_server_version }}"
+      - python3-psycopg2
+      - acl
     state: present
-    update_cache: yes
+    update_cache: true
   tags:
     - install
     - update
@@ -58,7 +58,7 @@
 
 - name: Postgres SSL with user supplied cert and key - verify both defined
   ansible.builtin.fail:
-    msg: "User has set postgres_server_ssl to on, but has only defined one of 'postgres_server_ssl_cert_file, 
+    msg: "User has set postgres_server_ssl to on, but has only defined one of 'postgres_server_ssl_cert_file,
           postgres_server_ssl_key_file'. Ensure that both these variables are set, or remove both of them from your
           inventory file to use the Ubuntu system default cert and key files."
   when:
@@ -70,6 +70,13 @@
     - update
 
 - name: Copy user supplied cert and key to Postgres host
+  when:
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+    - postgres_server_ssl|lower == "on"
+    - (postgres_server_ssl_cert_file|length > 0) and (postgres_server_ssl_key_file|length > 0)
+  tags:
+    - install
+    - update
   block:
     - name: Add user supplied SSL Cert
       ansible.builtin.copy:
@@ -91,15 +98,15 @@
       ansible.builtin.set_fact:
         postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
         postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
+
+- name: Create copy of Ubuntu default cert and key
   when:
     - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
     - postgres_server_ssl|lower == "on"
-    - (postgres_server_ssl_cert_file|length > 0) and (postgres_server_ssl_key_file|length > 0)
+    - (postgres_server_ssl_cert_file|length == 0) and (postgres_server_ssl_key_file|length == 0)
   tags:
     - install
     - update
-
-- name: Create copy of Ubuntu default cert and key
   block:
     - name: Copy Ubuntu default SSL Cert
       ansible.builtin.copy:
@@ -108,7 +115,7 @@
         owner: root
         group: root
         mode: "0644"
-        remote_src: yes
+        remote_src: true
       register: cert_result
     - name: Copy Ubuntu default SSL Key
       ansible.builtin.copy:
@@ -117,29 +124,22 @@
         owner: root
         group: ssl-cert
         mode: "0640"
-        remote_src: yes
+        remote_src: true
       register: key_result
     - name: Fetch SSL Cert
       ansible.builtin.fetch:
         src: "{{ cert_result.dest }}"
         dest: "{{ inventory_dir }}/"
-        flat: yes
+        flat: true
     - name: Fetch SSL Key
       ansible.builtin.fetch:
         src: "{{ key_result.dest }}"
         dest: "{{ inventory_dir }}/"
-        flat: yes
+        flat: true
     - name: Set postgres_server_ssl_cert_file_dest and postgres_server_ssl_key_file_dest
       ansible.builtin.set_fact:
         postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
         postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
-  when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
-    - postgres_server_ssl|lower == "on"
-    - (postgres_server_ssl_cert_file|length == 0) and (postgres_server_ssl_key_file|length == 0)
-  tags:
-    - install
-    - update
 
 - name: Alter postgresql.conf - Update ssl
   ansible.builtin.lineinfile:
@@ -193,7 +193,7 @@
   ansible.builtin.systemd:
     name: postgresql
     state: restarted
-    enabled: yes
+    enabled: true
   tags:
     - install
     - update

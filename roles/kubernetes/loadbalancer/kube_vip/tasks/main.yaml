@@ -3,6 +3,9 @@
 
 ---
 - name: Setting up kube-vip loadbalancer
+  tags:
+    - install
+    - update
   block:
     - name: Install kube-vip Cloud Provider
       ansible.builtin.shell: |
@@ -28,6 +31,3 @@
       tags:
         - install
         - update
-  tags:
-    - install
-    - update

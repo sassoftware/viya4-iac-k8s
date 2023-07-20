@@ -5,28 +5,28 @@
 - name: Draining the node
   ansible.builtin.shell: |
     kubectl drain {{ ansible_hostname }} --delete-emptydir-data --force --ignore-daemonsets
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   ignore_errors: true
   tags:
-    uninstall
+    - uninstall
 
 - name: Resetting the state
   ansible.builtin.shell: |
     kubeadm reset --force
   ignore_errors: true
   tags:
-    uninstall
+    - uninstall
 
 - name: Clean up IPTables
   ansible.builtin.shell: |
     iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
   tags:
-    uninstall
+    - uninstall
 
 - name: Remove the node
   ansible.builtin.shell: |
     kubectl delete nodes {{ ansible_hostname }}
-  delegate_to: "{{groups['k8s_control_plane'][0]}}"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   ignore_errors: true
   tags:
-    uninstall
+    - uninstall

@@ -13,7 +13,7 @@
 # but noting that is an experimental feature
 - name: Update PostgreSQL server settings script
   ansible.builtin.shell: |
-    echo 'ALTER SYSTEM SET {{ item | replace("postgres_system_setting_","") }} = {{ vars[item] }};' >> /tmp/postgres_system.psql
+    echo 'ALTER SYSTEM SET {{ item | replace("postgres_system_setting_", "") }} = {{ vars[item] }};' >> /tmp/postgres_system.psql
   with_items: "{{ lookup('ansible.builtin.varnames', '^postgres_system_setting_.+', wantlist=True) }}"
   tags:
     - install
