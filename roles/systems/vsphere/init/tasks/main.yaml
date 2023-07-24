@@ -18,7 +18,7 @@
     - update
 
 - name: Expand Root Partition - growpart
-  ansible.builtin.shell: "growpart /dev/sda {{ partition_number }}" # CentOS - 1 # Ubuntu - 2
+  ansible.builtin.command: "growpart /dev/sda {{ partition_number }}" # CentOS - 1 # Ubuntu - 2
   register: grow_result
   failed_when: grow_result.rc >= 2
   tags:
@@ -29,7 +29,7 @@
 #       using vSphere or any virtual vm's
 #
 - name: Expand Root File System - xfs_grow
-  ansible.builtin.shell: "xfs_growfs -d /"
+  ansible.builtin.command: "xfs_growfs -d /"
   tags:
     - install
 

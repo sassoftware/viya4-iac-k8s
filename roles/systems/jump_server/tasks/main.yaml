@@ -81,8 +81,8 @@
 #     - install
 #     - update
 
-- name: Mount /viya-share
-  ansible.builtin.shell: mount -a
+- name: Mount /viya-share # noqa: command-instead-of-module
+  ansible.builtin.command: mount -a
   tags:
     - install
     - update
