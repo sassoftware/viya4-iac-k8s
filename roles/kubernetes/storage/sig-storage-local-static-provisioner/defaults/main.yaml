@@ -7,7 +7,7 @@ LOCAL_VOLUME_NAME: sig-storage-local-static-provisioner-sas
 LOCAL_VOLUME_NAMESPACE: kube-system
 LOCAL_VOLUME_CHART_NAME: Chart.yaml
 LOCAL_VOLUME_REPO: https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner.git
-LOCAL_VOLUME_CHART_VERSION: 2.5.0
+LOCAL_VOLUME_CHART_VERSION: 2.6.0
 LOCAL_VOLUME_REPO_VERSION: "v{{ LOCAL_VOLUME_CHART_VERSION }}"
 LOCAL_VOLUME_REPO_LOCATION: "/tmp/{{ LOCAL_VOLUME_NAME }}"
 LOCAL_VOLUME_CONFIG:
