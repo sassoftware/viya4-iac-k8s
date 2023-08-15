@@ -90,9 +90,9 @@ cr_server
 # Postgres Servers
 #
 %{ for server_name, server_data in postgres_servers ~}
-[${prefix}_${server_name}_pgsql]
+[${prefix}_${replace(server_name, "-", "_")}_pgsql]
 ${server_data.server_ip}
-[${prefix}_${server_name}_pgsql:vars | replace("-", "_")]
+[${prefix}_${replace(server_name, "-", "_")}_pgsql:vars]
 postgres_server_name="${server_name}"
 postgres_server_version="${server_data.server_version}"
 postgres_server_ssl="${server_data.server_ssl}"
@@ -107,7 +107,7 @@ postgres_system_setting_${system_setting.name}="${system_setting.value}"
 %{ endfor ~}
 [postgres:children]
 %{ for server_name, server_data in postgres_servers ~}
-${prefix}_${server_name}_pgsql
+${prefix}_${replace(server_name, "-", "_")}_pgsql
 %{ endfor ~}
 
 %{ endif ~}
