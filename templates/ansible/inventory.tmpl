@@ -92,7 +92,7 @@ cr_server
 %{ for server_name, server_data in postgres_servers ~}
 [${prefix}_${server_name}_pgsql]
 ${server_data.server_ip}
-[${prefix}_${server_name}_pgsql:vars]
+[${prefix}_${server_name}_pgsql:vars | replace("-", "_")]
 postgres_server_name="${server_name}"
 postgres_server_version="${server_data.server_version}"
 postgres_server_ssl="${server_data.server_ssl}"
