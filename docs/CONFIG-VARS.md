@@ -289,7 +289,7 @@ postgres_servers = {
 
 **NOTE**: The `default = {}` element is always required when creating external databases. This is the system's default database server.
 
-Each server element, like `foo = {}`, can contain none, some, or all of the parameters listed 
+Each server element, like `foo = {}`, can contain none, some, or all of the parameters listed. When naming the server element, it must follow a valid naming scheme, the name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character.
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -311,7 +311,9 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
     - The Ansible tasks that are performed include copying the certificate and key from the PostgreSQL VM into your local workspace directory.
 2. If you are planning to use the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a SAS Viya platform deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls) configured, make sure that the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable in the viya4-deployment ansible-vars.yaml file points to a directory that contains the server_ssl_cert_file.
 
-Here is an example of the `postgres_servers` variable where the `default` entry only overrides the `administrator_password` parameter, and the `another-server` entry overrides all parameters:
+Multiple SAS offerings require a second PostgreSQL instance referred to as SAS Common Data Store, or CDS PostgreSQL. For more information, see [Common Customizations](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=dplyml0phy0dkr&docsetTarget=n08u2yg8tdkb4jn18u8zsi6yfv3d.htm#p0wkxxi9s38zbzn19ukjjaxsc0kl). A list of SAS offerings that require CDS PostgreSQL is provided in [SAS Common Data Store Requirements](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#n03wzanutmc6gon1val5fykas9aa). To create and configure an external CDS PostgreSQL instance in addition to the external platform PostgreSQL instance named `default`, specify `cds-postgres` as a second PostgreSQL instance, as shown in the example below.
+
+Here is an example of the `postgres_servers` variable with the `default` server entry overriding only the `administrator_password` parameter and the `cds-postgres` entry overriding all the parameters:
 
 ```terraform
 postgres_servers = {
@@ -319,7 +321,7 @@ postgres_servers = {
     administrator_password       = "D0ntL00kTh1sWay"
     server_ip                    = "10.10.10.10"     # Assigned values for static IPs
   },
-  another_server = {
+  cds-postgres = {
     server_num_cpu         = 8                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
