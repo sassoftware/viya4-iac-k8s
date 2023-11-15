@@ -208,3 +208,8 @@
   tags:
     - install
     - update
+
+- name: Reboot postgres server post installation
+  ansible.builtin.reboot:
+  tags:
+    - install
