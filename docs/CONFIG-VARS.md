@@ -69,7 +69,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.26.7" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://go.documentation.sas.com/doc/en/itopscdc/default/itopssr/n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.26.7" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
@@ -297,7 +297,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | server_memory | Memory in MB | number | 16385 | |
 | server_disk_size | Size of disk in GB | number | 250 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field. |
-| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
+| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | server_ssl | Enable/disable SSL | string | "off" | |
 | server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
 | server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
@@ -311,7 +311,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
     - The Ansible tasks that are performed include copying the certificate and key from the PostgreSQL VM into your local workspace directory.
 2. If you are planning to use the [viya4-deployment repository](https://github.com/sassoftware/viya4-deployment) to perform a SAS Viya platform deployment where you have [full-stack TLS](https://github.com/sassoftware/viya4-deployment/blob/main/docs/CONFIG-VARS.md#tls) configured, make sure that the `V4_CFG_TLS_TRUSTED_CA_CERTS` variable in the viya4-deployment ansible-vars.yaml file points to a directory that contains the server_ssl_cert_file.
 
-Multiple SAS offerings require a second PostgreSQL instance referred to as SAS Common Data Store, or CDS PostgreSQL. For more information, see [Common Customizations](https://go.documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=dplyml0phy0dkr&docsetTarget=n08u2yg8tdkb4jn18u8zsi6yfv3d.htm#p0wkxxi9s38zbzn19ukjjaxsc0kl). A list of SAS offerings that require CDS PostgreSQL is provided in [SAS Common Data Store Requirements](https://go.documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#n03wzanutmc6gon1val5fykas9aa). To create and configure an external CDS PostgreSQL instance in addition to the external platform PostgreSQL instance named `default`, specify `cds-postgres` as a second PostgreSQL instance, as shown in the example below.
+Multiple SAS offerings require a second PostgreSQL instance referred to as SAS Common Data Store, or CDS PostgreSQL. For more information, see [Common Customizations](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=dplyml0phy0dkr&docsetTarget=n08u2yg8tdkb4jn18u8zsi6yfv3d.htm#p0wkxxi9s38zbzn19ukjjaxsc0kl). A list of SAS offerings that require CDS PostgreSQL is provided in [SAS Common Data Store Requirements](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#n03wzanutmc6gon1val5fykas9aa). To create and configure an external CDS PostgreSQL instance in addition to the external platform PostgreSQL instance named `default`, specify `cds-postgres` as a second PostgreSQL instance, as shown in the example below.
 
 Here is an example of the `postgres_servers` variable with the `default` server entry overriding only the `administrator_password` parameter and the `cds-postgres` entry overriding all the parameters:
 
@@ -433,14 +433,14 @@ The following variables are used to describe the machine targets for the SAS Viy
 | Name | Description | Type | Notes |
 |:---|---:|---:|---:|
 | postgres_server_name | Name of the PostgreSQL server | string | |
-| postgres_server_version | The version of the PostgreSQL server | string | Refer to the [SAS Viya Platform Administration Guide](https://go.documentation.sas.com/doc/en/sasadmincdc/default/itopssr/p05lfgkwib3zxbn1t6nyihexp12n.htm?fromDefault=#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
+| postgres_server_version | The version of the PostgreSQL server | string | Refer to the [SAS Viya Platform Administration Guide](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | postgres_server_ssl | Enable/disable SSL | string | Specify `off` or `on` |
 | postgres_server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
 | postgres_server_ssl_key_file | Path to the PostgreSQL SSL key file | string | If `postgres_server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
 | postgres_administrator_login | PostgreSQL admin user | string | |
 | postgres_administrator_password | PostgreSQL admin password | string | |
-| postgres_system_setting_max_prepared_transactions | Allows you to configure the `max_prepared_transactions` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/caltuning/n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
-| postgres_system_setting_max_connections | Allows you to configure the `max_connections` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://go.documentation.sas.com/doc/en/sasadmincdc/default/caltuning/n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
+| postgres_system_setting_max_prepared_transactions | Allows you to configure the `max_prepared_transactions` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=caltuning&docsetTarget=n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
+| postgres_system_setting_max_connections | Allows you to configure the `max_connections` setting for your PostgreSQL Server | string | If not defined in your inventory file, the value 1024 will automatically be configured as per the [SAS Viya Platform PG tuning requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=caltuning&docsetTarget=n0adso3frm5ioxn1s2kwa4vbm9db.htm#n03n7868gd4m83n1azbziv4hiozb) |
 
 
 ## Storage
