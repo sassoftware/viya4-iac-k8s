@@ -367,13 +367,6 @@ nfs_memory    = 16384        # 16 GB
 nfs_disk_size = 500          # 500 GB
 nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 
-# Container Registry
-create_cr    = false         # Creation flag
-cr_num_cpu   = 4             # 4 CPUs
-cr_memory    = 8092          # 8 GB
-cr_disk_size = 250           # 250 GB
-cr_ip        = "10.18.0.13"  # Assigned values for static IPs
-
 # PostgreSQL server
 #
 #   Suggested server specs shown below.
@@ -633,9 +626,6 @@ jump_ip : ""
 
 # NFS Server
 nfs_ip  : ""
-
-# Container Registry
-cr_ip   : ""
 
 # PostgreSQL Servers
 ```

@@ -50,18 +50,6 @@ FIXME - ENTER YOUR NFS SERVER IP/FQDN HERE!
 nfs_server
 
 #
-# Container Registry
-#
-[cr_server]
-FIXME - ENTER YOUR CR SERVER IP/FQDN HERE!
-
-#
-# Container Registry - alias - DO NOT MODIFY
-#
-[cr:children]
-cr_server
-
-#
 # Postgres Servers
 #
 # NOTE: You MUST have an entry for each postgres server

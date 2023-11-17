@@ -143,13 +143,6 @@ nfs_memory    = 16384 # 16 GB
 nfs_disk_size = 500   # 500 GB
 nfs_ip        = ""    # Assigned values for static IPs
 
-# Container Registry
-create_cr    = false # Creation flag
-cr_num_cpu   = 4     # 4 CPUs
-cr_memory    = 8092  # 8 GB
-cr_disk_size = 250   # 250 GB
-cr_ip        = ""    # Assigned values for static IPs
-
 # Postgres Servers
 postgres_servers = {
   default = {
