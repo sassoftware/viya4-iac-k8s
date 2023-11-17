@@ -212,7 +212,7 @@ variable "nfs_disk_size" {
   default = 250
 }
 
-# container registry - WIP
+# container registry - TODO
 variable "create_cr" {
   type    = bool
   default = false
