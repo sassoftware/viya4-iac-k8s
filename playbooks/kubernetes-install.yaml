@@ -74,23 +74,6 @@
   roles:
     - { role: kubernetes/node/labels_taints }
 
-# Alter PostgreSQL server and add PostgreSQL databases
-- hosts: postgres
-  name: Postgres Setup - Configuration
-  become: true
-  become_user: postgres
-  roles:
-    - { role: kubernetes/database/postgres/alter_server_settings }
-    - { role: kubernetes/database/postgres/create_databases }
-
-# Restart PostgreSQL server
-- hosts: postgres
-  name: Postgres Setup - Restart
-  become: true
-  become_user: root
-  roles:
-    - { role: kubernetes/database/postgres/restart_server }
-
 # Setup default storage class for cluster
 - hosts: localhost
   name: Default Storage Class Setup

@@ -141,6 +141,3 @@ jump_ip : ""
 
 # NFS Server
 nfs_ip  : ""
-
-# Container Registry
-cr_ip   : ""

@@ -367,13 +367,6 @@ nfs_memory    = 16384        # 16 GB
 nfs_disk_size = 500          # 500 GB
 nfs_ip        = "10.18.0.12" # Assigned values for static IPs
 
-# Container Registry
-create_cr    = false         # Creation flag
-cr_num_cpu   = 4             # 4 CPUs
-cr_memory    = 8092          # 8 GB
-cr_disk_size = 250           # 250 GB
-cr_ip        = "10.18.0.13"  # Assigned values for static IPs
-
 # PostgreSQL server
 #
 #   Suggested server specs shown below.
@@ -634,9 +627,6 @@ jump_ip : ""
 # NFS Server
 nfs_ip  : ""
 
-# Container Registry
-cr_ip   : ""
-
 # PostgreSQL Servers
 ```
 
@@ -681,7 +671,7 @@ The third-party applications that are listed in the following table are supporte
 
 | Application | Minimum Version |
 | ---: | ---: |
-| [Ansible](https://www.ansible.com/) | Core 2.13.4 |
-| [Terraform](https://www.terraform.io/) | 1.4.5 |
+| [Ansible](https://www.ansible.com/) | Core 2.15.6 |
+| [Terraform](https://www.terraform.io/) | 1.6.3 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
-| [Helm](https://helm.sh/) | 3.12.0 |
+| [Helm](https://helm.sh/) | 3.13.2 |

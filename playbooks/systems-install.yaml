@@ -33,7 +33,24 @@
   become: true
   become_user: root
   roles:
-    - { role: systems/postgres }
+    - { role: systems/postgres/install }
+
+# Alter PostgreSQL server and add PostgreSQL databases
+- hosts: postgres
+  name: Postgres Setup - Configuration
+  become: true
+  become_user: postgres
+  roles:
+    - { role: systems/postgres/alter_server_settings }
+    - { role: systems/postgres/create_databases }
+
+# Restart PostgreSQL server
+- hosts: postgres
+  name: Postgres Setup - Restart
+  become: true
+  become_user: root
+  roles:
+    - { role: systems/postgres/restart_server }
 
 # Container Registry Server
 - hosts: cr
