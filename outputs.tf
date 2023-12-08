@@ -5,10 +5,6 @@ output "cluster_name" {
   value = local.cluster_name
 }
 
-output "cluster_node_pool_mode" {
-  value = "default"
-}
-
 output "jump_admin_username" {
   value = "root"
 }

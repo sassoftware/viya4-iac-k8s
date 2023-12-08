@@ -83,7 +83,6 @@ control_plane_ssh_key_name = "cp_ssh"
 #                     These are typically: compute, stateful, and
 #                     stateless. 
 #
-cluster_node_pool_mode = "minimal"
 node_pools = {
   # REQUIRED NODE TYPE - DO NOT REMOVE and DO NOT CHANGE THE NAME
   #                      Other variables may be altered
