@@ -203,11 +203,11 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.26.7"                        # Kubernetes version
+cluster_version        = "1.27.9"                        # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
 cluster_cni_version    = "3.24.5"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
-cluster_cri_version    = "1.6.20"                        # Kubernetes Container Runtime Interface (CRI) Version
+cluster_cri_version    = "1.6.26"                        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
 cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
@@ -512,7 +512,7 @@ kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"           # Choices : [calico]
 kubernetes_cni_version     : "3.24.5"           # Choices : [3.24.5]
 kubernetes_cri             : "containerd"       # Choices : [containerd]
-kubernetes_cri_version     : "1.6.20"           # Choices : [1.6.20]
+kubernetes_cri_version     : "1.6.26"           # Choices : [1.6.26]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 

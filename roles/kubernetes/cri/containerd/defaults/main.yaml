@@ -11,5 +11,5 @@
 # Focal 20 https://download.docker.com/linux/ubuntu/dists/focal/stable/binary-amd64/
 # On that page select "Packages" and the text file that is downloaded will contain all the versions of
 # containerd available in the repository.
-kubernetes_cri_version: "1.6.20"
+kubernetes_cri_version: "1.6.26"
 kubernetes_cri_deb_rev: ""
