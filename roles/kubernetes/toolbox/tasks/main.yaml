@@ -46,11 +46,11 @@
     - update
 
 # Add Kubernetes apt repository
-- name: add Kubernetes apt repository
+- name: Add Kubernetes apt repository
   ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
     state: present
-    update_cache: yes
+    update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
@@ -119,9 +119,9 @@
 - name: Update apt package index and install kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-      - kubelet={{ kubernetes_version }}-{{kube_deb_rev}}
-      - kubeadm={{ kubernetes_version }}-{{kube_deb_rev}}
-      - kubectl={{ kubernetes_version }}-{{kube_deb_rev}}
+      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: present
     update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
@@ -156,9 +156,9 @@
 - name: Update apt package index and remove kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-      - kubelet={{ kubernetes_version }}-{{kube_deb_rev}}
-      - kubeadm={{ kubernetes_version }}-{{kube_deb_rev}}
-      - kubectl={{ kubernetes_version }}-{{kube_deb_rev}}
+      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: absent
     update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
