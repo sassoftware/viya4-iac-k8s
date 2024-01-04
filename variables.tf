@@ -307,7 +307,7 @@ variable "cluster_cni" {
 
 variable "cluster_cni_version" {
   type    = string
-  default = "3.24.5"
+  default = "3.27.0"
 }
 
 variable "cluster_cri" {
