@@ -6,5 +6,5 @@
 # kubelet, kubeadm, & kubectl which will be installed on all the
 # ansible "k8s" hosts.
 # It's not recommended you change this value unless for debugging purposes.
-# leaving it as am empty string will result in the latest deb rev for the packages
-kube_deb_rev: ""
+# leaving it as this default value will result in the latest deb rev for the packages
+kube_deb_rev: "-*"
