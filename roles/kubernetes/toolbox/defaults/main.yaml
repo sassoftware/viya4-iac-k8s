@@ -7,4 +7,4 @@
 # ansible "k8s" hosts.
 # It's not recommended you change this value unless for debugging purposes.
 # leaving it as this default value will result in the latest deb rev for the packages
-kube_deb_rev: "-*"
+kube_deb_rev: "*"
