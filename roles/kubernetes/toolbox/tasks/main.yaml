@@ -6,11 +6,40 @@
 # Installing Kubernetes tooling
 #
 
-# Apply Google Cloud public signing key
-- name: Apply Google Cloud public signing key
+# Only applicable for releases older than Ubuntu 22.04
+- name: Create /etc/apt/keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04")
+  tags:
+    - install
+    - update
+
+- name: Set kubernetes version facts for toolbox installation
+  set_fact:
+    k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
+  tags:
+    - install
+    - update
+
+- name: Set kubernetes version part facts for toolbox installation
+  set_fact:
+    k8s_major_version: "{% if k8s_version_semantic_parts|length > 0 %}{{ k8s_version_semantic_parts.0 }}{% endif %}"
+    k8s_minor_version: "{% if k8s_version_semantic_parts|length > 1 %}{{ k8s_version_semantic_parts.1 }}{% endif %}"
+    k8s_patch_version: "{% if k8s_version_semantic_parts|length > 2 %}{{ k8s_version_semantic_parts.2 }}{% else %}0{% endif %}"
+  tags:
+    - install
+    - update
+
+# Apply Kubernetes public signing key
+- name: Apply Kubernetes public signing key
   ansible.builtin.get_url:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/Release.key"
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
   tags:
     - install
@@ -18,29 +47,11 @@
 
 # Add Kubernetes apt repository
 - name: Add Kubernetes apt repository
-  ansible.builtin.copy:
-    dest: /etc/apt/sources.list.d/kubernetes.list
-    content: |
-      deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg trusted=yes] https://apt.kubernetes.io/ kubernetes-xenial main
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
+    state: present
+    update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
-  tags:
-    - install
-    - update
-
-- name: Set kubernetes version facts for crictl
-  set_fact:
-    k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
-  when: kubernetes_cri|lower != 'docker'
-  tags:
-    - install
-    - update
-
-- name: Set kubernetes version part facts for crictl
-  set_fact:
-    k8s_major_version: "{% if k8s_version_semantic_parts|length > 0 %}{{ k8s_version_semantic_parts.0 }}{% endif %}"
-    k8s_minor_version: "{% if k8s_version_semantic_parts|length > 1 %}{{ k8s_version_semantic_parts.1 }}{% endif %}"
-    k8s_patch_version: "{% if k8s_version_semantic_parts|length > 2 %}{{ k8s_version_semantic_parts.2 }}{% else %}0{% endif %}"
-  when: kubernetes_cri|lower != 'docker'
   tags:
     - install
     - update
@@ -108,9 +119,9 @@
 - name: Update apt package index and install kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-      - kubelet={{ kubernetes_version }}-00
-      - kubeadm={{ kubernetes_version }}-00
-      - kubectl={{ kubernetes_version }}-00
+      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: present
     update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
@@ -145,9 +156,9 @@
 - name: Update apt package index and remove kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-      - kubelet={{ kubernetes_version }}-00
-      - kubeadm={{ kubernetes_version }}-00
-      - kubectl={{ kubernetes_version }}-00
+      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: absent
     update_cache: true
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")

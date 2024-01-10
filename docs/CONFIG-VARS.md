@@ -69,11 +69,11 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.26.7" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.27.9" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
-| cluster_cri_version    | Version of the CRI specifed by `cluster_cri` to be installed  | string | "1.6.20" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions |
+| cluster_cri_version    | Version of the CRI specifed by `cluster_cri` to be installed  | string | "1.6.26" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions |
 | cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | cluster_pod_subnet     | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | cluster_domain         | Cluster domain suffix for DNS | string | | |
@@ -353,13 +353,13 @@ The following variables are used to describe the machine targets for the SAS Viy
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
 | deployment_type | Type of deployment to be performed | string | "bare_metal" | Specify `bare_metal` or `vsphere`. |
 | kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled. **ONLY** change the `prefix` value described previously. |
-| kubernetes_version | Kubernetes version | string | "1.26.7" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
+| kubernetes_version | Kubernetes version | string | "1.27.9" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
 | kubernetes_upgrade_allowed | | bool | true | **NOTE:** Not currently used. |
 | kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled. **ONLY** change the `vm_arch` value described previously. |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
 | kubernetes_cni_version | Kubernetes Container Network Interface (CNI) Version | string | "3.24.5" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
-| kubernetes_cri_version | Version of the CRI specifed by `kubernetes_cri` to be installed  | string | "1.6.20" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions | |
+| kubernetes_cri_version | Version of the CRI specifed by `kubernetes_cri` to be installed  | string | "1.6.26" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | kubernetes_vip_version | kube-vip version | string | "0.5.7" | |
