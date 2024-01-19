@@ -24,9 +24,9 @@ kubernetes_version         : ""
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"        # Choices : [calico]
-kubernetes_cni_version     : "3.24.5"        # Choices : [3.24.5]
+kubernetes_cni_version     : "3.27.0"        # Choices : [3.27.0]
 kubernetes_cri             : "containerd"    # Choices : [containerd]
-kubernetes_cri_version     : "1.6.20"        # Choices : [1.6.20]
+kubernetes_cri_version     : "1.6.26"        # Choices : [1.6.26]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
