@@ -23,9 +23,9 @@ body:
       label: Terraform Variable File Details
       description: |
         Paste the relevant parts of your Terraform variables here.
-        
+
         The relevant parts should come from your `terraform.tfvars` file or equivalent and small snippets of the `*.tf` file/files that seem to be causing the error.
-        
+
         security reasons, do not copy and paste any sensitive information in this issue, like account information and passwords etc.
     validations:
       required: false
