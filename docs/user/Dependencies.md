@@ -27,7 +27,6 @@ Python dependencies can be installed via `pip` using the `requirements.txt` prov
 
 ```bash
 pip install -r ./requirements.txt 
-
 ```
 Ansible dependencies can be installed via `ansible-galaxy` using the `requirements.yaml` provided in this project.
 
