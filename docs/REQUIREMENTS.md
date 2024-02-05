@@ -68,7 +68,7 @@ The current repository supports the provisioning of vSphere VMs. The following t
 
 | Requirement | Description |
 | --- | --- |
-| Disk | The `root` partition `/` must be on `/dev/sd2`. |
+| Disk | The `root` partition `/` must be on `/dev/sd2` and must be an `XFS` file system |
 | Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements that were listed previously. |
 
 ### Physical Machines or Linux VMs
