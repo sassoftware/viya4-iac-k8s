@@ -246,7 +246,7 @@ variable "postgres_server_defaults" {
     server_memory            = 16384                   # 16 GiB
     server_disk_size         = 250                     # 250 GiB
     server_ip                = ""                      # Assigned values for static IPs
-    server_version           = 13                      # PostgreSQL version
+    server_version           = 15                      # PostgreSQL version
     server_ssl               = "off"                   # SSL flag
     server_ssl_cert_file     = ""                      # PostgreSQL SSL certificate file
     server_ssl_key_file      = ""                      # PostgreSQL SSL key file

@@ -377,7 +377,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.18.0.14"            # Assigned values for static IPs
-    server_version         = 13                      # PostgreSQL version
+    server_version         = 15                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
@@ -460,7 +460,7 @@ nfs_server
 [viya4_oss_default_pgsql]
 192.168.5.0
 [viya4_oss_default_pgsql:vars]
-postgres_server_version=12
+postgres_server_version=15
 postgres_server_ssl=off                 # NOTE: Values - [on,off]
 postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
 postgres_administrator_password="Un33d2ChgM3n0W!"
