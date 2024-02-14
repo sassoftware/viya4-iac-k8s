@@ -171,7 +171,7 @@ This section provides an example configuration based on the physical-machine and
 
 ### vCenter/vSphere Sample tfvars File
 
-If you are creating virtual machines with vCenter or vSphere, the terraform .tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya platform deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
+If you are creating virtual machines with vCenter or vSphere, based on the values from the `terraform.tfvars` file that you create and the resulting infrastructure, this project will generate the required `inventory` and `ansible-vars.yaml` files for use with the `setup` and `install` actions executed by the `oss-k8s.sh` Script
 
 For this example, the network setup is as follows:
 
@@ -489,7 +489,7 @@ ansible_user     : ""
 ansible_password : ""
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu|rhel] - Ubuntu 22.04 LTS / Red Hat Enterprise Linux ???
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS /
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
