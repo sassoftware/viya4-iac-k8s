@@ -489,7 +489,7 @@ ansible_user     : ""
 ansible_password : ""
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS /
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
