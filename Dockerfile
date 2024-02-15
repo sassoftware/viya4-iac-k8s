@@ -10,7 +10,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 FROM baseline as tool_builder
 ARG HELM_VERSION=3.13.2
 ARG KUBECTL_VERSION=1.27.9
-ARG TERRAFORM_VERSION=1.6.3-*
+ARG TERRAFORM_VERSION=1.6.6-*
 
 WORKDIR /build
 

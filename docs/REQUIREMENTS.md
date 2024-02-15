@@ -68,7 +68,7 @@ The current repository supports the provisioning of vSphere VMs. The following t
 
 | Requirement | Description |
 | --- | --- |
-| Disk | The `root` partition `/` must be on `/dev/sd2`. |
+| Disk | The `root` partition `/` must be on `/dev/sd2` and must be an `XFS` file system |
 | Hard Disk | Specify `Thin Provision` to adjust the size of the disk to match the machine requirements that were listed previously. |
 
 ### Physical Machines or Linux VMs
@@ -671,7 +671,7 @@ The third-party applications that are listed in the following table are supporte
 
 | Application | Minimum Version |
 | ---: | ---: |
-| [Ansible](https://www.ansible.com/) | Core 2.15.6 |
-| [Terraform](https://www.terraform.io/) | 1.6.3 |
+| [Ansible](https://www.ansible.com/) | Core 2.16.1 |
+| [Terraform](https://www.terraform.io/) | 1.6.6 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
 | [Helm](https://helm.sh/) | 3.13.2 |
