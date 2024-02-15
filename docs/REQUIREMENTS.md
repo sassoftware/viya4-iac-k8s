@@ -171,7 +171,7 @@ This section provides an example configuration based on the physical-machine and
 
 ### vCenter/vSphere Sample tfvars File
 
-If you are creating virtual machines with vCenter or vSphere, based on the values from the `terraform.tfvars` file that you create and the resulting infrastructure, this project will generate the required `inventory` and `ansible-vars.yaml` files for use with the `setup` and `install` actions executed by the `oss-k8s.sh` Script
+If you are creating virtual machines with vCenter or vSphere, based on the values from the `terraform.tfvars` file that you create and the resulting infrastructure, this project will generate the required `inventory` and `ansible-vars.yaml` files for use with the `setup` and `install` actions executed by the `oss-k8s.sh` script
 
 For this example, the network setup is as follows:
 
