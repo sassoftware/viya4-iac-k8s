@@ -175,3 +175,4 @@
   ansible.builtin.reboot:
   tags:
     - install
+  when: inventory_hostname in groups["k8s"]
