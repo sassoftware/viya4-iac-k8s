@@ -297,7 +297,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | server_memory | Memory in MB | number | 16385 | |
 | server_disk_size | Size of disk in GB | number | 250 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field. |
-| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
+| server_version | The version of the PostgreSQL server | string | "15" | Refer to the [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | server_ssl | Enable/disable SSL | string | "off" | |
 | server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
 | server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
@@ -326,7 +326,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.10.10.11"           # Assigned values for static IPs
-    server_version         = 13                      # PostgreSQL version
+    server_version         = 15                      # PostgreSQL version
     server_ssl             = "on"                    # SSL flag
     server_ssl_cert_file   = "./ssl_cert.pem"        # Path to the PostgreSQL SSL certificate file
     server_ssl_key_file    = "./ssl_cert.key"        # Path to the PostgreSQL SSL key file
