@@ -9,7 +9,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 # Layers used for building/downloading/installing tools
 FROM baseline as tool_builder
 ARG HELM_VERSION=3.13.2
-ARG KUBECTL_VERSION=1.27.9
+ARG KUBECTL_VERSION=1.27.11
 ARG TERRAFORM_VERSION=1.6.6-*
 
 WORKDIR /build
