@@ -14,9 +14,10 @@ For dependency installation instructions and sources, links have been provided i
 | ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.26 - 1.28 |
 | ~              | [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                           | any         |
 | ~              | [jq](https://jqlang.github.io/jq/download/)                                                                                                    | >=1.6       |
-| pip            | ansible-core                                                                                                                                   | 2.16.3      |
+| pip            | ansible-core                                                                                                                                   | 2.16.4      |
+| pip            | openshift                                                                                                                                      | 0.13.2      |
 | pip            | kubernetes                                                                                                                                     | 27.2.0      |
-| pip            | dnspython                                                                                                                                      | 2.6.0       |
+| pip            | dnspython                                                                                                                                      | 2.6.1       |
 | pip            | jmespath                                                                                                                                       | 1.0.1       |
 | ansible-galaxy | community.general                                                                                                                              | 8.4.0       |
 | ansible-galaxy | community.postgresql                                                                                                                           | 3.3.0       |
