@@ -205,15 +205,15 @@ system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on eac
 # Kubernetes - Cluster
 cluster_version        = "1.27.11"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.27.0"                        # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.27.2"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
-cluster_cri_version    = "1.6.26"                        # Kubernetes Container Runtime Interface (CRI) Version
+cluster_cri_version    = "1.6.28"                        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
 cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP
-cluster_vip_version = "0.5.7"
+cluster_vip_version = "0.7.1"
 cluster_vip_ip      = "10.18.0.175"
 cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
 
@@ -510,9 +510,9 @@ kubernetes_version         : ""
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"           # Choices : [calico]
-kubernetes_cni_version     : "3.27.0"           # Choices : [3.27.0]
+kubernetes_cni_version     : "3.27.2"           # Choices : [3.27.2]
 kubernetes_cri             : "containerd"       # Choices : [containerd]
-kubernetes_cri_version     : "1.6.26"           # Choices : [1.6.26]
+kubernetes_cri_version     : "1.6.28"           # Choices : [1.6.28]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
@@ -524,7 +524,7 @@ kubernetes_pod_subnet      : ""
 #   VIP IP : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "0.5.7"
+kubernetes_vip_version              : "0.7.1"
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
 

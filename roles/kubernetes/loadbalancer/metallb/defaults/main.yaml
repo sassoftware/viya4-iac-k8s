@@ -7,7 +7,7 @@ METALLB_NAME: metallb
 METALLB_NAMESPACE: kube-system
 METALLB_CHART_NAME: metallb
 METALLB_CHART_URL: https://metallb.github.io/metallb
-METALLB_CHART_VERSION: 0.13.7
+METALLB_CHART_VERSION: 0.14.3
 METALLB_KUBE_CONFIG: ~/.kube/config
 METALLB_CONFIG:
   controller:
