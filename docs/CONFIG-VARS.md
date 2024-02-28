@@ -82,7 +82,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_vip_version   | kube-vip version | string | "0.7.1" | Currently kube-vip is the only supported Kubernetes virtual IP address. The minimum supported version is 0.7.1. |
+| cluster_vip_version   | kube-vip version | string | "0.7.1" | Currently kube-vip is the only supported Kubernetes virtual IP address. The minimum supported version is 0.5.7. |
 | cluster_vip_ip    | kube-vip IP address | string | | IP address assigned to the FQDN value. You must access the cluster via the FQDN value supplied. |
 | cluster_vip_fqdn   | kube-vip DNS | string | | FQDN used in the creation of the kubeconfig file, which is used to access the cluster. |
 
