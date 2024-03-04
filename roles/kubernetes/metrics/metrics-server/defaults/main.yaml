@@ -7,7 +7,7 @@ METRICS_SERVER_NAME: metrics-server
 METRICS_SERVER_NAMESPACE: kube-system
 METRICS_SERVER_CHART_NAME: metrics-server
 METRICS_SERVER_CHART_URL: https://kubernetes-sigs.github.io/metrics-server/
-METRICS_SERVER_CHART_VERSION: 3.11.0
+METRICS_SERVER_CHART_VERSION: 3.12.0
 METRICS_SERVER_CONFIG:
   apiService:
     create: true
