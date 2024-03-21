@@ -18,17 +18,17 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on each system
 
 # Kubernetes - Cluster
-cluster_version        = "1.27.9"       # Kubernetes Version
+cluster_version        = "1.27.11"      # Kubernetes Version
 cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.27.0"       # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.27.2"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
-cluster_cri_version    = "1.6.26"       # Kubernetes Container Runtime Interface (CRI) Version
+cluster_cri_version    = "1.6.28"       # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
 cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
 cluster_domain         = ""             # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP
-cluster_vip_version = "0.5.7"
+cluster_vip_version = "0.7.1"
 cluster_vip_ip      = ""
 cluster_vip_fqdn    = ""
 
@@ -157,7 +157,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = ""                      # Assigned values for static IPs
-    server_version         = 13                      # PostgreSQL version
+    server_version         = 15                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password

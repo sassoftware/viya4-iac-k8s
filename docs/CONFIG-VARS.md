@@ -69,11 +69,11 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.27.9" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.27.11" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
-| cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.27.0" | |
+| cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.27.2" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
-| cluster_cri_version    | Version of the CRI specifed by `cluster_cri` to be installed  | string | "1.6.26" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions |
+| cluster_cri_version    | Version of the CRI specifed by `cluster_cri` to be installed  | string | "1.6.28" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions |
 | cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | cluster_pod_subnet     | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | cluster_domain         | Cluster domain suffix for DNS | string | | |
@@ -82,7 +82,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_vip_version   | kube-vip version | string | "0.5.7" | Currently kube-vip is the only supported Kubernetes virtual IP address. The minimum supported version is 0.5.7. |
+| cluster_vip_version   | kube-vip version | string | "0.7.1" | Currently kube-vip is the only supported Kubernetes virtual IP address. The minimum supported version is 0.5.7. |
 | cluster_vip_ip    | kube-vip IP address | string | | IP address assigned to the FQDN value. You must access the cluster via the FQDN value supplied. |
 | cluster_vip_fqdn   | kube-vip DNS | string | | FQDN used in the creation of the kubeconfig file, which is used to access the cluster. |
 
@@ -297,7 +297,7 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 | server_memory | Memory in MB | number | 16385 | |
 | server_disk_size | Size of disk in GB | number | 250 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field. |
-| server_version | The version of the PostgreSQL server | string | "13" | Refer to the [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
+| server_version | The version of the PostgreSQL server | string | "15" | Refer to the [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | server_ssl | Enable/disable SSL | string | "off" | |
 | server_ssl_cert_file | Path to the PostgreSQL SSL certificate file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL certificate is used. |
 | server_ssl_key_file | Path to the PostgreSQL SSL key file | string | "" | If `server_ssl` is enabled and this variable is not defined, the system default SSL key is used. |
@@ -326,7 +326,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.10.10.11"           # Assigned values for static IPs
-    server_version         = 13                      # PostgreSQL version
+    server_version         = 15                      # PostgreSQL version
     server_ssl             = "on"                    # SSL flag
     server_ssl_cert_file   = "./ssl_cert.pem"        # Path to the PostgreSQL SSL certificate file
     server_ssl_key_file    = "./ssl_cert.key"        # Path to the PostgreSQL SSL key file
@@ -353,16 +353,16 @@ The following variables are used to describe the machine targets for the SAS Viy
 | prefix | A prefix used in the names of all the resources created by this script | string | | |
 | deployment_type | Type of deployment to be performed | string | "bare_metal" | Specify `bare_metal` or `vsphere`. |
 | kubernetes_cluster_name | Cluster name | string | "{{ prefix }}-oss" | This item is auto-filled. **ONLY** change the `prefix` value described previously. |
-| kubernetes_version | Kubernetes version | string | "1.27.9" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
+| kubernetes_version | Kubernetes version | string | "1.27.11" | Valid values are listed here: [Kubernetes Releases](https://kubernetes.io/releases/). |
 | kubernetes_upgrade_allowed | | bool | true | **NOTE:** Not currently used. |
 | kubernetes_arch | | string | "{{ vm_arch }}" | This item is auto-filled. **ONLY** change the `vm_arch` value described previously. |
 | kubernetes_cni | Kubernetes Container Network Interface (CNI) | string | "calico" | |
-| kubernetes_cni_version | Kubernetes Container Network Interface (CNI) Version | string | "3.27.0" | |
+| kubernetes_cni_version | Kubernetes Container Network Interface (CNI) Version | string | "3.27.2" | |
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
-| kubernetes_cri_version | Version of the CRI specifed by `kubernetes_cri` to be installed  | string | "1.6.26" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions | |
+| kubernetes_cri_version | Version of the CRI specifed by `kubernetes_cri` to be installed  | string | "1.6.28" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
 | kubernetes_pod_subnet | Kubernetes pod subnet | string | "10.42.0.0/16" | |
-| kubernetes_vip_version | kube-vip version | string | "0.5.7" | |
+| kubernetes_vip_version | kube-vip version | string | "0.7.1" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
 | kubernetes_vip_fqdn | kube-vip DNS | string | | |
 | kubernetes_loadbalancer | Load balancer provider | string | "kube_vip" | Choices are `kube_vip` or `metallb`. |

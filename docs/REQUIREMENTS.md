@@ -171,7 +171,7 @@ This section provides an example configuration based on the physical-machine and
 
 ### vCenter/vSphere Sample tfvars File
 
-If you are creating virtual machines with vCenter or vSphere, the terraform .tfvars file that you create will generate the required inventory and ansible-vars.yaml files for a SAS Viya platform deployment using the tools in the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) repository.
+If you are creating virtual machines with vCenter or vSphere, based on the values from the `terraform.tfvars` file that you create and the resulting infrastructure, this project will generate the required `inventory` and `ansible-vars.yaml` files for use with the `setup` and `install` actions executed by the `oss-k8s.sh` script
 
 For this example, the network setup is as follows:
 
@@ -203,17 +203,17 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.27.9"                        # Kubernetes version
+cluster_version        = "1.27.11"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.27.0"                        # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.27.2"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
-cluster_cri_version    = "1.6.26"                        # Kubernetes Container Runtime Interface (CRI) Version
+cluster_cri_version    = "1.6.28"                        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
 cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP
-cluster_vip_version = "0.5.7"
+cluster_vip_version = "0.7.1"
 cluster_vip_ip      = "10.18.0.175"
 cluster_vip_fqdn    = "vm-dev-oss-vip.sample.domain.foo.com"
 
@@ -377,7 +377,7 @@ postgres_servers = {
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 250                     # 256 GB
     server_ip              = "10.18.0.14"            # Assigned values for static IPs
-    server_version         = 13                      # PostgreSQL version
+    server_version         = 15                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
     administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
@@ -460,7 +460,7 @@ nfs_server
 [viya4_oss_default_pgsql]
 192.168.5.0
 [viya4_oss_default_pgsql:vars]
-postgres_server_version=12
+postgres_server_version=15
 postgres_server_ssl=off                 # NOTE: Values - [on,off]
 postgres_administrator_login="postgres" # NOTE: Do not change this value at this time
 postgres_administrator_password="Un33d2ChgM3n0W!"
@@ -489,7 +489,7 @@ ansible_user     : ""
 ansible_password : ""
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu|rhel] - Ubuntu 22.04 LTS / Red Hat Enterprise Linux ???
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
@@ -510,9 +510,9 @@ kubernetes_version         : ""
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"           # Choices : [calico]
-kubernetes_cni_version     : "3.27.0"           # Choices : [3.27.0]
+kubernetes_cni_version     : "3.27.2"           # Choices : [3.27.2]
 kubernetes_cri             : "containerd"       # Choices : [containerd]
-kubernetes_cri_version     : "1.6.26"           # Choices : [1.6.26]
+kubernetes_cri_version     : "1.6.28"           # Choices : [1.6.28]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
@@ -524,7 +524,7 @@ kubernetes_pod_subnet      : ""
 #   VIP IP : https://kube-vip.io/docs/installation/static/
 #   VIP Cloud Provider IP Range : https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap
 #
-kubernetes_vip_version              : "0.5.7"
+kubernetes_vip_version              : "0.7.1"
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
 
@@ -672,6 +672,6 @@ The third-party applications that are listed in the following table are supporte
 | Application | Minimum Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.16.1 |
-| [Terraform](https://www.terraform.io/) | 1.6.6 |
+| [Terraform](https://www.terraform.io/) | 1.7.4 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
-| [Helm](https://helm.sh/) | 3.13.2 |
+| [Helm](https://helm.sh/) | 3.14.2 |
