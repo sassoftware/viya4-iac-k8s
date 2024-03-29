@@ -19,7 +19,7 @@
     - install
     - update
   when:
-    kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
+    kubernetes_version is version("1.29.0", "ge", version_type="semver")
   block:
     - name: Back up admin.conf
       ansible.builtin.copy:
