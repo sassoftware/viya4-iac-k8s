@@ -18,6 +18,8 @@
   tags:
     - install
     - update
+  when:
+    kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
   block:
     - name: Back up admin.conf
       ansible.builtin.copy:
@@ -33,8 +35,6 @@
       tags:
         - install
         - update
-  when:
-     kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
 
 # TODO: pod-network-cidr can conflict locally check with IT to ensure correct range.
 - name: Run kubeadm init
@@ -50,7 +50,7 @@
     - install
     - update
   when:
-     kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
+    kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
 
 - name: Setup kubernetes .kube directory
   ansible.builtin.file:
