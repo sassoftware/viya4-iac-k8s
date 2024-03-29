@@ -13,11 +13,44 @@
     - install
     - update
 
+# TODO ADD DOC, workaround for https://github.com/kube-vip/kube-vip/issues/684
+- name: Update admin.conf for K8s 1.29+
+  tags:
+    - install
+    - update
+  block:
+    - name: Back up admin.conf
+      ansible.builtin.copy:
+        src: "/etc/kubernetes/admin.conf"
+        dest: "/etc/kubernetes/admin.conf.bak"
+      tags:
+        - install
+        - update
+    - name: Replace admin with super.conf
+      ansible.builtin.copy:
+        src: "/etc/kubernetes/super-admin.conf"
+        dest: "/etc/kubernetes/admin.conf"
+      tags:
+        - install
+        - update
+  when:
+     kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
+
 # TODO: pod-network-cidr can conflict locally check with IT to ensure correct range.
 - name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
   tags:
     - install
+
+- name: Restore admin.conf
+  ansible.builtin.copy:
+    src: "/etc/kubernetes/admin.conf.bak"
+    dest: "/etc/kubernetes/admin.conf"
+  tags:
+    - install
+    - update
+  when:
+     kubernetes_version is version('1.29.0', 'ge', version_type='semver')"
 
 - name: Setup kubernetes .kube directory
   ansible.builtin.file:
