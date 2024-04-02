@@ -15,8 +15,10 @@
 
 # TODO ADD DOC, workaround for https://github.com/kube-vip/kube-vip/issues/684
 - name: Update kube-vip.yaml to use super-admin.conf for kubeadm init in 1.29+
-  ansible.builtin.shell: >
-    sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: "path: /etc/kubernetes/admin.conf"
+    replace: "path: /etc/kubernetes/super-admin.conf"
   when: kubernetes_version is version("1.29.0", "ge", version_type="semver")
   tags:
     - install
@@ -30,8 +32,10 @@
 
 # TODO ADD DOC, workaround for https://github.com/kube-vip/kube-vip/issues/684
 - name: Restore kube-vip.yaml to use admin.conf for kubeadm init in 1.29+
-  ansible.builtin.shell: >
-    sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: "path: /etc/kubernetes/super-admin.conf"
+    replace: "path: /etc/kubernetes/admin.conf"
   when: kubernetes_version is version("1.29.0", "ge", version_type="semver")
   tags:
     - install
