@@ -25,6 +25,7 @@
       ansible.builtin.copy:
         src: "/etc/kubernetes/admin.conf"
         dest: "/etc/kubernetes/admin.conf.bak"
+        remote_src: true
       tags:
         - install
         - update
@@ -32,6 +33,7 @@
       ansible.builtin.copy:
         src: "/etc/kubernetes/super-admin.conf"
         dest: "/etc/kubernetes/admin.conf"
+        remote_src: true
       tags:
         - install
         - update
@@ -46,6 +48,7 @@
   ansible.builtin.copy:
     src: "/etc/kubernetes/admin.conf.bak"
     dest: "/etc/kubernetes/admin.conf"
+    remote_src: true
   tags:
     - install
     - update
