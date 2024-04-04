@@ -13,11 +13,35 @@
     - install
     - update
 
+# Workaround for https://github.com/kube-vip/kube-vip/issues/684 will be removed once
+# kube-vip releases a version with this fixed.
+- name: Update kube-vip.yaml to use super-admin.conf for kubeadm init in 1.29+
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: "path: /etc/kubernetes/admin.conf"
+    replace: "path: /etc/kubernetes/super-admin.conf"
+  when: kubernetes_version is version("1.29.0", "ge", version_type="semver")
+  tags:
+    - install
+    - update
+
 # TODO: pod-network-cidr can conflict locally check with IT to ensure correct range.
 - name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
   tags:
     - install
+
+# Workaround for https://github.com/kube-vip/kube-vip/issues/684 will be removed once
+# kube-vip releases a version with this fixed.
+- name: Restore kube-vip.yaml to use admin.conf for kubeadm init in 1.29+
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: "path: /etc/kubernetes/super-admin.conf"
+    replace: "path: /etc/kubernetes/admin.conf"
+  when: kubernetes_version is version("1.29.0", "ge", version_type="semver")
+  tags:
+    - install
+    - update
 
 - name: Setup kubernetes .kube directory
   ansible.builtin.file:
