@@ -13,7 +13,8 @@
     - install
     - update
 
-# TODO ADD DOC, workaround for https://github.com/kube-vip/kube-vip/issues/684
+# Workaround for https://github.com/kube-vip/kube-vip/issues/684 will be removed once
+# kube-vip releases a version with this fixed.
 - name: Update kube-vip.yaml to use super-admin.conf for kubeadm init in 1.29+
   ansible.builtin.replace:
     path: /etc/kubernetes/manifests/kube-vip.yaml
@@ -30,7 +31,8 @@
   tags:
     - install
 
-# TODO ADD DOC, workaround for https://github.com/kube-vip/kube-vip/issues/684
+# Workaround for https://github.com/kube-vip/kube-vip/issues/684 will be removed once
+# kube-vip releases a version with this fixed.
 - name: Restore kube-vip.yaml to use admin.conf for kubeadm init in 1.29+
   ansible.builtin.replace:
     path: /etc/kubernetes/manifests/kube-vip.yaml
