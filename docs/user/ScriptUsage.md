@@ -6,21 +6,21 @@ After satisfying all of the requirements that are listed in the [README file](..
 
 ### vSphere/vCenter Environment File for Authentication
 
-Create a file that contains the authentication variable values to use at container invocation. Store the file outside of this repository, for example in  `$HOME/.vsphere_creds.env`. Protect that file with vSphere/vCenter credentials so that only you have Read access to it.
+Create a file that contains the authentication variable values to use at script invocation. Store the file outside of this repository, for example in  `$HOME/.vsphere_creds.env`. Protect that file with vSphere/vCenter credentials so that only you have Read access to it.
 
 **NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
 
-Now each time you invoke the container, specify the file with the `--env-file` option to pass credentials to the container.
+Now each time you invoke the script, export the variables within the file to pass the credentials to it. You can run `export $(grep -v '^#' .vsphere_creds.env | xargs)` to export them all at once.
 
 An example of this file can be found in the `examples` directory [here](./../../examples/vsphere/.vsphere_creds.env).
 
 ### Bare Metal Environment File for Authentication
 
-Create a file that contains the authentication variable values to use at container invocation. Store the file outside of this repository, for example in  `$HOME/.bare_metal_creds.env`. Protect that file with operating-system credentials so that only you have Read access to it
+Create a file that contains the authentication variable values to use at script invocation. Store the file outside of this repository, for example in  `$HOME/.bare_metal_creds.env`. Protect that file with operating-system credentials so that only you have Read access to it
 
 **NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
 
-Now each time you invoke the container, specify the file with the --env-file option to pass credentials to the container.
+Now each time you invoke the script, export the variables within the file to pass the credentials to it. You can run `export $(grep -v '^#' .bare_metal_creds.env | xargs)` to export them all at once.
 
 An example of this file can be found in the `examples` directory [here](./../../examples/bare-metal/.bare_metal_creds.env).
 
