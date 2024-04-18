@@ -1,4 +1,4 @@
-# Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 #
@@ -297,7 +297,7 @@ variable "cluster_domain" {
 
 variable "cluster_version" {
   type    = string
-  default = "1.27.11"
+  default = "1.28.7"
 }
 
 variable "cluster_cni" {
