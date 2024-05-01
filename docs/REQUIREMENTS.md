@@ -171,7 +171,7 @@ This snippet shows the four `misc_disks` created on the single store virtual mac
 
 ### Time Synchronization
 
-It iss recommended that your vSphere template or Bare Metal instances have a method of time synchronization implemented. This will prevent issues from occurring during the Kubernetes initialization phase.
+It is recommended that your vSphere template or Bare Metal instances have a method of time synchronization implemented. This will prevent issues from occurring during the Kubernetes initialization phase.
 By default, Ubuntu uses `timedatectl`/`timesyncd` to synchronise time, and they are available and active by default. For more information see this [documentation](https://ubuntu.com/server/docs/use-timedatectl-and-timesyncd) from Ubuntu, this documentation also provides information about configuring a private timeserver if the default public server from Ubuntu is not preferred. 
 
 ## Examples
