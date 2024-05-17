@@ -19,6 +19,8 @@ Table of Contents
     - [Configuration and Restrictions](#configuration-and-restrictions)
     - [Bare metal and virtual machine storage example](#bare-metal-and-virtual-machine-storage-example)
     - [Terraform storage example](#terraform-storage-example)
+  - [Additional Configuration](#additional-configuration)
+    - [Time Synchronization](#time-synchronization)
   - [Examples](#examples)
     - [vCenter/vSphere Sample tfvars File](#vcentervsphere-sample-tfvars-file)
     - [Physical Machine or VM Sample Inventory File](#physical-machine-or-vm-sample-inventory-file)
@@ -164,6 +166,14 @@ Here is a sample entry that would be included in your terraform tfvars file to d
 ```
 
 This snippet shows the four `misc_disks` created on the single store virtual machines.
+
+## Additional Configuration
+
+### Time Synchronization
+
+It is recommended that your vSphere template or Bare Metal instances have a method of time synchronization implemented. This will prevent issues from occurring during the Kubernetes initialization phase.
+
+By default, Ubuntu uses `timedatectl`/`timesyncd` to synchronise time, and they are available and active by default. For more information see this [documentation](https://ubuntu.com/server/docs/use-timedatectl-and-timesyncd) from Ubuntu, this documentation also provides information about configuring a private timeserver if the default public server from Ubuntu is not preferred. 
 
 ## Examples
 
@@ -674,4 +684,4 @@ The third-party applications that are listed in the following table are supporte
 | [Ansible](https://www.ansible.com/) | Core 2.16.1 |
 | [Terraform](https://www.terraform.io/) | 1.7.4 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
-| [Helm](https://helm.sh/) | 3.14.2 |
+| [Helm](https://helm.sh/) | 3.14.4 |
