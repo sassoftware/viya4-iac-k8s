@@ -199,7 +199,7 @@ variable "nfs_ip" {
 
 variable "nfs_memory" {
   type    = number
-  default = 8092
+  default = 16384
 }
 
 variable "nfs_num_cpu" {
@@ -209,7 +209,7 @@ variable "nfs_num_cpu" {
 
 variable "nfs_disk_size" {
   type    = number
-  default = 250
+  default = 400
 }
 
 # container registry - TODO
@@ -242,9 +242,9 @@ variable "postgres_server_defaults" {
   description = ""
   type        = any
   default = {
-    server_num_cpu           = 8                       # 8 CPUs
+    server_num_cpu           = 4                       # 4 CPUs
     server_memory            = 16384                   # 16 GiB
-    server_disk_size         = 250                     # 250 GiB
+    server_disk_size         = 128                     # 128 GiB
     server_ip                = ""                      # Assigned values for static IPs
     server_version           = 15                      # PostgreSQL version
     server_ssl               = "off"                   # SSL flag
