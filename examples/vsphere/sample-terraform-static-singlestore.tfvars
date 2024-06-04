@@ -108,7 +108,7 @@ node_pools = {
   #                      Other variables may be altered
   system = {
     cpus    = 8
-    memory  = 16384
+    memory  = 65536
     os_disk = 100
     ip_addresses = [
       "",
@@ -123,12 +123,9 @@ node_pools = {
     memory  = 131072
     os_disk = 350
     misc_disks = [
-      150,
-      150,
+      400,
     ]
     ip_addresses = [
-      "",
-      "",
       "",
     ]
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
@@ -137,9 +134,12 @@ node_pools = {
     }
   },
   compute = {
-    cpus    = 16
-    memory  = 131072
+    cpus    = 4
+    memory  = 16384
     os_disk = 100
+    misc_disks = [
+      400,
+    ]
     ip_addresses = [
       "",
     ]
@@ -150,13 +150,14 @@ node_pools = {
     }
   },
   stateful = {
-    cpus    = 8
-    memory  = 32768
+    cpus    = 4
+    memory  = 16384
     os_disk = 100
     misc_disks = [
       150,
     ]
     ip_addresses = [
+      "",
       "",
     ]
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
@@ -165,13 +166,15 @@ node_pools = {
     }
   },
   stateless = {
-    cpus    = 8
-    memory  = 32768
+    cpus    = 4
+    memory  = 16384
     os_disk = 100
     misc_disks = [
       150,
     ]
     ip_addresses = [
+      "",
+      "",
       "",
       "",
     ]
@@ -211,17 +214,17 @@ jump_ip        = ""   # Assigned values for static IPs
 
 # NFS server
 create_nfs    = true  # Creation flag
-nfs_num_cpu   = 8     # 8 CPUs
+nfs_num_cpu   = 4     # 4 CPUs
 nfs_memory    = 16384 # 16 GB
-nfs_disk_size = 500   # 500 GB
+nfs_disk_size = 400   # 400 GB
 nfs_ip        = ""    # Assigned values for static IPs
 
 # Postgres Servers
 postgres_servers = {
   default = {
-    server_num_cpu         = 8                       # 8 CPUs
+    server_num_cpu         = 4                       # 4 CPUs
     server_memory          = 16384                   # 16 GB
-    server_disk_size       = 250                     # 256 GB
+    server_disk_size       = 128                     # 128 GB
     server_ip              = ""                      # Assigned values for static IPs
     server_version         = 15                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
