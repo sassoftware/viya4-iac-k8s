@@ -107,10 +107,10 @@ node_pools = {
     }
   },
   cas = {
-    count   = 1
-    cpus    = 16
-    memory  = 131072
-    os_disk = 350
+    count      = 1
+    cpus       = 16
+    memory     = 131072
+    os_disk    = 350
     misc_disks = [
       150,
       150,
@@ -132,10 +132,10 @@ node_pools = {
     }
   },
   stateful = {
-    count   = 2
-    cpus    = 4
-    memory  = 16384
-    os_disk = 100
+    count      = 2
+    cpus       = 4
+    memory     = 16384
+    os_disk    = 100
     misc_disks = [
       150,
     ]
@@ -145,10 +145,10 @@ node_pools = {
     }
   },
   stateless = {
-    count   = 4
-    cpus    = 4
-    memory  = 16384
-    os_disk = 100
+    count      = 4
+    cpus       = 4
+    memory     = 16384
+    os_disk    = 100
     misc_disks = [
       150,
     ]
@@ -156,20 +156,21 @@ node_pools = {
     node_labels = {
       "workload.sas.com/class" = "stateless"
     },
-  singlestore = {
-    count   = 3
-    cpus    = 16
-    memory  = 131072
-    os_disk = 100
-    misc_disks = [
-      150,
-      150,
-      250,
-      250,
-    ]
-    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
-    node_labels = {
-      "workload.sas.com/class" = "singlestore"
+    singlestore = {
+      count      = 3
+      cpus       = 16
+      memory     = 131072
+      os_disk    = 100
+      misc_disks = [
+        150,
+        150,
+        250,
+        250,
+      ]
+      node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
+      node_labels = {
+        "workload.sas.com/class" = "singlestore"
+      }
     }
   }
 }
