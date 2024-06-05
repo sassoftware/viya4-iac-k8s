@@ -108,11 +108,11 @@ node_pools = {
   },
   cas = {
     count   = 1
-    cpus    = 8
+    cpus    = 16
     memory  = 131072
     os_disk = 350
     misc_disks = [
-      400
+      400,
     ]
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
