@@ -53,7 +53,7 @@ cluster_lb_type = "kube_vip" # Load Balancer accepted values [kube_vip,metallb]
 #        "cidr-global: 192.168.0.240/29"                    # CIDR-based range which can be used in any Namespace
 #      ]
 #
-#    MetelLB sample:
+#    MetalLB sample:
 #
 #      cluster_lb_addresses = [
 #        "192.168.10.0/24",
