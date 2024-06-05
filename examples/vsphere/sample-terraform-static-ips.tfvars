@@ -117,7 +117,8 @@ node_pools = {
     memory  = 131072
     os_disk = 350
     misc_disks = [
-      400,
+      150,
+      150,
     ]
     ip_addresses = [
       "",
@@ -128,12 +129,9 @@ node_pools = {
     }
   },
   compute = {
-    cpus    = 4
-    memory  = 16384
+    cpus    = 16
+    memory  = 131072
     os_disk = 100
-    misc_disks = [
-      400,
-    ]
     ip_addresses = [
       "",
     ]
