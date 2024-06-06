@@ -107,7 +107,7 @@ node_pools = {
     }
   },
   cas = {
-    count   = 1
+    count   = 3
     cpus    = 16
     memory  = 131072
     os_disk = 350

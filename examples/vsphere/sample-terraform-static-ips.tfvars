@@ -122,6 +122,8 @@ node_pools = {
     ]
     ip_addresses = [
       "",
+      "",
+      "",
     ]
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
