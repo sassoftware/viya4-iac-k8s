@@ -257,8 +257,8 @@ jump_ip        = ""   # Assigned values for static IP addresses
 | :--- | :--- | :--- | :--- | :--- |
 | create_nfs | Creation flag | bool | false | |
 | nfs_num_cpu | # of CPUs | number | 4 | |
-| nfs_memory | Memory in MB | number | 8092 | |
-| nfs_disk_size | Size of disk in GB | number | 250 | |
+| nfs_memory | Memory in MB | number | 16384 | |
+| nfs_disk_size | Size of disk in GB | number | 400 | |
 | nfs_ip | Static IP for NFS server | string | | |
 
 Sample:
@@ -293,9 +293,9 @@ Each server element, like `foo = {}`, can contain none, some, or all of the para
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| server_num_cpu | # of CPUs | number | 8 | |
+| server_num_cpu | # of CPUs | number | 4 | |
 | server_memory | Memory in MB | number | 16385 | |
-| server_disk_size | Size of disk in GB | number | 250 | |
+| server_disk_size | Size of disk in GB | number | 128 | |
 | server_ip | Static IP address for PostgreSQL server | string | | This is a required field. |
 | server_version | The version of the PostgreSQL server | string | "15" | Refer to the [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for the supported versions of PostgreSQL for the SAS Viya platform. |
 | server_ssl | Enable/disable SSL | string | "off" | |
@@ -322,9 +322,9 @@ postgres_servers = {
     server_ip                    = "10.10.10.10"     # Assigned values for static IPs
   },
   cds-postgres = {
-    server_num_cpu         = 8                       # 8 CPUs
+    server_num_cpu         = 4                       # 8 CPUs
     server_memory          = 16384                   # 16 GB
-    server_disk_size       = 250                     # 256 GB
+    server_disk_size       = 128                     # 256 GB
     server_ip              = "10.10.10.11"           # Assigned values for static IPs
     server_version         = 15                      # PostgreSQL version
     server_ssl             = "on"                    # SSL flag
