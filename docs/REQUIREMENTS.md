@@ -46,8 +46,8 @@ The following table lists the minimum machine requirements that are needed to su
 | **Control Plane** | 2 | 4 GB | 100 GB | You must have an odd number of nodes, 3 or more, in order to provide high availability (HA) for the cluster. | 1 |
 | **Nodes** | xx | xx GB | xx GB | Nodes in the Kubernetes cluster. The number of machines varies, depending on multiple factors. Suggested capacities and information can be found in the sample files. | 3 |
 | **Jump Server** | 4 | 8 GB | 100 GB | Bastion box that is used to access NFS mounts, share data, etc. | 1 |
-| **NFS Server** | 8 | 16 GB | 500 GB | Required server that is used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster. | 1 |
-| **PostgreSQL Servers** | 8 | 16 GB | 250 GB | PostgreSQL servers for your SAS Viya platform deployment. | 1..n |
+| **NFS Server** | 4 | 16 GB | 400 GB | Required server that is used to store persistent volumes for the cluster. Used for providing storage for the `default` storage class in the cluster. | 1 |
+| **PostgreSQL Servers** | 4 | 16 GB | 128 GB | PostgreSQL servers for your SAS Viya platform deployment. | 1..n |
 
 ### VMware vSphere or vCenter
 
@@ -682,6 +682,6 @@ The third-party applications that are listed in the following table are supporte
 | Application | Minimum Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.16.1 |
-| [Terraform](https://www.terraform.io/) | 1.7.4 |
+| [Terraform](https://www.terraform.io/) | 1.8.5 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
 | [Helm](https://helm.sh/) | 3.14.4 |
