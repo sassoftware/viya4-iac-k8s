@@ -53,7 +53,7 @@ Example of using build arguments to control specific versions of dependencies in
 ```bash
 # Override kubectl version
 docker build \
-	--build-arg KUBECTL_VERSION=1.28.7 \
+	--build-arg KUBECTL_VERSION=1.29.7 \
 	-t viya4-iac-k8s .
 ```
 
