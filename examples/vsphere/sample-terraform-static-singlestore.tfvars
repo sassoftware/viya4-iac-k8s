@@ -18,9 +18,9 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on each system
 
 # Kubernetes - Cluster
-cluster_version        = "1.28.7"      # Kubernetes Version
+cluster_version        = "1.29.7"      # Kubernetes Version
 cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.27.2"       # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.28.0"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "1.6.28"       # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
