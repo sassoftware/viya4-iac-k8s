@@ -112,6 +112,8 @@ These IP addresses are part of your network but are not assigned. Floating IP ad
 
 This section outlines how storage is used by the tooling to create the `local-storage` storage class for use in kubernetes. Currently, there are two such products that are used in the SAS Viya platform system that require local storage, these are **OpenSearch** and **SingleStore**. If these products are going to be in use within your cluster you will need to have local storage active.
 
+For more information on product specific storage requirements please see [SAS Viya Platform Operations Hardware and Resource Requirements](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n0ampbltwqgkjkn1j3qogztsbbu0.htm)
+
 ### Configuration and Restrictions
 
 1. The disks must be represented as empty partitions - `/dev/sdb`, `/dev/sdc`, etc. and attached to the machine or VM.
@@ -173,7 +175,7 @@ This snippet shows the four `misc_disks` created on the single store virtual mac
 
 It is recommended that your vSphere template or Bare Metal instances have a method of time synchronization implemented. This will prevent issues from occurring during the Kubernetes initialization phase.
 
-By default, Ubuntu uses `timedatectl`/`timesyncd` to synchronise time, and they are available and active by default. For more information see this [documentation](https://ubuntu.com/server/docs/use-timedatectl-and-timesyncd) from Ubuntu, this documentation also provides information about configuring a private timeserver if the default public server from Ubuntu is not preferred. 
+By default, Ubuntu uses `timedatectl`/`timesyncd` to synchronise time, and they are available and active by default. For more information see this [documentation](https://ubuntu.com/server/docs/use-timedatectl-and-timesyncd) from Ubuntu, this documentation also provides information about configuring a private timeserver if the default public server from Ubuntu is not preferred.
 
 ## Examples
 
@@ -273,7 +275,7 @@ control_plane_ssh_key_name = "cp_ssh"
 #   * cas           - CAS Nodes
 #   * <node type>   - Any number of node types with unique names.
 #                     These are typically: compute, stateful, and
-#                     stateless. 
+#                     stateless.
 #
 
 # NOTE: For this example ALL node pools are using DHCP to obtain their
@@ -528,7 +530,7 @@ kubernetes_pod_subnet      : ""
 
 #
 # Kubernetes - VIP : https://kube-vip.io
-# 
+#
 # Useful links:
 #
 #   VIP IP : https://kube-vip.io/docs/installation/static/
@@ -567,7 +569,7 @@ kubernetes_loadbalancer : "kube_vip" # Load Balancer accepted values [kube_vip,m
 #        - "192.168.10.0/24"
 #        - "192.168.9.1-192.168.9.5"
 #
-#  NOTE: If you are assigning a static IP using the loadBalancerIP value for your 
+#  NOTE: If you are assigning a static IP using the loadBalancerIP value for your
 #        load balancer controller service when using `metallb` that IP must fall
 #        within the address range you provide below. If you are using `kube_vip`
 #        you do not have this limitation.
@@ -600,7 +602,7 @@ control_plane_ssh_key_name : "cp_ssh"
 #   NOTE: There are no quotes around the label and taint elements
 #         These are literal converted to strings when applying
 #         into the cluster
-#   
+#
 
 ## Labels
 node_labels:
@@ -664,7 +666,7 @@ INGRESS_NGINX_CONFIG:
       annotations:
 
 ### NFS Subdir External Provisioner - SAS default storage class
-# Updates to support open source Kubernetes 
+# Updates to support open source Kubernetes
 NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
 
 ## Logging and Monitoring
