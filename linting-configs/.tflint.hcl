@@ -8,7 +8,7 @@
 
 config {
   # Enables module inspection.
-  module = true
+  call_module_type = "all"
 }
 
 plugin "terraform" {
