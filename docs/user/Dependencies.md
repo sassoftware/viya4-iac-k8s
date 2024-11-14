@@ -8,10 +8,10 @@ For dependency installation instructions and sources, links have been provided i
 |----------------|------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
 | ~              | [python](https://www.python.org/downloads/)                                                                                                    | >=3.10      |
 | ~              | [pip](https://packaging.python.org/en/latest/guides/installing-using-linux-tools/#installing-pip-setuptools-wheel-with-linux-package-managers) | >=22.0      |
-| ~              | [terraform](https://www.terraform.io/downloads)                                                                                                | >=1.4.5     |
+| ~              | [terraform](https://www.terraform.io/downloads)                                                                                                | >=1.9.8     |
 | ~              | [docker](https://docs.docker.com/engine/install/)                                                                                              | >=20.10.17  |
 | ~              | [helm](https://helm.sh/docs/intro/install/)                                                                                                    | >=3         |
-| ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.26 - 1.28 |
+| ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.28 - 1.30 |
 | ~              | [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                           | any         |
 | ~              | [jq](https://jqlang.github.io/jq/download/)                                                                                                    | >=1.6       |
 | pip            | ansible-core                                                                                                                                   | 2.16.4      |

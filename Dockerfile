@@ -8,9 +8,9 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 
 # Layers used for building/downloading/installing tools
 FROM baseline as tool_builder
-ARG HELM_VERSION=3.14.4
-ARG KUBECTL_VERSION=1.29.7
-ARG TERRAFORM_VERSION=1.8.5-*
+ARG HELM_VERSION=3.16.2
+ARG KUBECTL_VERSION=1.29.10
+ARG TERRAFORM_VERSION=1.9.8-*
 
 WORKDIR /build
 
@@ -18,7 +18,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
   && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/tf.list \
   && apt-get update \
-  && curl -sLO https://storage.googleapis.com/kubernetes-release/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
+  && curl -sLO https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
   && curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 755 get-helm-3 \
   && ./get-helm-3 --version v$HELM_VERSION --no-sudo \
   && apt-get install -y terraform=$TERRAFORM_VERSION --no-install-recommends \

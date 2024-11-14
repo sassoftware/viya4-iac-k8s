@@ -50,5 +50,7 @@ For Terraform-related files the standards are:
 When coding has completed, run the following command:
 
   - terraform fmt -recursive
+  
+When committing your changes, use the "git commit -s" form to sign your changes. This is required for the DCO ci/cd step that runs for all PRs.
 
 This ensures everyone on the team has the same and consistent file formatting prior to pushing the code into git.
