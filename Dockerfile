@@ -43,8 +43,8 @@ RUN pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy install -r ./requirements.yaml \
   && chmod 755 /viya4-iac-k8s/docker-entrypoint.sh /viya4-iac-k8s/oss-k8s.sh \
   && terraform init \
-  && chmod g=u -R /etc/passwd /etc/group /viya4-iac-k8s \
-  && git config --system --add safe.directory /viya4-iac-k8s
+  && git config --system --add safe.directory /viya4-iac-k8s \
+  && chmod g=u -R /etc/passwd /etc/group /viya4-iac-k8s
 
 ENV IAC_TOOLING=docker
 ENV TF_VAR_iac_tooling=docker
