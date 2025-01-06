@@ -317,7 +317,7 @@ variable "cluster_cri" {
 
 variable "cluster_cri_version" {
   type    = string
-  default = "1.6.28"
+  default = "1.7.24"
 }
 
 variable "cluster_service_subnet" {
