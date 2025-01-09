@@ -1,5 +1,5 @@
 # Base layer
-FROM ubuntu:22.04 as baseline
+FROM ubuntu:22.04 AS baseline
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y python3 python3-dev python3-pip curl unzip gnupg --no-install-recommends \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
@@ -7,9 +7,9 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Layers used for building/downloading/installing tools
-FROM baseline as tool_builder
+FROM baseline AS tool_builder
 ARG HELM_VERSION=3.16.2
-ARG KUBECTL_VERSION=1.29.10
+ARG KUBECTL_VERSION=1.30.8
 ARG TERRAFORM_VERSION=1.9.8-*
 
 WORKDIR /build
