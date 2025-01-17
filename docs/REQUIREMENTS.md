@@ -215,11 +215,11 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.29.7"                       # Kubernetes version
+cluster_version        = "1.30.8"                        # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.28.0"                        # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.29.0"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
-cluster_cri_version    = "1.6.28"                        # Kubernetes Container Runtime Interface (CRI) Version
+cluster_cri_version    = "1.7.24"                        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
 cluster_pod_subnet     = "10.36.0.0/16"                  # Kubernetes Pod subnet
 cluster_domain         = "sample.domain.foo.com"         # Cluster domain suffix for DNS
@@ -522,9 +522,9 @@ kubernetes_version         : ""
 kubernetes_upgrade_allowed : true
 kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"           # Choices : [calico]
-kubernetes_cni_version     : "3.28.0"           # Choices : [3.28.0]
+kubernetes_cni_version     : "3.29.0"           # Choices : [3.29.0]
 kubernetes_cri             : "containerd"       # Choices : [containerd]
-kubernetes_cri_version     : "1.6.28"           # Choices : [1.6.28]
+kubernetes_cri_version     : "1.7.24"           # Choices : [1.7.24]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 
@@ -684,6 +684,6 @@ The third-party applications that are listed in the following table are supporte
 | Application | Minimum Version |
 | ---: | ---: |
 | [Ansible](https://www.ansible.com/) | Core 2.16.1 |
-| [Terraform](https://www.terraform.io/) | 1.8.5 |
+| [Terraform](https://www.terraform.io/) | 1.9.8 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
-| [Helm](https://helm.sh/) | 3.14.4 |
+| [Helm](https://helm.sh/) | 3.16.2 |

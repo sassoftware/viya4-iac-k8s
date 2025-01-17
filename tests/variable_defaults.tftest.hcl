@@ -1,36 +1,73 @@
+# Description: This terraform test file checks the default values for variables in the variables.tf file. 
+# The variables are used to define the configuration of the virtual machines that will be created in the vSphere environment.
+#
+# The tests check the default values for the following variables:
+#
+# - cluster_cni
+# - cluster_cni_version
+#
+# The test checks that the default values for the variables match the expected values.
+#
+# The expected values are:
+# - cluster_cni: "calico"
+# - cluster_cni_version: "3.29.0"
+# 
+# In order to run this test, the following environment variables must be exported to the shell where the test is run:
+# - vsphere_server
+# - vsphere_username
+# - vsphere_password
+#
+#  The following statements are an example of how to export the environment variables prior to running the test:
+#
+# export TF_VAR_vsphere_user=****
+# export TF_VAR_vsphere_password=****
+# export TF_VAR_vsphere_server=vcenter*.*.*.*
+#
+# Be sure to fill in the configured VSphere values for the _REPLACE_ME_ placeholders in the vSphere variables section below.
+#
+# The test can be executed by running the following command in the root directory of the repository:
+# terraform test --verbose --filter=tests/variable_defaults.tftest.hcl
+
+
+variables {
+
+deployment_type = "vsphere"
+
 # General items
-ansible_user     = ""
-ansible_password = ""
-prefix           = "v4-k8s-dhcp" # Infra prefix
-gateway          = ""            # Gateway for servers
-netmask          = ""            # Network interface netmask
+ansible_user     = "ubuntu"
+ansible_password = "ubuntu"
+prefix           = "prefix14"  # Infra prefix TODO REPLACE ME
+gateway          = "10.124.93.1" # Gateway for servers
+netmask          = "24"          # Network interface netmask
 
 # vSphere
-vsphere_server        = "" # Name of the vSphere server
-vsphere_datacenter    = "" # Name of the vSphere data center
-vsphere_datastore     = "" # Name of the vSphere data store to use for the VMs
-vsphere_resource_pool = "" # Name of the vSphere resource pool to use for the VMs
-vsphere_folder        = "" # Name of the vSphere folder to store the vms
-vsphere_template      = "" # Name of the VM template to clone to create VMs for the cluster
-vsphere_network       = "" # Name of the network to to use for the VMs
+# TODO: Replace the first three values below with the correct values for your configured VSphere environment
+vsphere_server        = "_REPLACE_ME_" # Name of the vSphere server
+vsphere_datacenter    = "_REPLACE_ME_" # Name of the vSphere data center
+vsphere_datastore     = "_REPLACE_ME_" # Name of the vSphere data store to use for the VMs
+vsphere_resource_pool = "viya4-iac-k8s-testing-resource-pool" # Name of the vSphere resource pool to use for the VMs
+vsphere_folder        = "Infrastructure as Code/Users/nobody" # Name of the vSphere folder to store the vms TODO REPLACE ME, use your own folder
+vsphere_template      = "ubuntu_22.04_LTS" # Name of the VM template to clone to create VMs for the cluster TODO REPLACE ME, optional ubuntu_20.04_LTS is also available
+vsphere_network       = "IACdhcp" # Name of the network to to use for the VMs
 
 # Systems
-system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on each system
+system_ssh_keys_dir = "/workspace/.ssh" # Directory holding public keys to be used on each system, TODO REPLACE ME your path may differ
 
 # Kubernetes - Cluster
-cluster_version        = "1.30.8"       # Kubernetes Version
-cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.29.0"       # Kubernetes Container Network Interface (CNI) Version
+cluster_version        = "1.30.4"       # Kubernetes Version
+# The next two lines are intentionally commented out to test the assigned default values
+#cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
+#cluster_cni_version    = "3.29.0"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "1.7.24"       # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
 cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
-cluster_domain         = ""             # Cluster domain suffix for DNS
+cluster_domain         = "sas.com"   # Cluster domain suffix for DNS
 
 # Kubernetes - Cluster VIP
 cluster_vip_version = "0.7.1"
-cluster_vip_ip      = ""
-cluster_vip_fqdn    = ""
+cluster_vip_ip      = "10.124.93.221" # TODO REPLACE ME, put the first IP of the contiguous block your reserved earlier
+cluster_vip_fqdn    = "host.sas.com" # TODO REPLACE ME, put the fqdn of the first IP of the contiguous block your reserved earlier
 
 # Kubernetes - Load Balancer
 
@@ -65,7 +102,11 @@ cluster_lb_type = "kube_vip" # Load Balancer accepted values [kube_vip,metallb]
 #        within the address range you provide below. If you are using `kube_vip`
 #        you do not have this limitation.
 #
-cluster_lb_addresses = []
+#cluster_lb_addresses = []
+#kube-vip
+cluster_lb_addresses = [
+  "range-global: 10.124.93.222-10.124.93.223", # Range-based IP range for use in the development Namespace  # TODO REPLACE ME, range of the second and third IP of the contiguous block you reserved earlier.
+]
 
 # Control plane node shared ssh key name
 control_plane_ssh_key_name = "cp_ssh"
@@ -132,9 +173,9 @@ node_pools = {
     }
   },
   stateful = {
-    count      = 2
-    cpus       = 4
-    memory     = 16384
+    count      = 1
+    cpus       = 8
+    memory     = 32768
     os_disk    = 100
     misc_disks = [
       150,
@@ -145,9 +186,9 @@ node_pools = {
     }
   },
   stateless = {
-    count      = 4
-    cpus       = 4
-    memory     = 16384
+    count      = 2
+    cpus       = 8
+    memory     = 32768
     os_disk    = 100
     misc_disks = [
       150,
@@ -155,22 +196,6 @@ node_pools = {
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateless"
-    }
-  },
-  singlestore = {
-    count      = 3
-    cpus       = 16
-    memory     = 131072
-    os_disk    = 100
-    misc_disks = [
-      150,
-      150,
-      250,
-      250,
-    ]
-    node_taints = ["workload.sas.com/class=singlestore:NoSchedule"]
-    node_labels = {
-      "workload.sas.com/class" = "singlestore"
     }
   }
 }
@@ -180,14 +205,14 @@ create_jump    = true # Creation flag
 jump_num_cpu   = 4    # 4 CPUs
 jump_memory    = 8092 # 8 GB
 jump_disk_size = 100  # 100 GB
-jump_ip        = ""   # Assigned values for static IPs
+jump_ip        = "10.124.93.143"   # Assigned values for static IPs # TODO REPLACE ME, use reserved jump IP
 
 # NFS server
 create_nfs    = true  # Creation flag
 nfs_num_cpu   = 4     # 4 CPUs
 nfs_memory    = 16384 # 16 GB
 nfs_disk_size = 400   # 400 GB
-nfs_ip        = ""    # Assigned values for static IPs
+nfs_ip        = "10.124.93.67"    # Assigned values for static IPs # TODO REPLACE ME, use reserved nfs IP
 
 # Postgres Servers
 postgres_servers = {
@@ -195,10 +220,38 @@ postgres_servers = {
     server_num_cpu         = 4                       # 4 CPUs
     server_memory          = 16384                   # 16 GB
     server_disk_size       = 128                     # 128 GB
-    server_ip              = ""                      # Assigned values for static IPs
+    server_ip              = "10.124.93.126"                      # Assigned values for static IPs # TODO REPLACE ME, use reserved nfs IP
     server_version         = 15                      # PostgreSQL version
     server_ssl             = "off"                   # SSL flag
     administrator_login    = "postgres"              # PostgreSQL admin user - CANNOT BE CHANGED
-    administrator_password = "my$up3rS3cretPassw0rd" # PostgreSQL admin user password
+    administrator_password = "S3cretPassw0rd" # PostgreSQL admin user password
+  }
+}
+
+}
+
+run "cluster_cni_should_default_to_calico" {
+
+  command = plan
+  
+  variables {
+  }
+
+  assert {
+    condition     = var.cluster_cni == "calico"
+    error_message = "A default value of \"${var.cluster_cni}\" for cluster_cni was not expected."
+  }
+}
+
+run "cluster_cni_version_should_default_to_3_29_0" {
+
+  command = plan
+  
+  variables {
+  }
+
+  assert {
+    condition     = var.cluster_cni_version == "3.29.0"
+    error_message = "A default value of \"${var.cluster_cni_version}\" for cluster_cni_version was not expected."
   }
 }

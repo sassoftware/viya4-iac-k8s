@@ -1,5 +1,5 @@
 # Base layer
-FROM ubuntu:22.04 as baseline
+FROM ubuntu:22.04 AS baseline
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y python3 python3-dev python3-pip curl unzip gnupg --no-install-recommends \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
@@ -7,10 +7,10 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Layers used for building/downloading/installing tools
-FROM baseline as tool_builder
-ARG HELM_VERSION=3.14.4
-ARG KUBECTL_VERSION=1.29.7
-ARG TERRAFORM_VERSION=1.8.5-*
+FROM baseline AS tool_builder
+ARG HELM_VERSION=3.16.2
+ARG KUBECTL_VERSION=1.30.8
+ARG TERRAFORM_VERSION=1.9.8-*
 
 WORKDIR /build
 
@@ -18,7 +18,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
   && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/tf.list \
   && apt-get update \
-  && curl -sLO https://storage.googleapis.com/kubernetes-release/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
+  && curl -sLO https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
   && curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 755 get-helm-3 \
   && ./get-helm-3 --version v$HELM_VERSION --no-sudo \
   && apt-get install -y terraform=$TERRAFORM_VERSION --no-install-recommends \
@@ -43,8 +43,8 @@ RUN pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy install -r ./requirements.yaml \
   && chmod 755 /viya4-iac-k8s/docker-entrypoint.sh /viya4-iac-k8s/oss-k8s.sh \
   && terraform init \
-  && chmod g=u -R /etc/passwd /etc/group /viya4-iac-k8s \
-  && git config --system --add safe.directory /viya4-iac-k8s
+  && git config --system --add safe.directory /viya4-iac-k8s \
+  && chmod g=u -R /etc/passwd /etc/group /viya4-iac-k8s
 
 ENV IAC_TOOLING=docker
 ENV TF_VAR_iac_tooling=docker
