@@ -29,6 +29,7 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
 FROM baseline
 
 RUN apt-get update && apt-get -y install git sshpass jq python3-venv\
+  && pip install --break-system-packages --upgrade setuptools \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=tool_builder /usr/local/bin/helm /usr/local/bin/helm
