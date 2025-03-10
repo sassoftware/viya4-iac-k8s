@@ -683,7 +683,7 @@ The third-party applications that are listed in the following table are supporte
 
 | Application | Minimum Version |
 | ---: | ---: |
-| [Ansible](https://www.ansible.com/) | Core 2.16.1 |
-| [Terraform](https://www.terraform.io/) | 1.9.8 |
+| [Ansible](https://www.ansible.com/) | Core 2.18.3 |
+| [Terraform](https://www.terraform.io/) | 1.10.5 |
 | [Docker](https://www.docker.com/) | 20.10.17 |
-| [Helm](https://helm.sh/) | 3.16.2 |
+| [Helm](https://helm.sh/) | 3.17.2 |

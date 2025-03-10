@@ -1,6 +1,7 @@
 # Base layer
-FROM ubuntu:22.04 AS baseline
+FROM ubuntu:24.04 AS baseline
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata \
   && apt-get install -y python3 python3-dev python3-pip curl unzip gnupg --no-install-recommends \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
   && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 \
@@ -27,7 +28,7 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
 # Installation steps
 FROM baseline
 
-RUN apt-get update && apt-get -y install git sshpass jq \
+RUN apt-get update && apt-get -y install git sshpass jq python3-venv\
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=tool_builder /usr/local/bin/helm /usr/local/bin/helm
@@ -39,7 +40,9 @@ COPY . /viya4-iac-k8s/
 
 ENV HOME=/viya4-iac-k8s
 
-RUN pip install -r ./requirements.txt --no-cache-dir \
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN python3 -m venv .venv && source .venv/bin/activate \
+  && pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy install -r ./requirements.yaml \
   && chmod 755 /viya4-iac-k8s/docker-entrypoint.sh /viya4-iac-k8s/oss-k8s.sh \
   && terraform init \
