@@ -14,6 +14,7 @@ For dependency installation instructions and sources, links have been provided i
 | ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.28 - 1.30 |
 | ~              | [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                           | any         |
 | ~              | [jq](https://jqlang.github.io/jq/download/)                                                                                                    | >=1.6       |
+| ~              | [sshpass](https://manpages.ubuntu.com/manpages/jammy/man1/sshpass.1.html)                                                                                                    | >=1.09       |
 | pip            | ansible-core                                                                                                                                   | 2.16.4      |
 | pip            | openshift                                                                                                                                      | 0.13.2      |
 | pip            | kubernetes                                                                                                                                     | 27.2.0      |
