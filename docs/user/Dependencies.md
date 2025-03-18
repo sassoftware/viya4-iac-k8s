@@ -8,7 +8,7 @@ For dependency installation instructions and sources, links have been provided i
 |----------------|------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
 | ~              | [python](https://www.python.org/downloads/)                                                                                                    | >=3.10      |
 | ~              | [pip](https://packaging.python.org/en/latest/guides/installing-using-linux-tools/#installing-pip-setuptools-wheel-with-linux-package-managers) | >=22.0      |
-| ~              | [terraform](https://www.terraform.io/downloads)                                                                                                | >=1.9.8     |
+| ~              | [terraform](https://www.terraform.io/downloads)                                                                                                | >=1.10.5     |
 | ~              | [docker](https://docs.docker.com/engine/install/)                                                                                              | >=20.10.17  |
 | ~              | [helm](https://helm.sh/docs/intro/install/)                                                                                                    | >=3         |
 | ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.28 - 1.30 |
@@ -54,7 +54,7 @@ Example of using build arguments to control specific versions of dependencies in
 ```bash
 # Override kubectl version
 docker build \
-	--build-arg KUBECTL_VERSION=1.30.8 \
+	--build-arg KUBECTL_VERSION=1.30.10 \
 	-t viya4-iac-k8s .
 ```
 
