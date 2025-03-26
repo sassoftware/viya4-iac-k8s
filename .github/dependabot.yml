@@ -31,3 +31,4 @@ updates:
       interval: "weekly"
     target-branch: "staging"
     open-pull-requests-limit: 2
+    
