@@ -1,5 +1,28 @@
 # SAS Viya 4 Infrastructure as Code (IaC) for Open Source Kubernetes
 
+# Table of Contents
+
+- [SAS Viya 4 Infrastructure as Code (IaC) for Open Source Kubernetes](#sas-viya-4-infrastructure-as-code-iac-for-open-source-kubernetes)
+  - [Release Notes](#release-notes)
+  - [Overview](#overview)
+  - [Prerequisites](#prerequisites)
+    - [Machines](#machines)
+      - [VMware vSphere](#vmware-vsphere)
+      - [Physical or Virtual Machines](#physical-or-virtual-machines)
+    - [Networking](#networking)
+    - [Technical Prerequisites](#technical-prerequisites)
+      - [Script Requirements](#script-requirements)
+      - [Docker Requirements](#docker-requirements)
+  - [Getting Started](#getting-started)
+    - [Clone This Project](#clone-this-project)
+    - [Customize Input Values](#customize-input-values)
+      - [vSphere/vCenter Machines](#vspherevcenter-machines)
+      - [SAS Viya IaC Configuration Files](#sas-viya-iac-configuration-files)
+    - [Create and Manage Cluster Resources](#create-and-manage-cluster-resources)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Additional Resources](#additional-resources)
+
 ## Release Notes
 
 - A problem with the implementation of the default storage class and its usage of an NFS server as its
