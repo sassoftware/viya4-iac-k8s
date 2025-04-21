@@ -2,6 +2,7 @@
 
 # Table of Contents
 
+- [Kubernetes Support](#kubernetes-support)
 - [Release Notes](#release-notes)
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
@@ -21,6 +22,9 @@
 - [Contributing](#contributing)
 - [License](#license)
 - [Additional Resources](#additional-resources)
+
+## Kubernetes Support
+At this time, the viya4-iac-k8s project supports Kubernetes versions 1.29 through 1.31. Support for Kubernetes 1.32 is to be determined.
 
 ## Release Notes
 
