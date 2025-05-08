@@ -1,5 +1,5 @@
 # Base layer
-FROM ubuntu:22.04 AS baseline
+FROM ubuntu:24.04 AS baseline
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y python3 python3-dev python3-pip curl unzip gnupg --no-install-recommends \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
