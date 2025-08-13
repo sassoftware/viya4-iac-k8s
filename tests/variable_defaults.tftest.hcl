@@ -10,7 +10,7 @@
 #
 # The expected values are:
 # - cluster_cni: "calico"
-# - cluster_cni_version: "3.29.0"
+# - cluster_cni_version: "3.30.0"
 # 
 # In order to run this test, the following environment variables must be exported to the shell where the test is run:
 # - vsphere_server
@@ -54,10 +54,10 @@ vsphere_network       = "IACdhcp" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "/workspace/.ssh" # Directory holding public keys to be used on each system, TODO REPLACE ME your path may differ
 
 # Kubernetes - Cluster
-cluster_version        = "1.30.4"       # Kubernetes Version
+  cluster_version = "1.32.7" # Kubernetes Version
 # The next two lines are intentionally commented out to test the assigned default values
 #cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
-#cluster_cni_version    = "3.29.0"       # Kubernetes Container Network Interface (CNI) Version
+  #cluster_cni_version    = "3.30.0"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "1.7.24"       # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
@@ -243,7 +243,7 @@ run "cluster_cni_should_default_to_calico" {
   }
 }
 
-run "cluster_cni_version_should_default_to_3_29_0" {
+run "cluster_cni_version_should_default_to_3_30_0" {
 
   command = plan
   
@@ -251,7 +251,7 @@ run "cluster_cni_version_should_default_to_3_29_0" {
   }
 
   assert {
-    condition     = var.cluster_cni_version == "3.29.0"
+    condition     = var.cluster_cni_version == "3.30.0"
     error_message = "A default value of \"${var.cluster_cni_version}\" for cluster_cni_version was not expected."
   }
 }
