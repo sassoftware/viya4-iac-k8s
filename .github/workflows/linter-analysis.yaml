@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
         # The latest ansible/ansible-lint-action removed the
         # ability to specify configs from other dirs
@@ -94,6 +94,6 @@ jobs:
         run: ansible-galaxy install -r ./requirements.yaml
 
       - name: Run ansible-lint Action
-        uses: ansible/ansible-lint@v6.17.0
+        uses: ansible/ansible-lint-action@v6.17.0
         env:
           ANSIBLE_ROLES_PATH: "./roles"
