@@ -16,7 +16,7 @@ WORKDIR /build
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
-  && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" > /etc/apt/sources.list.d/tf.list \
+  && echo "deb [arch=amd64] https://apt.releases.hashicorp.com jammy main" > /etc/apt/sources.list.d/tf.list \
   && apt-get update \
   && curl -sLO https://dl.k8s.io/release/v$KUBECTL_VERSION/bin/linux/amd64/kubectl && chmod 755 ./kubectl \
   && curl -ksLO https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 755 get-helm-3 \
