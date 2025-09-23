@@ -15,7 +15,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 FROM baseline AS tool_builder
 
 ARG HELM_VERSION=3.17.1
-ARG KUBECTL_VERSION=1.32.7fix(ansible/docker): improve unattended-upgrades handling and Dockerfile tooling
+ARG KUBECTL_VERSION=1.32.7
 
 ARG TERRAFORM_VERSION=1.10.5
 
