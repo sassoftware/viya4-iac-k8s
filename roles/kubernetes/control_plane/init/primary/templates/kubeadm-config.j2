@@ -7,14 +7,21 @@
 #
 # kubeadm Configuration : https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta2/
 #
-{% if kubernetes_version is version('1.26.0', 'lt', version_type='semver') %}
-apiVersion: kubeadm.k8s.io/v1beta2
-{% else %}
+{% if kubernetes_version is version('1.31.0', 'lt', version_type='semver') %}
 apiVersion: kubeadm.k8s.io/v1beta3
+{% elif kubernetes_version is version('1.33.0', 'lt', version_type='semver') %}
+apiVersion: kubeadm.k8s.io/v1beta4
+{% else %}
+apiVersion: kubeadm.k8s.io/v1
 {% endif %}
 kind: ClusterConfiguration
 certificatesDir: /etc/kubernetes/pki
 kubernetesVersion: v{{ kubernetes_version }}
+clusterName: "{{ kubernetes_cluster_name }}"
+controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
+
+imageRepository: registry.k8s.io
+
 apiServer:
   certSANs:
   - "{{ kubernetes_vip_fqdn }}"
@@ -37,7 +44,11 @@ clusterName: "{{ kubernetes_cluster_name }}"
 #
 # Kubelet Configuration : https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 #
+{% if kubernetes_version is version('1.31.0', 'lt', version_type='semver') %}
 apiVersion: kubelet.config.k8s.io/v1beta1
+{% else %}
+apiVersion: kubelet.config.k8s.io/v1beta2
+{% endif %}
 kind: KubeletConfiguration
 authentication:
   anonymous:
@@ -51,7 +62,11 @@ cgroupDriver: systemd
 #
 # kube-proxy Configuration : https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/
 #
+{% if kubernetes_version is version('1.31.0', 'lt', version_type='semver') %}
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
+{% else %}
+apiVersion: kubeproxy.config.k8s.io/v1beta1
+{% endif %}
 kind: KubeProxyConfiguration
 mode: "ipvs"
 ipvs:

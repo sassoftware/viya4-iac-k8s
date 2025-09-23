@@ -47,8 +47,9 @@
 #
 - name: Kill the unattended-upgrade task if it's running
   ansible.builtin.shell: |
-    killall -q -9 unattended-upgrade 2>&1 /dev/null
-  ignore_errors: true
+    if pgrep -x unattended-upgrade >/dev/null; then
+      killall -q -9 unattended-upgrade
+    fi
   tags:
     - install
     - update
@@ -57,7 +58,12 @@
   ansible.builtin.apt:
     name: unattended-upgrades
     state: absent
+
     purge: true
+  register: apt_remove_result
+  until: apt_remove_result is succeeded
+  retries: 5       # retry up to 5 times
+  delay: 30        # wait 30s between retries
   tags:
     - install
     - update
