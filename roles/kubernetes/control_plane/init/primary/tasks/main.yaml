@@ -1,8 +1,12 @@
-# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# Copyright © 2022-2025, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-- name: Copy cluster config
+# -----------------------------------------------------------
+# Control Plane Initialization — Primary Node
+# -----------------------------------------------------------
+
+- name: Copy cluster config (kubeadm-config.yaml)
   ansible.builtin.template:
     src: "templates/{{ item }}.j2"
     dest: "/etc/kubernetes/{{ item }}.yaml"
@@ -13,8 +17,8 @@
     - install
     - update
 
-# Workaround for https://github.com/kube-vip/kube-vip/issues/684 will be removed once
-# kube-vip releases a version with this fixed.
+# Workaround for https://github.com/kube-vip/kube-vip/issues/684
+# to use super-admin.conf during kubeadm init (fixed in future kube-vip releases)
 - name: Update kube-vip.yaml to use super-admin.conf for kubeadm init in 1.29+
   ansible.builtin.replace:
     path: /etc/kubernetes/manifests/kube-vip.yaml
@@ -25,14 +29,15 @@
     - install
     - update
 
-# TODO: pod-network-cidr can conflict locally check with IT to ensure correct range.
+# Initialize Kubernetes Control Plane
 - name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
+  register: kubeadm_init
+  changed_when: "'initialized successfully' in kubeadm_init.stdout or 'This node has joined the cluster' in kubeadm_init.stdout"
   tags:
     - install
 
-# Workaround for https://github.com/kube-vip/kube-vip/issues/684 will be removed once
-# kube-vip releases a version with this fixed.
+# Workaround revert — restore original kube-vip.yaml
 - name: Restore kube-vip.yaml to use admin.conf for kubeadm init in 1.29+
   ansible.builtin.replace:
     path: /etc/kubernetes/manifests/kube-vip.yaml
@@ -43,6 +48,7 @@
     - install
     - update
 
+# Create .kube directory for root
 - name: Setup kubernetes .kube directory
   ansible.builtin.file:
     path: ~/.kube
@@ -51,7 +57,7 @@
   tags:
     - install
 
-  # Configure env for root.
+# Configure environment for root
 - name: Configure env for root
   ansible.builtin.lineinfile:
     path: $HOME/.bashrc
@@ -59,6 +65,7 @@
   tags:
     - install
 
+# Copy admin.conf to ~/.kube/config for root user
 - name: Copy admin.conf file
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
@@ -70,6 +77,7 @@
   tags:
     - install
 
+# Fetch kubeconfig locally for later usage
 - name: Fetch k8s config
   ansible.builtin.fetch:
     src: /etc/kubernetes/admin.conf
@@ -77,3 +85,4 @@
     flat: true
   tags:
     - install
+
