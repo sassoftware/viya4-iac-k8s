@@ -71,7 +71,7 @@ Terraform input variables can be set in the following ways:
 | :--- | :--- | :--- | :--- | :--- |
 | cluster_version        | Kubernetes version | string | "1.32.7" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
-| cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.30.0" | |
+| cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.30.3" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
 | cluster_cri_version    | Version of the CRI specifed by `cluster_cri` to be installed  | string | "1.7.24" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions |
 | cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |

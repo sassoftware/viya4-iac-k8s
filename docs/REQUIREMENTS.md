@@ -217,7 +217,7 @@ system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on eac
 # Kubernetes - Cluster
 cluster_version        = "1.32.7"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.30.0"                        # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.30.3"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "1.7.24"                        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
