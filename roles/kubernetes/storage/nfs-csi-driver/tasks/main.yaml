@@ -63,18 +63,6 @@
     - install
     - update
 
-# Install pg-storage StorageClass as separate K8s resource
-- name: Create pg-storage StorageClass
-  kubernetes.core.k8s:
-    api_version: storage.k8s.io/v1
-    kind: StorageClass
-    state: present
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    definition: "{{ PG_STORAGE_CLASS_DEFINITION }}"
-  tags:
-    - install
-    - update
-
 - name: Remove csi-driver-nfs
   kubernetes.core.helm:
     name: "{{ CSI_DRIVER_NFS_NAME }}"
@@ -82,15 +70,5 @@
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
     wait: true
     state: absent
-  tags:
-    - uninstall
-
-- name: Remove pg-storage StorageClass
-  kubernetes.core.k8s:
-    api_version: storage.k8s.io/v1
-    kind: StorageClass
-    name: pg-storage
-    state: absent
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
   tags:
     - uninstall

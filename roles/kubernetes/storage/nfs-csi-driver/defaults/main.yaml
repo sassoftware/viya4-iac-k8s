@@ -23,31 +23,9 @@ CSI_DRIVER_NFS_CONFIG:
       subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
       mountPermissions: "0777"
     mountOptions:
-      - vers=4.1
+      - nfsvers=4.1
       - nolock
       - noatime
       - nodiratime
       - rsize=262144
       - wsize=262144
-
-## PostgreSQL Storage Class definition (created separately via k8s resource)
-PG_STORAGE_CLASS_DEFINITION:
-  apiVersion: storage.k8s.io/v1
-  kind: StorageClass
-  metadata:
-    name: pg-storage
-  provisioner: nfs.csi.k8s.io
-  reclaimPolicy: Retain
-  volumeBindingMode: Immediate
-  allowVolumeExpansion: true
-  parameters:
-    server: "{{ nfs_ip }}"
-    share: /pvs
-    subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
-    mountPermissions: "0777"
-  mountOptions:
-    - vers=4.1
-    - noatime
-    - nodiratime
-    - rsize=262144
-    - wsize=262144
