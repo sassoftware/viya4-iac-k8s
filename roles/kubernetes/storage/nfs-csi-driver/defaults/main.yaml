@@ -19,7 +19,7 @@ CSI_DRIVER_NFS_CONFIG:
     volumeBindingMode: Immediate
     parameters:
       server: "{{ nfs_ip }}"
-      share: /srv/nfs/kubernetes/sc/default
+      share: /pvs
       subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
       mountPermissions: "0777"
     mountOptions:
@@ -42,7 +42,7 @@ PG_STORAGE_CLASS_DEFINITION:
   allowVolumeExpansion: true
   parameters:
     server: "{{ nfs_ip }}"
-    share: /srv/nfs/kubernetes/sc/default
+    share: /pvs
     subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
     mountPermissions: "0777"
   mountOptions:

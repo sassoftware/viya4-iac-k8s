@@ -147,7 +147,7 @@ nfs_ip  : "${nfs_ip}"
 
 # viya4-deployment compatibility - maps nfs_ip to expected variable
 V4_CFG_RWX_FILESTORE_ENDPOINT: "${nfs_ip}"
-V4_CFG_RWX_FILESTORE_PATH: /srv/nfs/kubernetes/sc/default
+V4_CFG_RWX_FILESTORE_PATH: /pvs
 %{ endif ~}
 %{ endif ~}
 

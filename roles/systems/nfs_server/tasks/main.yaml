@@ -47,6 +47,39 @@
         line: /export    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: exports_file_rc.stdout != "0"
 
+- name: Setting up /pvs nfs mount point for viya4-deployment compatibility
+  tags:
+    - install
+    - update
+  block:
+    - name: Create /pvs nfs mount point
+      ansible.builtin.file:
+        path: /pvs
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: "0777"
+      when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+
+    - name: Test for /pvs export mount point
+      ansible.builtin.shell: grep -c "^/pvs" /etc/exports || true
+      register: pvs_file_rc
+
+    # TODO - Determine access CIDR for /pvs mount and cluster. * is for POC
+    # TODO - Verify these are the correct nfs options needed
+    - name: Add /pvs exported mount point to /etc/exports file - New entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: /pvs    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: pvs_file_rc.stdout == "0"
+
+    - name: Add /pvs exported mount point to /etc/exports file - Update entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        regexp: '^/pvs'
+        line: /pvs    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: pvs_file_rc.stdout != "0"
+
 - name: Setting up /srv/nfs/kubernetes/sc/default nfs mount point
   tags:
     - install

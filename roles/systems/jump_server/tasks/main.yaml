@@ -37,6 +37,17 @@
     - install
     - update
 
+- name: Create mount point /pvs for viya4-deployment compatibility
+  ansible.builtin.file:
+    dest: /pvs
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: "0777"
+  tags:
+    - install
+    - update
+
 - name: Create mount point /srv/nfs/kubernetes/sc/default
   ansible.builtin.file:
     dest: /srv/nfs/kubernetes/sc/default
@@ -63,6 +74,7 @@
   when: fstab_file_rc.stdout == "0"
   with_items:
     - "{{ nfs_ip }}:/export    /viya-share    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
+    - "{{ nfs_ip }}:/pvs    /pvs    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
     - "{{ nfs_ip }}:/srv/nfs/kubernetes/sc/default    /srv/nfs/kubernetes/sc/default    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
   tags:
     - install

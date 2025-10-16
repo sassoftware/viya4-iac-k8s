@@ -675,11 +675,11 @@ CSI_DRIVER_NFS_CONFIG:
     name: sas
     parameters:
       server: "{{ nfs_ip }}"
-      share: /srv/nfs/kubernetes/sc/default
+      share: /pvs
 
 # viya4-deployment compatibility variables
 V4_CFG_RWX_FILESTORE_ENDPOINT: "{{ nfs_ip }}"
-V4_CFG_RWX_FILESTORE_PATH: /srv/nfs/kubernetes/sc/default
+V4_CFG_RWX_FILESTORE_PATH: /pvs
 
 ## Logging and Monitoring
 V4M_STORAGECLASS: local-storage
