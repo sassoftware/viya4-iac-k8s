@@ -1,0 +1,100 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# NOTE: The usage and setting of the iac_inventory_dir variable
+#       is only needed given this task is run on localhost
+#       an implied localhost and this keeps the magic inventory_file
+#       and inventory_dir from having values.
+#
+#       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
+
+# Remove deprecated nfs-client-provisioner Helm release if present
+- name: Remove deprecated nfs-client-provisioner
+  kubernetes.core.helm:
+    name: nfs-client
+    namespace: nfs-client
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+# Remove deprecated nfs-subdir-external-provisioner Helm release if present
+- name: Remove deprecated nfs-subdir-external-provisioner
+  kubernetes.core.helm:
+    name: nfs-subdir-external-provisioner-default
+    namespace: kube-system
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+- name: Setting up NFS CSI storage for the cluster using csi-driver-nfs
+  kubernetes.core.helm:
+    name: "{{ CSI_DRIVER_NFS_NAME }}"
+    namespace: "{{ CSI_DRIVER_NFS_NAMESPACE }}"
+    chart_repo_url: "{{ CSI_DRIVER_NFS_CHART_URL }}"
+    chart_ref: "{{ CSI_DRIVER_NFS_CHART_NAME }}"
+    chart_version: "{{ CSI_DRIVER_NFS_CHART_VERSION }}"
+    values: "{{ CSI_DRIVER_NFS_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    create_namespace: true
+    wait: true
+  tags:
+    - install
+    - update
+
+# Patch the fsGroupPolicy in the CSIDriver after Helm install
+- name: Patch fsGroupPolicy in CSIDriver to ReadWriteOnceWithFSType
+  kubernetes.core.k8s:
+    api_version: storage.k8s.io/v1
+    kind: CSIDriver
+    name: nfs.csi.k8s.io
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    merge_type: merge
+    definition:
+      spec:
+        fsGroupPolicy: ReadWriteOnceWithFSType
+  tags:
+    - install
+    - update
+
+# Install pg-storage CSI driver configuration
+- name: Setting up NFS CSI pg-storage for the cluster
+  kubernetes.core.helm:
+    name: "{{ CSI_DRIVER_NFS_PG_NAME }}"
+    namespace: "{{ CSI_DRIVER_NFS_PG_NAMESPACE }}"
+    chart_repo_url: "{{ CSI_DRIVER_NFS_PG_CHART_URL }}"
+    chart_ref: "{{ CSI_DRIVER_NFS_PG_CHART_NAME }}"
+    chart_version: "{{ CSI_DRIVER_NFS_PG_CHART_VERSION }}"
+    values: "{{ CSI_DRIVER_NFS_PG_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    create_namespace: true
+    wait: true
+  tags:
+    - install
+    - update
+
+- name: Remove csi-driver-nfs
+  kubernetes.core.helm:
+    name: "{{ CSI_DRIVER_NFS_NAME }}"
+    namespace: "{{ CSI_DRIVER_NFS_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
+    state: absent
+  tags:
+    - uninstall
+
+- name: Remove csi-driver-nfs-pg-storage
+  kubernetes.core.helm:
+    name: "{{ CSI_DRIVER_NFS_PG_NAME }}"
+    namespace: "{{ CSI_DRIVER_NFS_PG_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
+    state: absent
+  tags:
+    - uninstall

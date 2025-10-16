@@ -79,7 +79,7 @@
   name: Default Storage Class Setup
   roles:
     - { role: kubernetes/storage/sig-storage-local-static-provisioner }
-    - { role: kubernetes/storage/nfs-subdir-external-provisioner }
+    - { role: kubernetes/storage/nfs-csi-driver }
 
 # Setup metrics-server for cluster
 - hosts: localhost

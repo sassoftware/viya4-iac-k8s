@@ -665,9 +665,21 @@ INGRESS_NGINX_CONFIG:
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
-### NFS Subdir External Provisioner - SAS default storage class
-# Updates to support open source Kubernetes
-NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
+### NFS CSI Driver - Default storage class
+# NFS CSI storage provisioner configuration (compatible with viya4-deployment)
+CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
+CSI_DRIVER_NFS_CONFIG:
+  driver:
+    mountPermissions: "0777"
+  storageClass:
+    name: sas
+    parameters:
+      server: "{{ nfs_ip }}"
+      share: /srv/nfs/kubernetes/sc/default
+
+# viya4-deployment compatibility variables
+V4_CFG_RWX_FILESTORE_ENDPOINT: "{{ nfs_ip }}"
+V4_CFG_RWX_FILESTORE_PATH: /srv/nfs/kubernetes/sc/default
 
 ## Logging and Monitoring
 V4M_STORAGECLASS: local-storage

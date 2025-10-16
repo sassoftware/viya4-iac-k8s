@@ -1,0 +1,58 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+## NFS CSI Driver
+CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
+CSI_DRIVER_NFS_NAMESPACE: kube-system
+CSI_DRIVER_NFS_CHART_NAME: csi-driver-nfs
+CSI_DRIVER_NFS_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+CSI_DRIVER_NFS_CHART_VERSION: 4.11.0
+CSI_DRIVER_NFS_CONFIG:
+  driver:
+    mountPermissions: "0777"
+  storageClass:
+    create: true
+    name: sas
+    annotations: {}
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    parameters:
+      server: "{{ nfs_ip }}"
+      share: /srv/nfs/kubernetes/sc/default
+      subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
+      mountPermissions: "0777"
+    mountOptions:
+      - vers=4.1
+      - nolock
+      - noatime
+      - nodiratime
+      - rsize=262144
+      - wsize=262144
+
+## NFS CSI Driver for PostgreSQL storage
+CSI_DRIVER_NFS_PG_NAME: csi-driver-nfs-pg-storage
+CSI_DRIVER_NFS_PG_NAMESPACE: nfs-client
+CSI_DRIVER_NFS_PG_CHART_NAME: csi-driver-nfs
+CSI_DRIVER_NFS_PG_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+CSI_DRIVER_NFS_PG_CHART_VERSION: 4.11.0
+CSI_DRIVER_NFS_PG_CONFIG:
+  driver:
+    mountPermissions: "0777"
+  storageClass:
+    reclaimPolicy: Retain
+    volumeBindingMode: Immediate
+    create: true
+    name: pg-storage
+    annotations: {}
+    parameters:
+      server: "{{ nfs_ip }}"
+      share: /srv/nfs/kubernetes/sc/default
+      subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
+      mountPermissions: "0777"
+    mountOptions:
+      - vers=4.1
+      - noatime
+      - nodiratime
+      - rsize=262144
+      - wsize=262144
