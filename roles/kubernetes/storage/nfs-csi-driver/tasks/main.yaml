@@ -63,18 +63,14 @@
     - install
     - update
 
-# Install pg-storage CSI driver configuration
-- name: Setting up NFS CSI pg-storage for the cluster
-  kubernetes.core.helm:
-    name: "{{ CSI_DRIVER_NFS_PG_NAME }}"
-    namespace: "{{ CSI_DRIVER_NFS_PG_NAMESPACE }}"
-    chart_repo_url: "{{ CSI_DRIVER_NFS_PG_CHART_URL }}"
-    chart_ref: "{{ CSI_DRIVER_NFS_PG_CHART_NAME }}"
-    chart_version: "{{ CSI_DRIVER_NFS_PG_CHART_VERSION }}"
-    values: "{{ CSI_DRIVER_NFS_PG_CONFIG }}"
+# Install pg-storage StorageClass as separate K8s resource
+- name: Create pg-storage StorageClass
+  kubernetes.core.k8s:
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+    state: present
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    create_namespace: true
-    wait: true
+    definition: "{{ PG_STORAGE_CLASS_DEFINITION }}"
   tags:
     - install
     - update
@@ -89,12 +85,12 @@
   tags:
     - uninstall
 
-- name: Remove csi-driver-nfs-pg-storage
-  kubernetes.core.helm:
-    name: "{{ CSI_DRIVER_NFS_PG_NAME }}"
-    namespace: "{{ CSI_DRIVER_NFS_PG_NAMESPACE }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    wait: true
+- name: Remove pg-storage StorageClass
+  kubernetes.core.k8s:
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+    name: pg-storage
     state: absent
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
   tags:
     - uninstall

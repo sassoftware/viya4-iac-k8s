@@ -30,29 +30,24 @@ CSI_DRIVER_NFS_CONFIG:
       - rsize=262144
       - wsize=262144
 
-## NFS CSI Driver for PostgreSQL storage
-CSI_DRIVER_NFS_PG_NAME: csi-driver-nfs-pg-storage
-CSI_DRIVER_NFS_PG_NAMESPACE: nfs-client
-CSI_DRIVER_NFS_PG_CHART_NAME: csi-driver-nfs
-CSI_DRIVER_NFS_PG_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
-CSI_DRIVER_NFS_PG_CHART_VERSION: 4.11.0
-CSI_DRIVER_NFS_PG_CONFIG:
-  driver:
-    mountPermissions: "0777"
-  storageClass:
-    reclaimPolicy: Retain
-    volumeBindingMode: Immediate
-    create: true
+## PostgreSQL Storage Class definition (created separately via k8s resource)
+PG_STORAGE_CLASS_DEFINITION:
+  apiVersion: storage.k8s.io/v1
+  kind: StorageClass
+  metadata:
     name: pg-storage
-    annotations: {}
-    parameters:
-      server: "{{ nfs_ip }}"
-      share: /srv/nfs/kubernetes/sc/default
-      subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
-      mountPermissions: "0777"
-    mountOptions:
-      - vers=4.1
-      - noatime
-      - nodiratime
-      - rsize=262144
-      - wsize=262144
+  provisioner: nfs.csi.k8s.io
+  reclaimPolicy: Retain
+  volumeBindingMode: Immediate
+  allowVolumeExpansion: true
+  parameters:
+    server: "{{ nfs_ip }}"
+    share: /srv/nfs/kubernetes/sc/default
+    subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
+    mountPermissions: "0777"
+  mountOptions:
+    - vers=4.1
+    - noatime
+    - nodiratime
+    - rsize=262144
+    - wsize=262144

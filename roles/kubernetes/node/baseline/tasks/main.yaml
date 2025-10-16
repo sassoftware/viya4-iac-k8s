@@ -2,16 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-# Start rpc-statd
-- name: Start rpc-statd
-  ansible.builtin.systemd:
-    name: rpc-statd.service
-    enabled: true
-    state: started
-  tags:
-    - install
-    - update
-
+# Set owner and group for Ubuntu OS
 - name: Set owner and group for Ubuntu OS
   ansible.builtin.set_fact:
     owner: nobody
