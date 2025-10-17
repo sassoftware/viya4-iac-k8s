@@ -7,6 +7,9 @@ locals {
 
   # Kubernetes
   cluster_name = "${var.prefix}-oss"
+  
+  # Calculate DNS IP as the 10th IP in the service subnet
+  cluster_dns_ip = cidrhost(var.cluster_service_subnet, 10)
 
   ## User defined node_pools
   node_pools  = var.node_pools == null ? {} : { for k, v in var.node_pools : k => merge(var.node_pool_defaults, v, ) }

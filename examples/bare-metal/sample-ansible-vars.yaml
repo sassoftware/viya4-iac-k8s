@@ -29,6 +29,7 @@ kubernetes_cri             : "containerd"    # Choices : [containerd]
 kubernetes_cri_version     : "1.7.24"        # Choices : [1.7.24]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
+kubernetes_cluster_dns     : ""              # DNS IP for kubelet (should be service_subnet first IP + .10)
 
 # Kubernetes - VIP : https://kube-vip.io
 #

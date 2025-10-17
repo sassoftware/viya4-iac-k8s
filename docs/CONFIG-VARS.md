@@ -361,6 +361,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_cri_version | Version of the CRI specifed by `kubernetes_cri` to be installed  | string | "1.7.24" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
+| kubernetes_cluster_dns | Kubernetes cluster DNS IP address | string | "10.43.0.10" | Automatically calculated from the service subnet. Typically the 10th IP in the service subnet range. |
 | kubernetes_pod_subnet | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | kubernetes_vip_version | kube-vip version | string | "0.7.1" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |

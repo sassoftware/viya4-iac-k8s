@@ -4,3 +4,4 @@
 ---
 kubernetes_pod_subnet: 10.42.0.0/16
 kubernetes_service_subnet: 10.43.0.0/16
+kubernetes_cluster_dns: 10.43.0.10

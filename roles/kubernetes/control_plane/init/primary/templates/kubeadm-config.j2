@@ -58,7 +58,7 @@ authentication:
     enabled: false
 cgroupDriver: systemd
 clusterDNS:
-  - "{{ kubernetes_cluster_dns | default('10.96.0.10') }}"
+  - "{{ kubernetes_cluster_dns }}"
 clusterDomain: "{{ kubernetes_dns_domain | default('cluster.local') }}"
 failSwapOn: true
 maxPods: 110
