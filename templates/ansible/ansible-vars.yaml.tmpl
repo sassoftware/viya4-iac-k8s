@@ -146,9 +146,13 @@ jump_ip : "${jump_ip}"
 # NFS Server
 nfs_ip  : "${nfs_ip}"
 
-# viya4-deployment compatibility - maps nfs_ip to expected variable
+# viya4-deployment compatibility - NFS configuration
 V4_CFG_RWX_FILESTORE_ENDPOINT: "${nfs_ip}"
-V4_CFG_RWX_FILESTORE_PATH: /pvs
+# Base path for NFS exports - viya4-deployment constructs full paths as:
+# V4_CFG_RWX_FILESTORE_DATA_PATH: "{{ V4_CFG_RWX_FILESTORE_PATH }}/{{ NAMESPACE }}/data"
+# V4_CFG_RWX_FILESTORE_HOMES_PATH: "{{ V4_CFG_RWX_FILESTORE_PATH }}/{{ NAMESPACE }}/homes"
+# Choose /export for direct NFS mounts or /pvs for NFS CSI driver
+V4_CFG_RWX_FILESTORE_PATH: /export
 %{ endif ~}
 %{ endif ~}
 

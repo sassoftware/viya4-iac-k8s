@@ -113,6 +113,44 @@
         line: /srv/nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: kubernetes_sc_default_file_rc.stdout != "0"
 
+- name: Create script for dynamic namespace directory creation
+  ansible.builtin.copy:
+    dest: /usr/local/bin/create-namespace-dirs.sh
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      # Script to create viya4-deployment directory structure for any namespace
+      # Usage: create-namespace-dirs.sh <namespace>
+      
+      NAMESPACE="${1:-viya4}"
+      
+      echo "Creating directory structure for namespace: $NAMESPACE"
+      
+      # Create directories under /export (V4_CFG_RWX_FILESTORE_PATH)
+      mkdir -p /export/$NAMESPACE/{bin,data,homes,astores}
+      chown nobody:nogroup /export/$NAMESPACE /export/$NAMESPACE/{bin,data,homes,astores}
+      chmod 0777 /export/$NAMESPACE /export/$NAMESPACE/{bin,data,homes,astores}
+      
+      # Create directories under /pvs (for NFS CSI driver)  
+      mkdir -p /pvs/$NAMESPACE/{bin,data,homes,astores}
+      chown nobody:nogroup /pvs/$NAMESPACE /pvs/$NAMESPACE/{bin,data,homes,astores}
+      chmod 0777 /pvs/$NAMESPACE /pvs/$NAMESPACE/{bin,data,homes,astores}
+      
+      echo "Directory structure created successfully for namespace: $NAMESPACE"
+      echo "  /export/$NAMESPACE/{bin,data,homes,astores}"
+      echo "  /pvs/$NAMESPACE/{bin,data,homes,astores}"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Create default viya4 namespace directories
+  ansible.builtin.command: /usr/local/bin/create-namespace-dirs.sh viya4
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
 - name: Export file system
   ansible.builtin.command: exportfs -a
   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
