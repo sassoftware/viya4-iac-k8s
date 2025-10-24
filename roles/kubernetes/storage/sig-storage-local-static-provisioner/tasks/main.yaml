@@ -11,7 +11,7 @@
 #
 - name: Cleaning up old sig-storage-local-static-provisioner repo
   ansible.builtin.file:
-    path: "/tmp/{{ LOCAL_VOLUME_NAME }}"
+    path: "/tmp/{{ kubernetes_LOCAL_VOLUME_NAME }}"
     state: absent
   tags:
     - install
@@ -19,20 +19,20 @@
 
 - name: Cloning sig-storage-local-static-provisioner
   ansible.builtin.git:
-    repo: "{{ LOCAL_VOLUME_REPO }}"
-    dest: "/tmp/{{ LOCAL_VOLUME_NAME }}"
-    version: "{{ LOCAL_VOLUME_REPO_VERSION }}"
+    repo: "{{ kubernetes_LOCAL_VOLUME_REPO }}"
+    dest: "/tmp/{{ kubernetes_LOCAL_VOLUME_NAME }}"
+    version: "{{ kubernetes_LOCAL_VOLUME_REPO_VERSION }}"
   tags:
     - install
     - update
 
 - name: Setting up local storage for the cluster using sig-storage-local-static-provisioner
   kubernetes.core.helm:
-    name: "{{ LOCAL_VOLUME_NAME }}"
-    namespace: "{{ LOCAL_VOLUME_NAMESPACE }}"
-    chart_ref: "{{ LOCAL_VOLUME_REPO_LOCATION }}/helm/provisioner"
-    chart_version: "{{ LOCAL_VOLUME_CHART_VERSION }}"
-    values: "{{ LOCAL_VOLUME_CONFIG }}"
+    name: "{{ kubernetes_LOCAL_VOLUME_NAME }}"
+    namespace: "{{ kubernetes_LOCAL_VOLUME_NAMESPACE }}"
+    chart_ref: "{{ kubernetes_LOCAL_VOLUME_REPO_LOCATION }}/helm/provisioner"
+    chart_version: "{{ kubernetes_LOCAL_VOLUME_CHART_VERSION }}"
+    values: "{{ kubernetes_LOCAL_VOLUME_CONFIG }}"
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
     create_namespace: true
     wait: true
@@ -42,8 +42,8 @@
 
 - name: Remove sig-storage-local-static-provisioner
   kubernetes.core.helm:
-    name: "{{ LOCAL_VOLUME_NAME }}"
-    namespace: "{{ LOCAL_VOLUME_NAMESPACE }}"
+    name: "{{ kubernetes_LOCAL_VOLUME_NAME }}"
+    namespace: "{{ kubernetes_LOCAL_VOLUME_NAMESPACE }}"
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
     wait: true
     state: absent
