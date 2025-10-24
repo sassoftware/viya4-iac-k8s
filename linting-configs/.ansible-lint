@@ -21,6 +21,7 @@ skip_list:
   - yaml[line-length] # it's easier to understand/debug the underlying command when it's not broken up, excessively long lines that make sense to split up should be caught during code review,
   - name[template] # task name is being templated, this can be ignored
   - key-order[play] # playbook structure is fine as-is, enforcing key order adds no value
+  - var-naming[no-role-prefix] # Variable naming patterns are acceptable for this project
 
 # Ansible-lint does not automatically load rules that have the 'opt-in' tag.
 # You must enable opt-in rules by listing each rule 'id' below.
