@@ -123,6 +123,7 @@
   vars:
     packages:
       - sshpass
+      - conntrack
   tags:
     - install
     - update
