@@ -16,13 +16,13 @@
   block:
     - name: Installing metallb
       kubernetes.core.helm:
-        name: "{{ METALLB_NAME }}"
-        namespace: "{{ METALLB_NAMESPACE }}"
-        chart_repo_url: "{{ METALLB_CHART_URL }}"
-        chart_ref: "{{ METALLB_CHART_NAME }}"
-        chart_version: "{{ METALLB_CHART_VERSION }}"
-        values: "{{ METALLB_CONFIG }}"
-        kubeconfig: "{{ METALLB_KUBE_CONFIG }}"
+        name: "{{ kubernetes_METALLB_NAME }}"
+        namespace: "{{ kubernetes_METALLB_NAMESPACE }}"
+        chart_repo_url: "{{ kubernetes_METALLB_CHART_URL }}"
+        chart_ref: "{{ kubernetes_METALLB_CHART_NAME }}"
+        chart_version: "{{ kubernetes_METALLB_CHART_VERSION }}"
+        values: "{{ kubernetes_METALLB_CONFIG }}"
+        kubeconfig: "{{ kubernetes_METALLB_KUBE_CONFIG }}"
         create_namespace: true
         wait: true
       tags:
@@ -59,8 +59,8 @@
 
 - name: Remove MetalLB
   kubernetes.core.helm:
-    name: "{{ METALLB_NAME }}"
-    namespace: "{{ METALLB_NAMESPACE }}"
+    name: "{{ kubernetes_METALLB_NAME }}"
+    namespace: "{{ kubernetes_METALLB_NAMESPACE }}"
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
     wait: true
     state: absent

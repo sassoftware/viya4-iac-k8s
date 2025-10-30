@@ -9,7 +9,7 @@
   block:
     - name: Install kube-vip Cloud Provider
       ansible.builtin.shell: |
-        kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/{{ kube_vip_cloud_provider_version }}/manifest/kube-vip-cloud-controller.yaml
+        kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/{{ kubernetes_kube_vip_cloud_provider_version }}/manifest/kube-vip-cloud-controller.yaml
       tags:
         - install
         - update

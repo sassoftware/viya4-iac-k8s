@@ -16,13 +16,13 @@
     - update
 
 # Wait for Tigera CRDs to be available
-#- name: Wait for Tigera CRDs to be registered
-#  ansible.builtin.shell: |
-#    until kubectl get crds | grep installations.operator.tigera.io; do sleep 5; done
-#  retries: 12
-#  delay: 5
-#  register: crd_check
-#  until: crd_check.rc == 0
+# - name: Wait for Tigera CRDs to be registered
+#   ansible.builtin.shell: |
+#     until kubectl get crds | grep installations.operator.tigera.io; do sleep 5; done
+#   retries: 12
+#   delay: 5
+#   register: crd_check
+#   until: crd_check.rc == 0
 #  tags:
 #    - install
 #    - update

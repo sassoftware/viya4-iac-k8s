@@ -138,7 +138,7 @@
     - update
 
 - name: Execute helm installation script
-  ansible.builtin.command: /tmp/get-helm-3 --version v{{ helm_version }} --no-sudo
+  ansible.builtin.command: /tmp/get-helm-3 --version v{{ kubernetes_helm_version }} --no-sudo
   tags:
     - install
     - update
