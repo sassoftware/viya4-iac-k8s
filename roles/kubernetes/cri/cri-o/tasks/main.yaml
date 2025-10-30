@@ -29,7 +29,7 @@
 - name: Setting cri-o facts
   set_fact:
     k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -40,7 +40,7 @@
     k8s_major_version: "{% if k8s_version_semantic_parts|length > 0 %}{{ k8s_version_semantic_parts.0 }}{% endif %}"
     k8s_minor_version: "{% if k8s_version_semantic_parts|length > 1 %}{{ k8s_version_semantic_parts.1 }}{% endif %}"
     k8s_patch_version: "{% if k8s_version_semantic_parts|length > 2 %}{{ k8s_version_semantic_parts.2 }}{% else %}0{% endif %}"
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -50,7 +50,7 @@
     url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/Release.key
     keyring: /usr/share/keyrings/libcontainers-archive-keyring.gpg
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -60,7 +60,7 @@
     url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/Release.key
     keyring: /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -73,7 +73,7 @@
   with_items:
     - deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /
     - deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ k8s_major_version }}.{{ k8s_minor_version }}/{{ os }}/ /
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -127,7 +127,7 @@
     packages:
       - cri-o
       - cri-o-runc
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update

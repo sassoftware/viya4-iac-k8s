@@ -14,7 +14,7 @@
     mode: "0755"
     owner: root
     group: root
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04")
   tags:
     - install
     - update
@@ -40,7 +40,7 @@
   ansible.builtin.get_url:
     url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/Release.key"
     dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -51,7 +51,7 @@
     repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
     state: present
     update_cache: true
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -124,7 +124,7 @@
       - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: present
     update_cache: true
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
 
@@ -137,7 +137,7 @@
     - kubelet
     - kubeadm
     - kubectl
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
 
@@ -149,7 +149,7 @@
     - kubelet
     - kubeadm
     - kubectl
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - uninstall
 
@@ -161,7 +161,7 @@
       - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: absent
     update_cache: true
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - uninstall
 
