@@ -47,6 +47,39 @@
         line: /export    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: exports_file_rc.stdout != "0"
 
+- name: Setting up /pvs nfs mount point for viya4-deployment compatibility
+  tags:
+    - install
+    - update
+  block:
+    - name: Create /pvs nfs mount point
+      ansible.builtin.file:
+        path: /pvs
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: "0777"
+      when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+
+    - name: Test for /pvs export mount point
+      ansible.builtin.shell: grep -c "^/pvs" /etc/exports || true
+      register: pvs_file_rc
+
+    # TODO - Determine access CIDR for /pvs mount and cluster. * is for POC
+    # TODO - Verify these are the correct nfs options needed
+    - name: Add /pvs exported mount point to /etc/exports file - New entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: /pvs    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: pvs_file_rc.stdout == "0"
+
+    - name: Add /pvs exported mount point to /etc/exports file - Update entry
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        regexp: '^/pvs'
+        line: /pvs    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+      when: pvs_file_rc.stdout != "0"
+
 - name: Setting up /srv/nfs/kubernetes/sc/default nfs mount point
   tags:
     - install
@@ -79,6 +112,44 @@
         regexp: '^/srv/nfs/kubernetes/sc/default'
         line: /srv/nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: kubernetes_sc_default_file_rc.stdout != "0"
+
+- name: Create script for dynamic namespace directory creation
+  ansible.builtin.copy:
+    dest: /usr/local/bin/create-namespace-dirs.sh
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      # Script to create viya4-deployment directory structure for any namespace
+      # Usage: create-namespace-dirs.sh <namespace>
+
+      NAMESPACE="${1:-viya4}"
+
+      echo "Creating directory structure for namespace: $NAMESPACE"
+
+      # Create directories under /export (V4_CFG_RWX_FILESTORE_PATH)
+      mkdir -p /export/$NAMESPACE/{bin,data,homes,astores}
+      chown nobody:nogroup /export/$NAMESPACE /export/$NAMESPACE/{bin,data,homes,astores}
+      chmod 0777 /export/$NAMESPACE /export/$NAMESPACE/{bin,data,homes,astores}
+
+      # Create directories under /pvs (for NFS CSI driver)
+      mkdir -p /pvs/$NAMESPACE/{bin,data,homes,astores}
+      chown nobody:nogroup /pvs/$NAMESPACE /pvs/$NAMESPACE/{bin,data,homes,astores}
+      chmod 0777 /pvs/$NAMESPACE /pvs/$NAMESPACE/{bin,data,homes,astores}
+
+      echo "Directory structure created successfully for namespace: $NAMESPACE"
+      echo "  /export/$NAMESPACE/{bin,data,homes,astores}"
+      echo "  /pvs/$NAMESPACE/{bin,data,homes,astores}"
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Create default viya4 namespace directories
+  ansible.builtin.command: /usr/local/bin/create-namespace-dirs.sh viya4
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
 
 - name: Export file system
   ansible.builtin.command: exportfs -a

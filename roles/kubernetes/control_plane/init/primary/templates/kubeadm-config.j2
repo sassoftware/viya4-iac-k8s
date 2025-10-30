@@ -1,56 +1,72 @@
----
-#
-# TODO: Review all items here for actual need
-#       with bare metal/vm installations.
-#
-# Resource Links: https://kubernetes.io/docs/reference/config-api/
-#
-# kubeadm Configuration : https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta2/
-#
-{% if kubernetes_version is version('1.26.0', 'lt', version_type='semver') %}
-apiVersion: kubeadm.k8s.io/v1beta2
-{% else %}
-apiVersion: kubeadm.k8s.io/v1beta3
-{% endif %}
+# SPDX-License-Identifier: Apache-2.0
+# -----------------------------------------------------------
+# kubeadm Cluster Configuration Template (SAS Custom)
+# -----------------------------------------------------------
+
+# ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
-certificatesDir: /etc/kubernetes/pki
-kubernetesVersion: v{{ kubernetes_version }}
-apiServer:
-  certSANs:
-  - "{{ kubernetes_vip_fqdn }}"
-  - "{{ kubernetes_vip_ip }}"
-{% for cp_host in groups["k8s_control_plane"] %}
-  - "{{hostvars[cp_host]['ansible_fqdn']}}"
-{% endfor %}
-  - localhost
-  extraArgs:
-    # NOTE: enable-aggregator-routing was added
-    #       for metrics-server. Need to verify
-    authorization-mode: Node,RBAC
-    enable-aggregator-routing: "true"
-controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
+kubernetesVersion: "{{ kubernetes_version }}"
+clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
+controlPlaneEndpoint: "{{ kubernetes_control_plane_endpoint | default(ansible_host ~ ':6443', true) }}"
 networking:
-  serviceSubnet: "{{ kubernetes_service_subnet }}"
   podSubnet: "{{ kubernetes_pod_subnet }}"
-clusterName: "{{ kubernetes_cluster_name }}"
+  serviceSubnet: "{{ kubernetes_service_subnet | default('10.96.0.0/12') }}"
+  dnsDomain: "{{ kubernetes_dns_domain | default('cluster.local') }}"
+
+apiServer:
+  extraArgs:
+    - name: "authorization-mode"
+      value: "Node,RBAC"
+    - name: "enable-admission-plugins"
+      value: "NodeRestriction"
+  certSANs:
+    - "{{ kubernetes_control_plane_endpoint | default(ansible_host, true) }}"
+    - "127.0.0.1"
+
+controllerManager:
+  extraArgs:
+    - name: "allocate-node-cidrs"
+      value: "true"
+    - name: "cluster-cidr"
+      value: "{{ kubernetes_pod_subnet }}"
+
+scheduler: {}
+
 ---
-#
-# Kubelet Configuration : https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
-#
+
+# InitConfiguration
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "{{ ansible_host }}"
+  bindPort: 6443
+nodeRegistration:
+  name: "{{ inventory_hostname }}"
+  criSocket: "unix:///var/run/containerd/containerd.sock"
+  kubeletExtraArgs:
+    - name: "cgroup-driver"
+      value: "systemd"
+
+---
+
+# KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 authentication:
   anonymous:
     enabled: false
 cgroupDriver: systemd
+clusterDNS:
+  - "{{ kubernetes_cluster_dns }}"
+clusterDomain: "{{ kubernetes_dns_domain | default('cluster.local') }}"
+failSwapOn: true
+maxPods: 110
+readOnlyPort: 0
+
 ---
-#
-# NOTE: metricsBindAddress, enableProfiling, clusterCIDR
-#       were added in an attempt to help with node metrics
-#       pod metrics seem fine at this point
-#
-# kube-proxy Configuration : https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/
-#
+
+# KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 mode: "ipvs"

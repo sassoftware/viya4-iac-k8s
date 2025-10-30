@@ -2,6 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
+# Install NFS client utilities required for NFS volume mounting
+- name: Install NFS client utilities
+  ansible.builtin.package:
+    name: nfs-common
+    state: present
+    update_cache: true
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
 - name: Generate control plane shared ssh key pair
   ansible.builtin.command: "{{ item }}"
   with_items:

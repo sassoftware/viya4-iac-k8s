@@ -9,10 +9,23 @@
 #
 - name: Install Operator
   ansible.builtin.shell: |
+    kubectl create -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/operator-crds.yaml" && \
     kubectl create -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/tigera-operator.yaml"
   tags:
     - install
     - update
+
+# Wait for Tigera CRDs to be available
+# - name: Wait for Tigera CRDs to be registered
+#   ansible.builtin.shell: |
+#     until kubectl get crds | grep installations.operator.tigera.io; do sleep 5; done
+#   retries: 12
+#   delay: 5
+#   register: crd_check
+#   until: crd_check.rc == 0
+#  tags:
+#    - install
+#    - update
 
 - name: Create custom-resources for our cluster
   ansible.builtin.template:

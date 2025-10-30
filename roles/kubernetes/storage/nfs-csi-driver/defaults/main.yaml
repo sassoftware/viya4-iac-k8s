@@ -1,0 +1,31 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+## NFS CSI Driver
+kubernetes_CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
+kubernetes_CSI_DRIVER_NFS_NAMESPACE: kube-system
+kubernetes_CSI_DRIVER_NFS_CHART_NAME: csi-driver-nfs
+kubernetes_CSI_DRIVER_NFS_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+kubernetes_CSI_DRIVER_NFS_CHART_VERSION: 4.11.0
+kubernetes_CSI_DRIVER_NFS_CONFIG:
+  driver:
+    mountPermissions: "0777"
+  storageClass:
+    create: true
+    name: sas
+    annotations: {}
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    parameters:
+      server: "{{ nfs_ip }}"
+      share: /pvs
+      subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
+      mountPermissions: "0777"
+    mountOptions:
+      - nfsvers=4.1
+      - nolock
+      - noatime
+      - nodiratime
+      - rsize=262144
+      - wsize=262144

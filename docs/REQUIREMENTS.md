@@ -215,9 +215,9 @@ vsphere_network       = "" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "~/.ssh" # Directory holding public keys to be used on each machine
 
 # Kubernetes - Cluster
-cluster_version        = "1.30.10"                       # Kubernetes version
+cluster_version        = "1.32.7"                       # Kubernetes version
 cluster_cni            = "calico"                        # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.29.0"                        # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.30.0"                        # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"                    # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "1.7.24"                        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.35.0.0/16"                  # Kubernetes service subnet
@@ -665,9 +665,45 @@ INGRESS_NGINX_CONFIG:
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
-### NFS Subdir External Provisioner - SAS default storage class
-# Updates to support open source Kubernetes
-NFS_CLIENT_NAME: nfs-subdir-external-provisioner-sas
+### NFS CSI Driver - Default storage class
+# NFS CSI storage provisioner configuration (compatible with viya4-deployment)
+CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
+CSI_DRIVER_NFS_CONFIG:
+  driver:
+    mountPermissions: "0777"
+  storageClass:
+    name: sas
+    parameters:
+      server: "{{ nfs_ip }}"
+      share: /pvs
+
+# viya4-deployment compatibility variables
+V4_CFG_RWX_FILESTORE_ENDPOINT: "{{ nfs_ip }}"
+V4_CFG_RWX_FILESTORE_PATH: /export  # Use /export for direct NFS mounts or /pvs for CSI driver
+
+### NFS Namespace Directory Management
+
+The NFS server includes a script to create directory structures for any Kubernetes namespace used by viya4-deployment. 
+
+**Default setup**: The `viya4` namespace structure is created automatically.
+
+**For custom namespaces**: If your viya4-deployment uses a different `NAMESPACE` value, create the required directories:
+
+```bash
+# SSH to the NFS server and run:
+sudo /usr/local/bin/create-namespace-dirs.sh <your-namespace>
+
+# Example for namespace "sas-prod":
+sudo /usr/local/bin/create-namespace-dirs.sh sas-prod
+```
+
+This creates the directory structure that viya4-deployment expects:
+- `/export/<NAMESPACE>/{bin,data,homes,astores}` (for direct NFS mounts)
+- `/pvs/<NAMESPACE>/{bin,data,homes,astores}` (for NFS CSI driver)
+
+The paths are dynamically constructed by viya4-deployment as:
+- `V4_CFG_RWX_FILESTORE_DATA_PATH: "{{ V4_CFG_RWX_FILESTORE_PATH }}/{{ NAMESPACE }}/data"`
+- `V4_CFG_RWX_FILESTORE_HOMES_PATH: "{{ V4_CFG_RWX_FILESTORE_PATH }}/{{ NAMESPACE }}/homes"`
 
 ## Logging and Monitoring
 V4M_STORAGECLASS: local-storage

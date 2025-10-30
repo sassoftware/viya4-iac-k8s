@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Hadolint Action
         uses: jbergstroem/hadolint-gh-action@v1.11.0
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
         # .shellcheckrc is read from the current dir
       - name: Copy Config to Parent Level Directory
@@ -42,10 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache Plugin Directory
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.tflint.d/plugins
           key: ubuntu-latest-tflint-${{ hashFiles('.tflint.hcl') }}
@@ -53,11 +53,11 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "^1.10.5"
+          terraform_version: "1.10.5"
           terraform_wrapper: false    
 
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v3.0.0
+        uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: latest
           github_token: ${{ secrets.LINTER_TOKEN }}
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
         # The latest ansible/ansible-lint-action removed the
         # ability to specify configs from other dirs
@@ -93,7 +93,15 @@ jobs:
       - name: Install requirements.yaml
         run: ansible-galaxy install -r ./requirements.yaml
 
-      - name: Run ansible-lint Action
-        uses: ansible/ansible-lint-action@v6.17.0
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install ansible-lint
+        run: pip install ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint
         env:
           ANSIBLE_ROLES_PATH: "./roles"
