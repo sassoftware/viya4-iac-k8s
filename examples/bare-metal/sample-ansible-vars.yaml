@@ -3,7 +3,7 @@ ansible_user     : ""
 ansible_password : ""
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04/24.04 LTS
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
@@ -26,7 +26,7 @@ kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"        # Choices : [calico]
 kubernetes_cni_version     : "3.29.0"        # Choices : [3.29.0]
 kubernetes_cri             : "containerd"    # Choices : [containerd]
-kubernetes_cri_version     : "1.7.24"        # Choices : [1.7.24]
+kubernetes_cri_version     : ""        # Choices : [22.04: 1.7.24, 24.04: 1.7.28]
 kubernetes_service_subnet  : ""
 kubernetes_pod_subnet      : ""
 kubernetes_cluster_dns     : ""              # DNS IP for kubelet (should be service_subnet first IP + .10)

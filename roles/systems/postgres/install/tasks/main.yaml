@@ -7,7 +7,7 @@
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
     keyring: /usr/share/keyrings/postgres-archive-keyring.gpg
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -16,7 +16,7 @@
   ansible.builtin.apt_repository:
     repo: deb [arch=amd64 signed-by=/usr/share/keyrings/postgres-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -71,7 +71,7 @@
 
 - name: Copy user supplied cert and key to Postgres host
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
     - postgres_server_ssl|lower == "on"
     - (systems_postgres_server_ssl_cert_file|length > 0) and (systems_postgres_server_ssl_key_file|length > 0)
   tags:
@@ -101,7 +101,7 @@
 
 - name: Create copy of Ubuntu default cert and key
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "20.04" or ansible_distribution_version == "22.04")
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
     - postgres_server_ssl|lower == "on"
     - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length == 0)
   tags:
