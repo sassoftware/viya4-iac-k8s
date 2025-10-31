@@ -14,6 +14,8 @@
   tags:
     - install
     - update
+  retries: 10
+  delay: 10
 
 # Wait for Tigera CRDs to be available
 # - name: Wait for Tigera CRDs to be registered
