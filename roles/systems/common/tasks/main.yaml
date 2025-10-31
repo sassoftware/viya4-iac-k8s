@@ -5,8 +5,8 @@
 # TODO: Check for supported operating systems
 #       Currently supported operating systems:
 #
-#       - Ubuntu 20.04 LTS
 #       - Ubuntu 22.04 LTS
+#       - Ubuntu 24.04 LTS
 #
 
 # SSH keys assign to the 'root' user on your systems
