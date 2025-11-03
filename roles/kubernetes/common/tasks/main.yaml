@@ -2,6 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
+- name: Verify Ubuntu version is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == "Ubuntu"
+      - ansible_distribution_version in ["22.04", "24.04"]
+    fail_msg: "Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}. Only Ubuntu 22.04 and 24.04 are supported."
+    success_msg: "OS version check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tags:
+    - install
+    - update
+
 - name: Add ssh keys - root user
   ansible.posix.authorized_key:
     user: root
