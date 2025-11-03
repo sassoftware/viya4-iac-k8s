@@ -58,7 +58,6 @@
   ansible.builtin.apt:
     name: unattended-upgrades
     state: absent
-
     purge: true
   register: apt_remove_result
   until: apt_remove_result is succeeded
