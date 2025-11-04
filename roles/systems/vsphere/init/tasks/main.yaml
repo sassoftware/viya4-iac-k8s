@@ -37,7 +37,6 @@
   ansible.builtin.set_fact:
     owner: nobody
     group: nogroup
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update

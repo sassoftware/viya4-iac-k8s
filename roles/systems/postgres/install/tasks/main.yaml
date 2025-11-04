@@ -7,7 +7,6 @@
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
     keyring: /usr/share/keyrings/postgres-archive-keyring.gpg
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -16,7 +15,6 @@
   ansible.builtin.apt_repository:
     repo: deb [arch=amd64 signed-by=/usr/share/keyrings/postgres-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update

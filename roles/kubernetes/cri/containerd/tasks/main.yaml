@@ -90,7 +90,6 @@
     url: https://download.docker.com/linux/ubuntu/gpg
     keyring: /usr/share/keyrings/docker-archive-keyring.gpg
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -99,7 +98,6 @@
   ansible.builtin.apt_repository:
     repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -121,7 +119,6 @@
   vars:
     packages:
       - "containerd.io{% if kubernetes_cri_version is defined and kubernetes_cri_version %}={{ kubernetes_cri_version }}{{ kubernetes_cri_deb_rev }}{%endif %}"
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
   tags:
     - install
     - update
@@ -137,7 +134,6 @@
 #   vars:
 #     packages:
 #     - containerd
-#   when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
 #   tags:
 #     - install
 #     - update
