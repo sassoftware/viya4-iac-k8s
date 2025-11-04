@@ -76,5 +76,4 @@ postgres_system_setting_max_connections="1024"
 k8s
 jump
 nfs
-cr
 postgres
