@@ -17,6 +17,13 @@
   tags:
     - uninstall
 
+- name: Remove CNI configuration
+  ansible.builtin.file:
+    state: absent
+    path: /etc/cni/net.d
+  tags:
+    - uninstall
+
 - name: Clean up IPTables
   ansible.builtin.shell: |
     iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
