@@ -116,6 +116,7 @@
   ansible.builtin.package:
     name: "{{ packages }}"
     state: present
+    allow_downgrade: true
   vars:
     packages:
       - "containerd.io{% if kubernetes_cri_version is defined and kubernetes_cri_version %}={{ kubernetes_cri_version }}{{ kubernetes_cri_deb_rev }}{%endif %}"
