@@ -88,7 +88,7 @@ gather_ans_creds() {
 # vSphere and bare-metal items
 ansible_prep() {
     gather_ans_creds
-    ansible-galaxy collection install -r "$BASEDIR/requirements.yaml" -f
+    ansible-galaxy collection install -r "$BASEDIR/requirements.yaml"
 }
 
 clean_up() {

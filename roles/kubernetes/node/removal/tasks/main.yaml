@@ -4,7 +4,7 @@
 ---
 - name: Draining the node
   ansible.builtin.shell: |
-    kubectl drain {{ ansible_hostname }} --delete-emptydir-data --force --ignore-daemonsets
+    kubectl drain {{ ansible_hostname }} --delete-emptydir-data --force --ignore-daemonsets --timeout 60
   delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   ignore_errors: true
   tags:
@@ -14,6 +14,13 @@
   ansible.builtin.shell: |
     kubeadm reset --force
   ignore_errors: true
+  tags:
+    - uninstall
+
+- name: Remove CNI configuration
+  ansible.builtin.file:
+    state: absent
+    path: /etc/cni/net.d
   tags:
     - uninstall
 
