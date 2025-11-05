@@ -2,34 +2,15 @@
 ansible_user     : ""
 ansible_password : ""
 
-# VM items
-vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04/24.04 LTS
-vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
-
-# System items
-enable_cgroup_v2    : true     # TODO - If needed hookup or remove flag
-system_ssh_keys_dir : "~/.ssh" # Directory holding public keys to be used on each system
-
 # Generic items
-prefix          : ""
-deployment_type : "" # Values are : [bare_metal|vsphere]
+prefix          : "" # Prefix for the deployment e.g. prod.
 
 # Kubernetes - Common
 #
-# TODO: kubernetes_upgrade_allowed needs to be implemented to either
-#       add or remove locks on the kubeadm, kubelet, kubectl packages
-#
-kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value above
-kubernetes_version         : ""
-kubernetes_upgrade_allowed : true
-kubernetes_arch            : "{{ vm_arch }}"
-kubernetes_cni             : "calico"        # Choices : [calico]
-kubernetes_cni_version     : "3.29.0"        # Choices : [3.29.0]
-kubernetes_cri             : "containerd"    # Choices : [containerd]
-kubernetes_cri_version     : ""        # Choices : [22.04: 1.7.24, 24.04: 1.7.28]
-kubernetes_service_subnet  : ""
-kubernetes_pod_subnet      : ""
-kubernetes_cluster_dns     : ""              # DNS IP for kubelet (should be service_subnet first IP + .10)
+# Consult SAS Viya Documentation for supported kubernetes versions for the release that is being deployed.
+kubernetes_version         : "" # Supported versions "1.31.x" - "1.33.x
+kubernetes_cri_version     : "" # Choices : [Ubuntu 22.04: "1.7.24", Ubuntu 24.04: "1.7.28"]
+kubernetes_cluster_dns     : "" # DNS IP for kubelet (should be service_subnet first IP + .10)
 
 # Kubernetes - VIP : https://kube-vip.io
 #
@@ -37,7 +18,9 @@ kubernetes_cluster_dns     : ""              # DNS IP for kubelet (should be ser
 #
 #   VIP IP                      : https://kube-vip.io/docs/installation/static/
 #
-kubernetes_vip_version              : "0.7.1"
+# This IP iis the HA IP for the control nodes, it will dynamically allocate to the primary node. It should be an
+# available IP addressable to all nodes in the cluster as well as any other client that will be making admin changes
+# to the cluster. FQDN should be the desired hostname for the control plane (administrative APIs) and exist in DNS.
 kubernetes_vip_ip                   : ""
 kubernetes_vip_fqdn                 : ""
 
@@ -79,9 +62,6 @@ kubernetes_loadbalancer : "" # Load Balancer accepted values [kube_vip,metallb]
 #        have this limitation.
 #
 kubernetes_loadbalancer_addresses : []
-
-# Kubernetes - Control Plane
-control_plane_ssh_key_name : "cp_ssh"
 
 # Labels/Taints
 #
@@ -142,3 +122,36 @@ jump_ip : ""
 
 # NFS Server
 nfs_ip  : ""
+
+
+# The below configuration items are explicitly set to their defaults.
+# It is uncommon to need to amend these in most deployments.
+
+# VM items
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04/24.04 LTS
+vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
+
+# System items
+enable_cgroup_v2    : true     # TODO - If needed hookup or remove flag
+system_ssh_keys_dir : "~/.ssh" # Directory holding public keys to be used on each system
+
+# Deployment Options
+deployment_type : "bare_metal" # Values are : [bare_metal|vsphere]
+
+# Kubernetes - Common
+kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value above
+kubernetes_arch            : "{{ vm_arch }}"
+kubernetes_cni             : "calico"        # Choices : [calico]
+kubernetes_cni_version     : "3.29.0"        # Choices : [3.29.0]
+kubernetes_cri             : "containerd"    # Choices : [containerd]
+kubernetes_service_subnet  : "10.43.0.0/16"  # Default cluster scoped CIDR
+kubernetes_pod_subnet      : "10.42.0.0/16"  # Default cluster scoped CIDR
+# TODO: kubernetes_upgrade_allowed needs to be implemented to either
+#       add or remove locks on the kubeadm, kubelet, kubectl packages
+kubernetes_upgrade_allowed : true
+
+# Kubernetes - kube-vip
+kubernetes_vip_version              : "0.7.1"
+
+# Kubernetes - Control Plane
+control_plane_ssh_key_name : "cp_ssh"
