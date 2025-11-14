@@ -21,7 +21,8 @@ apiServer:
     - name: "enable-admission-plugins"
       value: "NodeRestriction"
   certSANs:
-    - "{{ kubernetes_vip_fqdn | default(kubernetes_vip_ip, true) }}"
+    - "{{ kubernetes_vip_fqdn }}"
+    - "{{ kubernetes_vip_ip }}"
 {% for host in groups['k8s_control_plane'] %}
     - "{{ hostvars[host]['ansible_fqdn'] }}"
 {% endfor %}
