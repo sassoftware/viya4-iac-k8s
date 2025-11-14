@@ -8,7 +8,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubernetes_version }}"
 clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
-controlPlaneEndpoint: "{{ kubernetes_control_plane_endpoint | default(ansible_host ~ ':6443', true) }}"
+controlPlaneEndpoint: "{{ kubernetes_vip_fqdn | default(kubernetes_vip_ip ~ ':6443', true) }}"
 networking:
   podSubnet: "{{ kubernetes_pod_subnet }}"
   serviceSubnet: "{{ kubernetes_service_subnet | default('10.96.0.0/12') }}"
@@ -21,7 +21,7 @@ apiServer:
     - name: "enable-admission-plugins"
       value: "NodeRestriction"
   certSANs:
-    - "{{ kubernetes_control_plane_endpoint | default(ansible_host, true) }}"
+    - "{{ kubernetes_vip_fqdn | default(kubernetes_vip_ip, true) }}"
     - "127.0.0.1"
 
 controllerManager:
@@ -39,7 +39,7 @@ scheduler: {}
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 localAPIEndpoint:
-  advertiseAddress: "{{ ansible_host }}"
+  advertiseAddress: "{{ ansible_default_ipv4.address }}"
   bindPort: 6443
 nodeRegistration:
   name: "{{ inventory_hostname }}"
