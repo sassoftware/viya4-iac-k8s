@@ -10,6 +10,6 @@
     - install
 
 - name: Join compute nodes to the cluster
-  ansible.builtin.command: "{{ kubeadm_join_cmd.stdout }}"
+  ansible.builtin.command: "{{ kubeadm_join_cmd.stdout }} --node-name {{ ansible_fqdn }}"
   tags:
     - install

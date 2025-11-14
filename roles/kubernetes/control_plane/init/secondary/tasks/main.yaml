@@ -41,6 +41,6 @@
     - install
 
 - name: Join secondary control plane nodes to the cluster
-  ansible.builtin.command: "{{ kubeadm_join_cmd.stdout }} --control-plane"
+  ansible.builtin.command: "{{ kubeadm_join_cmd.stdout }} --control-plane --node-name {{ ansible_fqdn }}"
   tags:
     - install

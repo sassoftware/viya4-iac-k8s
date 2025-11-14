@@ -47,7 +47,7 @@ localAPIEndpoint:
   advertiseAddress: "{{ ansible_default_ipv4.address }}"
   bindPort: 6443
 nodeRegistration:
-  name: "{{ inventory_hostname }}"
+  name: "{{ ansible_fqdn }}"
   criSocket: "unix:///var/run/containerd/containerd.sock"
   kubeletExtraArgs:
     - name: "cgroup-driver"
