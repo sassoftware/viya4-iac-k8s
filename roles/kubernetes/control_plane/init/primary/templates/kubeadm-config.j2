@@ -8,7 +8,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubernetes_version }}"
 clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
-controlPlaneEndpoint: "{{ kubernetes_vip_fqdn | default(kubernetes_vip_ip ~ ':6443', true) }}"
+controlPlaneEndpoint: "{% if kubernetes_vip_fqdn is defined and kubernetes_vip_fqdn != '' %}{{ kubernetes_vip_fqdn }}:6443{% elif kubernetes_vip_ip is defined and kubernetes_vip_ip != '' %}{{ kubernetes_vip_ip }}:6443{% else %}{{ ansible_default_ipv4.address }}:6443{% endif %}"
 networking:
   podSubnet: "{{ kubernetes_pod_subnet }}"
   serviceSubnet: "{{ kubernetes_service_subnet | default('10.96.0.0/12') }}"
@@ -21,8 +21,19 @@ apiServer:
     - name: "enable-admission-plugins"
       value: "NodeRestriction"
   certSANs:
-    - "{{ kubernetes_vip_fqdn | default(kubernetes_vip_ip, true) }}"
+{% if kubernetes_vip_fqdn is defined and kubernetes_vip_fqdn != '' %}
+    - "{{ kubernetes_vip_fqdn }}"
+{% endif %}
+{% if kubernetes_vip_ip is defined and kubernetes_vip_ip != '' %}
+    - "{{ kubernetes_vip_ip }}"
+{% endif %}
+{% for host in groups['k8s_control_plane'] %}
+    - "{{ hostvars[host]['ansible_fqdn'] }}"
+    - "{{ hostvars[host]['ansible_hostname'] }}"
+    - "{{ hostvars[host]['ansible_default_ipv4']['address'] }}"
+{% endfor %}
     - "127.0.0.1"
+    - "localhost"
 
 controllerManager:
   extraArgs:

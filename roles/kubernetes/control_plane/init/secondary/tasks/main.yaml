@@ -40,7 +40,20 @@
   tags:
     - install
 
+- name: Extract certificate key from primary control plane
+  ansible.builtin.shell: |
+    kubeadm init phase upload-certs --upload-certs 2>/dev/null | tail -1
+  register: certificate_key
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+  tags:
+    - install
+
 - name: Join secondary control plane nodes to the cluster
-  ansible.builtin.command: "{{ kubeadm_join_cmd.stdout }} --control-plane"
+  ansible.builtin.command: >
+    {{ kubeadm_join_cmd.stdout }}
+    --control-plane
+    --certificate-key {{ certificate_key.stdout }}
+    --apiserver-advertise-address {{ ansible_default_ipv4.address }}
+    --node-name {{ inventory_hostname }}
   tags:
     - install
