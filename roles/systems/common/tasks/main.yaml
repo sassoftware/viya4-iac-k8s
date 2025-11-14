@@ -106,6 +106,8 @@
   tags:
     - install
     - update
+  retries: 3
+  delay: 3
 
 - name: Update alternatives for Python and PIP
   ansible.builtin.shell: |
