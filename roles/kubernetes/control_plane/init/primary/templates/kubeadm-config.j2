@@ -8,7 +8,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubernetes_version }}"
 clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
-controlPlaneEndpoint: "{{ kubernetes_vip_ip }}:6443"
+controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
 networking:
   podSubnet: "{{ kubernetes_pod_subnet }}"
   serviceSubnet: "{{ kubernetes_service_subnet | default('10.96.0.0/12') }}"

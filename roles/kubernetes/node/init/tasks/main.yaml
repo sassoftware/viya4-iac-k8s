@@ -16,7 +16,7 @@
   tags:
     - install
 
-- name: Join compute nodes to the cluster using VIP
-  ansible.builtin.command: "kubeadm join {{ kubernetes_vip_ip }}:6443 --token {{ join_token }} --discovery-token-ca-cert-hash {{ join_ca_hash }}"
+- name: Join compute nodes to the cluster using VIP FQDN
+  ansible.builtin.command: "kubeadm join {{ kubernetes_vip_fqdn }}:6443 --token {{ join_token }} --discovery-token-ca-cert-hash {{ join_ca_hash }}"
   tags:
     - install

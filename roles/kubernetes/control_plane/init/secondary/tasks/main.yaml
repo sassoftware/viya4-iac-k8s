@@ -47,7 +47,7 @@
   tags:
     - install
 
-- name: Join secondary control plane nodes to the cluster using VIP
-  ansible.builtin.command: "kubeadm join {{ kubernetes_vip_ip }}:6443 --token {{ join_token }} --discovery-token-ca-cert-hash {{ join_ca_hash }} --control-plane"
+- name: Join secondary control plane nodes to the cluster using VIP FQDN
+  ansible.builtin.command: "kubeadm join {{ kubernetes_vip_fqdn }}:6443 --token {{ join_token }} --discovery-token-ca-cert-hash {{ join_ca_hash }} --control-plane"
   tags:
     - install
