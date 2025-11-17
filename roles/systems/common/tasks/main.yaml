@@ -106,7 +106,9 @@
   tags:
     - install
     - update
-
+  retries: 3
+  delay: 3
+  
 - name: Update alternatives for Python and PIP
   ansible.builtin.shell: |
     update-alternatives --install /usr/bin/python python /usr/bin/python3 1
