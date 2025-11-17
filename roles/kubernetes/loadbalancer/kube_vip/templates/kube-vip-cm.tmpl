@@ -5,10 +5,14 @@ metadata:
   name: kubevip
   namespace: kube-system
 data:
-  {
+{% if kubernetes_loadbalancer == "kube_vip" %}
 {% for address in kubernetes_loadbalancer_addresses %}
 {% for key, value in address.items() %}
-   '{{ key }}': '{{ value }}',
+  {{ key }}: {{ value }}
 {% endfor %}
 {% endfor %}
-  }
+{% else %}
+{% for address in kubernetes_loadbalancer_addresses %}
+  {{ address }}
+{% endfor %}
+{% endif %}
