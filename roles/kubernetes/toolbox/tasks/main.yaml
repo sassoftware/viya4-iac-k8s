@@ -122,6 +122,8 @@
       - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: present
     update_cache: true
+    allow_downgrade: true
+    allow_change_held_packages: true
   tags:
     - install
 
@@ -156,6 +158,8 @@
       - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
     state: absent
     update_cache: true
+    allow_change_held_packages: true
+    allow_downgrade: true
   tags:
     - uninstall
 
