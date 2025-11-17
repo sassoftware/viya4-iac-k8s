@@ -6,6 +6,29 @@
 # Control Plane Initialization — Primary Node
 # -----------------------------------------------------------
 
+# Preflight validation for required HA configuration
+- name: Validate kubernetes_vip_ip is defined
+  ansible.builtin.assert:
+    that:
+      - kubernetes_vip_ip is defined
+      - kubernetes_vip_ip | length > 0
+    fail_msg: "ERROR: kubernetes_vip_ip must be defined for HA deployments. This is a required variable for control plane endpoint configuration."
+    success_msg: "kubernetes_vip_ip is properly configured: {{ kubernetes_vip_ip }}"
+  tags:
+    - install
+    - update
+
+- name: Validate kubernetes_vip_fqdn is defined
+  ansible.builtin.assert:
+    that:
+      - kubernetes_vip_fqdn is defined
+      - kubernetes_vip_fqdn | length > 0
+    fail_msg: "ERROR: kubernetes_vip_fqdn must be defined for HA deployments. This is a required variable for certificate generation."
+    success_msg: "kubernetes_vip_fqdn is properly configured: {{ kubernetes_vip_fqdn }}"
+  tags:
+    - install
+    - update
+
 - name: Copy cluster config (kubeadm-config.yaml)
   ansible.builtin.template:
     src: "templates/{{ item }}.j2"
