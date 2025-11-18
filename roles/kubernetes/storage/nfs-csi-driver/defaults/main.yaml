@@ -13,8 +13,9 @@ kubernetes_CSI_DRIVER_NFS_CONFIG:
     mountPermissions: "0777"
   storageClass:
     create: true
-    name: sas
-    annotations: {}
+    name: default
+    annotations: 
+      storageclass.kubernetes.io/is-default-class: "true"
     reclaimPolicy: Delete
     volumeBindingMode: Immediate
     parameters:
