@@ -21,7 +21,6 @@ kubernetes_CSI_DRIVER_NFS_CONFIG:
     parameters:
       server: "{{ nfs_ip }}"
       share: /pvs
-      subdir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}
       mountPermissions: "0777"
     mountOptions:
       - nfsvers=4.1
