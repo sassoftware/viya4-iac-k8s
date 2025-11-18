@@ -373,6 +373,8 @@ The following variables are used to describe the machine targets for the SAS Viy
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
+| V4_CFG_RWX_FILESTORE_ENDPOINT | NFS server endpoint | string | `${nfs_ip}` | Automatically set to the NFS server IP. |
+| V4_CFG_RWX_FILESTORE_PATH | Base path for NFS exports | string | "/export" | Base path used to construct namespace-specific paths. |
 
 **NOTES**: 
 
