@@ -9,6 +9,19 @@
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 
+# Remove deprecated nfs-subdir-external-provisioner Helm release if present
+- name: Remove deprecated nfs-subdir-external-provisioner
+  kubernetes.core.helm:
+    name: nfs-subdir-external-provisioner-default
+    namespace: kube-system
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
+    state: absent
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
 - name: Setting up default storage for the cluster using csi-driver-nfs
   kubernetes.core.helm:
     name: "{{ kubernetes_CSI_DRIVER_NFS_NAME }}"
