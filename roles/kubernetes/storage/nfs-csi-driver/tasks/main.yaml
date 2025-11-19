@@ -46,15 +46,6 @@
     - install
     - update
 
-- name: Create sas StorageClass for NFS CSI driver
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ kubernetes_CSI_DRIVER_NFS_SAS_SC }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-  tags:
-    - install
-    - update
-
 
 - name: Remove default StorageClass
   kubernetes.core.k8s:
@@ -62,16 +53,6 @@
     api_version: storage.k8s.io/v1
     kind: StorageClass
     name: default
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-  tags:
-    - uninstall
-
-- name: Remove sas StorageClass
-  kubernetes.core.k8s:
-    state: absent
-    api_version: storage.k8s.io/v1
-    kind: StorageClass
-    name: sas
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
   tags:
     - uninstall
