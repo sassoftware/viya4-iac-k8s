@@ -3,7 +3,9 @@
 
 ---
 ## NFS CSI Driver
-kubernetes_CSI_DRIVER_NFS_NAME: csi-driver-nfs
+# NOTE: Using same release name as viya4-deployment expects (csi-driver-nfs-sas)
+# viya4-deployment will upgrade this release to add the "sas" StorageClass
+kubernetes_CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
 kubernetes_CSI_DRIVER_NFS_NAMESPACE: kube-system
 kubernetes_CSI_DRIVER_NFS_CHART_NAME: csi-driver-nfs
 kubernetes_CSI_DRIVER_NFS_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
@@ -26,6 +28,31 @@ kubernetes_CSI_DRIVER_NFS_DEFAULT_SC:
   parameters:
     server: "{{ nfs_ip }}"
     share: /srv/nfs/kubernetes/sc/default
+    subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}"
+    mountPermissions: "0777"
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowVolumeExpansion: true
+  mountOptions:
+    - nfsvers=4.1
+    - nolock
+    - noatime
+    - nodiratime
+    - rsize=262144
+    - wsize=262144
+
+## SAS StorageClass (created separately) for viya4-deployment
+# Creating this here because viya4-deployment
+# skips StorageClass creation when Helm release already exists
+kubernetes_CSI_DRIVER_NFS_SAS_SC:
+  apiVersion: storage.k8s.io/v1
+  kind: StorageClass
+  metadata:
+    name: sas
+  provisioner: nfs.csi.k8s.io
+  parameters:
+    server: "{{ nfs_ip }}"
+    share: /export/pvs
     subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}"
     mountPermissions: "0777"
   reclaimPolicy: Delete
