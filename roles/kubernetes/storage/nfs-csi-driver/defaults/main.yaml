@@ -3,7 +3,7 @@
 
 ---
 ## NFS CSI Driver
-kubernetes_CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
+kubernetes_CSI_DRIVER_NFS_NAME: csi-driver-nfs
 kubernetes_CSI_DRIVER_NFS_NAMESPACE: kube-system
 kubernetes_CSI_DRIVER_NFS_CHART_NAME: csi-driver-nfs
 kubernetes_CSI_DRIVER_NFS_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
@@ -12,20 +12,30 @@ kubernetes_CSI_DRIVER_NFS_CONFIG:
   driver:
     mountPermissions: "0777"
   storageClass:
-    create: true
+    create: false  # Don't create SC via Helm, create it separately
+
+## Default StorageClass (created separately)
+kubernetes_CSI_DRIVER_NFS_DEFAULT_SC:
+  apiVersion: storage.k8s.io/v1
+  kind: StorageClass
+  metadata:
     name: default
-    annotations: 
+    annotations:
       storageclass.kubernetes.io/is-default-class: "true"
-    reclaimPolicy: Delete
-    volumeBindingMode: Immediate
-    parameters:
-      server: "{{ nfs_ip }}"
-      share: /pvs
-      mountPermissions: "0777"
-    mountOptions:
-      - nfsvers=4.1
-      - nolock
-      - noatime
-      - nodiratime
-      - rsize=262144
-      - wsize=262144
+  provisioner: nfs.csi.k8s.io
+  parameters:
+    server: "{{ nfs_ip }}"
+    share: /srv/nfs/kubernetes/sc/default
+    subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}"
+    mountPermissions: "0777"
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowVolumeExpansion: true
+  mountOptions:
+    - nfsvers=4.1
+    - nolock
+    - noatime
+    - nodiratime
+    - rsize=262144
+    - wsize=262144
+

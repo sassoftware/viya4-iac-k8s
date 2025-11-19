@@ -665,21 +665,28 @@ INGRESS_NGINX_CONFIG:
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
 
-### NFS CSI Driver - Default storage class
-# NFS CSI storage provisioner configuration (compatible with viya4-deployment)
-CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
-CSI_DRIVER_NFS_CONFIG:
-  driver:
-    mountPermissions: "0777"
-  storageClass:
-    name: sas
-    parameters:
-      server: "{{ nfs_ip }}"
-      share: /pvs
+### NFS CSI Driver - Default Storage Class
+
+The NFS CSI Driver is deployed to provide the "default" StorageClass for the cluster, replacing the deprecated nfs-subdir-external-provisioner from v3.15.2.
+
+**Configuration:**
+- **StorageClass name**: `default` (marked as default with `is-default-class` annotation)
+- **NFS path**: `/srv/nfs/kubernetes/sc/default`
+- **PVC path pattern**: `/srv/nfs/kubernetes/sc/default/<namespace>-<pvc-name>-<pv-name>/`
+- **Provisioner**: `nfs.csi.k8s.io`
+
+This maintains backward compatibility with v3.15.2, where the nfs-subdir-external-provisioner used the same path structure.
+
+**viya4-deployment "sas" StorageClass:**
+When viya4-deployment baseline runs, it also uses the NFS CSI driver (nfs-subdir-external-provisioner is deprecated) to create the "sas" StorageClass:
+- **StorageClass name**: `sas`
+- **NFS path**: `/export/pvs` (or `${V4_CFG_RWX_FILESTORE_PATH}/pvs`)
+- **PVC path pattern**: `/export/pvs/<namespace>-<pvc-name>-<pv-name>/`
+- **Provisioner**: `nfs.csi.k8s.io`
 
 # viya4-deployment compatibility variables
 V4_CFG_RWX_FILESTORE_ENDPOINT: "{{ nfs_ip }}"
-V4_CFG_RWX_FILESTORE_PATH: /export  # Use /export for direct NFS mounts or /pvs for CSI driver
+V4_CFG_RWX_FILESTORE_PATH: /export
 
 ### NFS Namespace Directory Management
 

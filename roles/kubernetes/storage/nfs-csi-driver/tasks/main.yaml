@@ -37,6 +37,26 @@
     - install
     - update
 
+- name: Create default StorageClass for NFS CSI driver
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ kubernetes_CSI_DRIVER_NFS_DEFAULT_SC }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  tags:
+    - install
+    - update
+
+
+- name: Remove default StorageClass
+  kubernetes.core.k8s:
+    state: absent
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+    name: default
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  tags:
+    - uninstall
+
 - name: Remove csi-driver-nfs
   kubernetes.core.helm:
     name: "{{ kubernetes_CSI_DRIVER_NFS_NAME }}"
