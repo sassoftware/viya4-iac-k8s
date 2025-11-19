@@ -49,6 +49,11 @@ kubernetes_CSI_DRIVER_NFS_SAS_SC:
   kind: StorageClass
   metadata:
     name: sas
+    labels:
+      app.kubernetes.io/managed-by: Helm
+    annotations:
+      meta.helm.sh/release-name: csi-driver-nfs-sas
+      meta.helm.sh/release-namespace: kube-system
   provisioner: nfs.csi.k8s.io
   parameters:
     server: "{{ nfs_ip }}"
