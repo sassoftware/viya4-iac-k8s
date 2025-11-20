@@ -9,31 +9,20 @@
 #
 #       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
 
-# Remove deprecated nfs-client-provisioner Helm release if present
-- name: Remove deprecated nfs-client-provisioner
-  kubernetes.core.helm:
-    name: nfs-client
-    namespace: nfs-client
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    state: absent
-  ignore_errors: true
-  tags:
-    - install
-    - update
-
 # Remove deprecated nfs-subdir-external-provisioner Helm release if present
 - name: Remove deprecated nfs-subdir-external-provisioner
   kubernetes.core.helm:
     name: nfs-subdir-external-provisioner-default
     namespace: kube-system
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    wait: true
     state: absent
   ignore_errors: true
   tags:
     - install
     - update
 
-- name: Setting up NFS CSI storage for the cluster using csi-driver-nfs
+- name: Setting up default storage for the cluster using csi-driver-nfs
   kubernetes.core.helm:
     name: "{{ kubernetes_CSI_DRIVER_NFS_NAME }}"
     namespace: "{{ kubernetes_CSI_DRIVER_NFS_NAMESPACE }}"
@@ -48,20 +37,24 @@
     - install
     - update
 
-# Patch the fsGroupPolicy in the CSIDriver after Helm install
-- name: Patch fsGroupPolicy in CSIDriver to ReadWriteOnceWithFSType
+- name: Create default StorageClass for NFS CSI driver
   kubernetes.core.k8s:
-    api_version: storage.k8s.io/v1
-    kind: CSIDriver
-    name: nfs.csi.k8s.io
+    state: present
+    definition: "{{ kubernetes_CSI_DRIVER_NFS_DEFAULT_SC }}"
     kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    merge_type: merge
-    definition:
-      spec:
-        fsGroupPolicy: ReadWriteOnceWithFSType
   tags:
     - install
     - update
+
+- name: Remove default StorageClass
+  kubernetes.core.k8s:
+    state: absent
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+    name: default
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  tags:
+    - uninstall
 
 - name: Remove csi-driver-nfs
   kubernetes.core.helm:
