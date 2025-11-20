@@ -361,7 +361,7 @@ The following variables are used to describe the machine targets for the SAS Viy
 | kubernetes_cri | Kubernetes Container Runtime Interface (CRI) | string | "containerd" | |
 | kubernetes_cri_version | Version of the CRI specifed by `kubernetes_cri` to be installed  | string | "1.7.24" | Set as an empty string to use the latest upstream version from the Docker APT repository. Currently only containerd is supported, see the [releases page](https://github.com/containerd/containerd/releases) for available versions | |
 | kubernetes_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | |
-| kubernetes_cluster_dns | Kubernetes cluster DNS IP address | string | "10.43.0.10" | Automatically calculated from the service subnet. Typically the 10th IP in the service subnet range. |
+| kubernetes_cluster_dns | Kubernetes cluster DNS IP address | string | Automatically calculated from the service subnet. Typically the 10th IP in the service subnet range. |
 | kubernetes_pod_subnet | Kubernetes pod subnet | string | "10.42.0.0/16" | |
 | kubernetes_vip_version | kube-vip version | string | "0.7.1" | |
 | kubernetes_vip_ip | kube-vip IP address | string | | |
@@ -373,6 +373,8 @@ The following variables are used to describe the machine targets for the SAS Viy
 | control_plane_ssh_key_name | Name for generated control plane SSH key | string | "cp_ssh" | |
 | jump_ip | Dynamic or static IP address that is assigned to your jump server | string | | |
 | nfs_ip | Dynamic or static IP address that is assigned to your NFS server | string | | |
+| V4_CFG_RWX_FILESTORE_ENDPOINT | NFS server endpoint | string | `${nfs_ip}` | Automatically set to the NFS server IP. |
+| V4_CFG_RWX_FILESTORE_PATH | Base path for NFS exports | string | "/export" | Base path used to construct namespace-specific paths. |
 
 **NOTES**: 
 
