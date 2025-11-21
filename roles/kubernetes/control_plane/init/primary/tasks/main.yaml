@@ -6,6 +6,14 @@
 # Control Plane Initialization — Primary Node
 # -----------------------------------------------------------
 
+- name: Calculate kubernetes_cluster_dns if not defined
+  ansible.builtin.set_fact:
+    kubernetes_cluster_dns: "{{ kubernetes_service_subnet | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('10') | ansible.utils.ipaddr('address') }}"
+  when: kubernetes_cluster_dns is not defined or kubernetes_cluster_dns == ""
+  tags:
+    - install
+    - update
+
 - name: Copy cluster config (kubeadm-config.yaml)
   ansible.builtin.template:
     src: "templates/{{ item }}.j2"
