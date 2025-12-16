@@ -8,7 +8,7 @@
 
 - name: Calculate kubernetes_cluster_dns if not defined
   ansible.builtin.set_fact:
-    kubernetes_cluster_dns: "{{ kubernetes_service_subnet | ansible.utils.ipaddr('net') | ansible.utils.ipaddr('10') | ansible.utils.ipaddr('address') }}"
+    kubernetes_cluster_dns: "{{ kubernetes_service_subnet.split('/')[0].split('.')[0:3] | join('.') }}.10"
   when: kubernetes_cluster_dns is not defined or kubernetes_cluster_dns == ""
   tags:
     - install
