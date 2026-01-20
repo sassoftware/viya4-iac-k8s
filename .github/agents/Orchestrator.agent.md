@@ -70,12 +70,13 @@ You initialize this state and pass it to the Jira Context Agent:
   "jiraKeys": ["PSCLOUD-418"],
   
   "gitCommands": {
-    "description": "Commands for downstream agents to fetch PR code locally",
-    "fetchBranch": "git fetch origin pull/42/head:pr-42",
-    "checkout": "git checkout pr-42",
-    "diffBase": "git diff main...pr-42",
-    "changedFilesCmd": "git diff --name-only main...pr-42",
-    "showFileAtRef": "git show pr-42:{filepath}"
+      "description": "Commands for downstream agents to fetch PR code without switching the main working tree",
+      "fetchRef": "git fetch origin pull/42/head:refs/remotes/origin/pr-42",
+      "worktreeAdd": "git worktree add --detach .worktrees/pr-42 refs/remotes/origin/pr-42",
+      "worktreeRemove": "git worktree remove .worktrees/pr-42",
+      "diffBase": "git diff main...refs/remotes/origin/pr-42",
+      "changedFilesCmd": "git diff --name-only main...refs/remotes/origin/pr-42",
+      "showFileAtRef": "git show refs/remotes/origin/pr-42:{filepath}"
   },
   
   "handoff": {
@@ -122,31 +123,36 @@ You initialize this state and pass it to the Jira Context Agent:
 2. Store full list in `pr.changedFiles`
 
 ### Step 3: Generate Git Command Set
-Prepare git commands for downstream agents (TCG Agent) to fetch code locally:
+Prepare git commands for downstream agents (TCG Agent) to fetch code locally **without checking out the PR in the main working tree**. Use a detached worktree or read-only refs so agent files are preserved.
 
-1. **Fetch PR branch:**
+1. **Fetch PR ref into remote-tracking namespace:**
    ```bash
-   git fetch origin pull/{prNumber}/head:pr-{prNumber}
+   git fetch origin pull/{prNumber}/head:refs/remotes/origin/pr-{prNumber}
    ```
 
-2. **Checkout command:**
+2. **Create isolated worktree (detached):**
    ```bash
-   git checkout pr-{prNumber}
+   git worktree add --detach .worktrees/pr-{prNumber} refs/remotes/origin/pr-{prNumber}
    ```
 
-3. **Diff against base:**
+3. **Diff against base (no checkout required):**
    ```bash
-   git diff {baseBranch}...pr-{prNumber}
+   git diff {baseBranch}...refs/remotes/origin/pr-{prNumber}
    ```
 
 4. **List changed files:**
    ```bash
-   git diff --name-only {baseBranch}...pr-{prNumber}
+   git diff --name-only {baseBranch}...refs/remotes/origin/pr-{prNumber}
    ```
 
 5. **Show specific file at PR ref:**
    ```bash
-   git show pr-{prNumber}:{filepath}
+   git show refs/remotes/origin/pr-{prNumber}:{filepath}
+   ```
+
+6. **Cleanup worktree when done:**
+   ```bash
+   git worktree remove .worktrees/pr-{prNumber}
    ```
 
 Store these in `gitCommands` object for TCG Agent to execute.
@@ -214,14 +220,14 @@ When handing off to the Jira Context Agent:
    - Fetch PR title, description, author, head SHA
    - Get PR diff and changed files
    - Extract Jira keys from title/description: `["PSCLOUD-418"]`
-   - Generate git command set:
-     ```json
-     "gitCommands": {
-       "fetchBranch": "git fetch origin pull/42/head:pr-42",
-       "checkout": "git checkout pr-42",
-       "diffBase": "git diff main...pr-42"
-     }
-     ```
+    - Generate git command set:
+       ```json
+       "gitCommands": {
+          "fetchRef": "git fetch origin pull/42/head:refs/remotes/origin/pr-42",
+          "worktreeAdd": "git worktree add --detach .worktrees/pr-42 refs/remotes/origin/pr-42",
+          "diffBase": "git diff main...refs/remotes/origin/pr-42"
+       }
+       ```
    - Set status: `PR_CONTEXT_ACQUIRED`
    
 3. **Phase 2:**
