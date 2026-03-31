@@ -22,6 +22,16 @@ Now each time that you invoke the container, specify the file with the `--env-fi
 
 An example of this file can be found in the `examples` directory [here](./../../examples/vsphere/.vsphere_creds.env).
 
+### OpenStack Environment File for Authentication
+
+Create a file with the OpenStack authentication variable values. Store these values outside of this repository in a secure file, such as `$HOME/.openstack_creds.env`. Protect that file so that only you have Read access to it.
+
+> **NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
+
+Pass the file to the container with the `--env-file` option.
+
+An example of this file can be found in the `examples` directory [here](./../../examples/openstack/.openstack_creds.env).
+
 ### Bare-Metal Environment File for Authentication
 
 Create a file with the authentication variable values to use with container invocation. Store these values outside of this repo in a secure file, for example `$HOME/.bare_metal_creds.env`. Protect that file with bare-metal credentials so only you have read access to it.
@@ -96,6 +106,36 @@ docker run --rm -it \
 
 This command can take a few minutes to complete. When it has completed, Terraform output values are written to the console. The inventory file, the ansible-vars.yaml file, and the kubeconfig file for the cluster, stored in the file [prefix]-oss-kubeconfig.conf, are written to the current directory, `$(pwd)`.
 
+### Create Your Infrastructure and Kubernetes Cluster - `openstack`
+
+1. Copy and fill in an OpenStack sample tfvars file into your working directory:
+
+   ```bash
+   # For floating IPs (DHCP-assigned):
+   cp examples/openstack/sample-terraform-floating-ip.tfvars $(pwd)/terraform.tfvars
+
+   # For pre-assigned static IPs:
+   cp examples/openstack/sample-terraform-static-ips.tfvars $(pwd)/terraform.tfvars
+   ```
+
+2. Run the full creation sequence using Docker:
+
+   ```bash
+   docker run --rm -it \
+     --group-add root \
+     --user $(id -u):$(id -g) \
+     --env SYSTEM=openstack \
+     --env-file $HOME/.openstack_creds.env \
+     --volume $(pwd):/workspace \
+     viya4-iac-k8s apply setup install
+   ```
+
+   - **`apply`** — runs `terraform apply`, creating all OpenStack VMs, Cinder volumes, and floating IPs. Writes `inventory` and `ansible-vars.yaml` to `/workspace`.
+   - **`setup`** — runs the `systems-install.yaml` Ansible playbook to baseline the OS on every node.
+   - **`install`** — runs the `kubernetes-install.yaml` Ansible playbook to bootstrap Kubernetes with kubeadm, CNI, CRI, kube-vip, and MetalLB.
+
+   On completion, the kubeconfig is written to `$(pwd)/[prefix]-oss-kubeconfig.conf`.
+
 ### Create Your Kubernetes Cluster Using Individual Machines - `bare_metal`
 
 To create your Kubernetes cluster, run the viya4-iac-k8s Docker image with the `install` command and the `bare_metal` option:
@@ -144,6 +184,20 @@ docker run --rm -it \
   --env-file $HOME/.vsphere_docker_creds.env \
   --volume $(pwd):/workspace \
   viya4-iac-k8s destroy
+```
+
+> **NOTE**: The `destroy` action is irreversible.
+
+### Tear Down Kubernetes Resources - OpenStack
+
+```bash
+docker run --rm -it \
+  --group-add root \
+  --user $(id -u):$(id -g) \
+  --env SYSTEM=openstack \
+  --env-file $HOME/.openstack_creds.env \
+  --volume $(pwd):/workspace \
+  viya4-iac-k8s uninstall cleanup destroy
 ```
 
 > **NOTE**: The `destroy` action is irreversible.

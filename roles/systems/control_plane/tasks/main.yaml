@@ -3,11 +3,13 @@
 
 ---
 # Install NFS client utilities required for NFS volume mounting
-- name: Install NFS client utilities
+# nfs-utils already installed on RHEL by systems/common
+- name: Install NFS client utilities (Debian/Ubuntu)
   ansible.builtin.package:
     name: nfs-common
     state: present
     update_cache: true
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update

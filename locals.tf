@@ -18,18 +18,57 @@ locals {
 
   ## Control plane nodes
   control_plane_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "control_plane" }
-  control_plane_ips   = flatten(sort(flatten([for item in values(module.control_plane) : values(item)])))
+
+  # IPs for control-plane nodes – prefer OpenStack output when deployment_type=openstack
+  control_plane_ips = var.deployment_type == "openstack" ? (
+    flatten(sort(flatten([for item in values(try(module.os_control_plane, {})) : item.ip_addresses])))
+  ) : (
+    flatten(sort(flatten([for item in values(try(module.control_plane, {})) : values(item)])))
+  )
 
   ## System nodes
   system_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
-  # system_node_ips = flatten(sort(flatten([for item in values(module.system) : values(item)]))) not used, ref for future use
 
-  ## Nodes
-  nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }
-  node_ips = flatten(sort(flatten([for item in values(merge(module.system, module.node)) : values(item)])))
+  ## Nodes (all non-control-plane, non-system pools)
+  nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }
+
+  # Worker node IPs – prefer OpenStack output when deployment_type=openstack
+  node_ips = var.deployment_type == "openstack" ? (
+    flatten(sort(flatten([for item in values(merge(try(module.os_system, {}), try(module.os_node, {}))) : item.ip_addresses])))
+  ) : (
+    flatten(sort(flatten([for item in values(merge(try(module.system, {}), try(module.node, {}))) : values(item)])))
+  )
 
   ## Load Balancer addresses and data items for kube-vip and MetalLB
   loadbalancer_addresses = var.cluster_lb_addresses != null ? length(var.cluster_lb_addresses) > 0 ? [for v in var.cluster_lb_addresses : v] : null : null
+
+  # ---------------------------------------------------------------------------
+  # Resolved auxiliary server IPs – works for vsphere, openstack, and bare_metal
+  # ---------------------------------------------------------------------------
+
+  resolved_jump_ip = (
+    var.deployment_type == "openstack" && var.create_jump ? (
+      length(try(module.os_jump.ip_addresses, [])) > 0 ? try(module.os_jump.ip_addresses[0], null) : null
+    ) : (
+      var.create_jump ? var.jump_ip : null
+    )
+  )
+
+  resolved_nfs_ip = (
+    var.deployment_type == "openstack" && var.create_nfs ? (
+      length(try(module.os_nfs.ip_addresses, [])) > 0 ? try(module.os_nfs.ip_addresses[0], null) : null
+    ) : (
+      var.create_nfs ? var.nfs_ip : null
+    )
+  )
+
+  resolved_cr_ip = (
+    var.deployment_type == "openstack" && var.create_cr ? (
+      length(try(module.os_cr.ip_addresses, [])) > 0 ? try(module.os_cr.ip_addresses[0], null) : null
+    ) : (
+      var.create_cr ? var.cr_ip : null
+    )
+  )
 
   # PostgreSQL
   postgres_servers = var.postgres_servers == null ? {} : { for k, v in var.postgres_servers : k => merge(var.postgres_server_defaults, v, ) }

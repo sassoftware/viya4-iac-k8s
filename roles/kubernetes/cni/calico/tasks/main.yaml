@@ -7,27 +7,42 @@
 #       adjust items needed when working on bare metal
 #       vm type systems.
 #
-- name: Install Operator
-  ansible.builtin.shell: |
-    kubectl apply --server-side -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/operator-crds.yaml" && \
-    kubectl apply --server-side -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/tigera-operator.yaml"
+
+# Wait for the API server to be reachable before installing CNI.
+# kube-vip may need a few seconds after a reboot to reclaim the VIP.
+- name: Wait for API server to be ready
+  ansible.builtin.shell: kubectl cluster-info 2>/dev/null
+  register: api_ready
+  until: api_ready.rc == 0
+  retries: 30
+  delay: 10
   tags:
     - install
     - update
+
+- name: Install Operator
+  ansible.builtin.shell: |
+    kubectl apply --server-side --validate=false -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/operator-crds.yaml" && \
+    kubectl apply --server-side --validate=false -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/tigera-operator.yaml"
+  register: calico_operator_result
+  until: calico_operator_result.rc == 0
   retries: 10
   delay: 10
+  tags:
+    - install
+    - update
 
-# Wait for Tigera CRDs to be available
-# - name: Wait for Tigera CRDs to be registered
-#   ansible.builtin.shell: |
-#     until kubectl get crds | grep installations.operator.tigera.io; do sleep 5; done
-#   retries: 12
-#   delay: 5
-#   register: crd_check
-#   until: crd_check.rc == 0
-#  tags:
-#    - install
-#    - update
+# Wait for Tigera CRDs to be available before applying custom resources
+- name: Wait for Tigera CRDs to be registered
+  ansible.builtin.shell: |
+    kubectl get crds | grep installations.operator.tigera.io
+  register: crd_check
+  until: crd_check.rc == 0
+  retries: 12
+  delay: 10
+  tags:
+    - install
+    - update
 
 - name: Create custom-resources for our cluster
   ansible.builtin.template:
@@ -41,7 +56,11 @@
 
 - name: Apply custom-resources
   ansible.builtin.shell: |
-    kubectl apply -f /tmp/custom-resources.yaml
+    kubectl apply --validate=false -f /tmp/custom-resources.yaml
+  register: calico_custom_result
+  until: calico_custom_result.rc == 0
+  retries: 10
+  delay: 10
   tags:
     - install
     - update

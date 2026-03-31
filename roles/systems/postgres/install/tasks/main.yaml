@@ -2,24 +2,28 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-- name: Installing the PostgreSQL gpg key
+# ===== Debian/Ubuntu: PostgreSQL via APT ===================================
+
+- name: Install PostgreSQL GPG key (Debian/Ubuntu)
   ansible.builtin.apt_key:
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
     keyring: /usr/share/keyrings/postgres-archive-keyring.gpg
     state: present
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-- name: Installing the PostgreSQL repo
+- name: Add PostgreSQL apt repository (Debian/Ubuntu)
   ansible.builtin.apt_repository:
     repo: deb [arch=amd64 signed-by=/usr/share/keyrings/postgres-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
     state: present
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-- name: Install postgres
+- name: Install postgres (Debian/Ubuntu)
   ansible.builtin.apt:
     pkg:
       - "postgresql-{{ postgres_server_version }}"
@@ -28,9 +32,53 @@
       - acl
     state: present
     update_cache: true
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
+
+# ===== RHEL/Rocky: PostgreSQL via DNF =====================================
+
+- name: Add PostgreSQL dnf repository (RHEL/Rocky)
+  ansible.builtin.shell: |
+    dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm 2>/dev/null || true
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Disable built-in PostgreSQL module (RHEL/Rocky)
+  ansible.builtin.shell: |
+    dnf -qy module disable postgresql 2>/dev/null || true
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Install postgres (RHEL/Rocky)
+  ansible.builtin.dnf:
+    name:
+      - "postgresql{{ postgres_server_version }}-server"
+      - "postgresql{{ postgres_server_version }}"
+      - python3-psycopg2
+      - acl
+    state: present
+    disable_gpg_check: true
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Initialize PostgreSQL database (RHEL/Rocky)
+  ansible.builtin.shell: |
+    /usr/pgsql-{{ postgres_server_version }}/bin/postgresql-{{ postgres_server_version }}-setup initdb
+  args:
+    creates: /var/lib/pgsql/{{ postgres_server_version }}/data/PG_VERSION
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+# ===== Common configuration ================================================
 
 - name: Update postgres admin user's password
   become: true
@@ -44,21 +92,37 @@
     - install
     - update
 
-# TODO: This should be adjusted to enhance security
+# ---- postgresql.conf path per distro ------
+
+- name: Set PostgreSQL config dir (Debian/Ubuntu)
+  ansible.builtin.set_fact:
+    pg_conf_dir: "/etc/postgresql/{{ postgres_server_version }}/main"
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Set PostgreSQL config dir (RHEL/Rocky)
+  ansible.builtin.set_fact:
+    pg_conf_dir: "/var/lib/pgsql/{{ postgres_server_version }}/data"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
 - name: Alter postgresql.conf - Update listen_addresses
   ansible.builtin.lineinfile:
-    path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
+    path: "{{ pg_conf_dir }}/postgresql.conf"
     regexp: '^#listen_addresses'
     line: "listen_addresses = '*'"
   tags:
     - install
     - update
 
-- name: Postgres SSL with user supplied cert and key - verify both defined
+- name: Postgres SSL - verify both defined
   ansible.builtin.fail:
     msg: "User has set postgres_server_ssl to on, but has only defined one of 'systems_postgres_server_ssl_cert_file,
-          systems_postgres_server_ssl_key_file'. Ensure that both these variables are set, or remove both of them from your
-          inventory file to use the Ubuntu system default cert and key files."
+          systems_postgres_server_ssl_key_file'. Ensure that both these variables are set, or remove both of them."
   when:
     - postgres_server_ssl|lower == "on"
     - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length > 0)
@@ -69,7 +133,6 @@
 
 - name: Copy user supplied cert and key to Postgres host
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
     - postgres_server_ssl|lower == "on"
     - (systems_postgres_server_ssl_cert_file|length > 0) and (systems_postgres_server_ssl_key_file|length > 0)
   tags:
@@ -92,56 +155,14 @@
         group: ssl-cert
         mode: "0640"
       register: key_result
-    - name: Set systems_postgres_server_ssl_cert_file_dest and systems_postgres_server_ssl_key_file_dest
-      ansible.builtin.set_fact:
-        systems_postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
-        systems_postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
-
-- name: Create copy of Ubuntu default cert and key
-  when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
-    - postgres_server_ssl|lower == "on"
-    - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length == 0)
-  tags:
-    - install
-    - update
-  block:
-    - name: Copy Ubuntu default SSL Cert
-      ansible.builtin.copy:
-        src: /etc/ssl/certs/ssl-cert-snakeoil.pem
-        dest: "/etc/ssl/certs/ssl-cert-sas-{{ ansible_hostname }}.pem"
-        owner: root
-        group: root
-        mode: "0644"
-        remote_src: true
-      register: cert_result
-    - name: Copy Ubuntu default SSL Key
-      ansible.builtin.copy:
-        src: /etc/ssl/private/ssl-cert-snakeoil.key
-        dest: "/etc/ssl/private/ssl-cert-sas-{{ ansible_hostname }}.key"
-        owner: root
-        group: ssl-cert
-        mode: "0640"
-        remote_src: true
-      register: key_result
-    - name: Fetch SSL Cert
-      ansible.builtin.fetch:
-        src: "{{ cert_result.dest }}"
-        dest: "{{ inventory_dir }}/"
-        flat: true
-    - name: Fetch SSL Key
-      ansible.builtin.fetch:
-        src: "{{ key_result.dest }}"
-        dest: "{{ inventory_dir }}/"
-        flat: true
-    - name: Set systems_postgres_server_ssl_cert_file_dest and systems_postgres_server_ssl_key_file_dest
+    - name: Set cert/key dest facts
       ansible.builtin.set_fact:
         systems_postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
         systems_postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
 
 - name: Alter postgresql.conf - Update ssl
   ansible.builtin.lineinfile:
-    path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
+    path: "{{ pg_conf_dir }}/postgresql.conf"
     regexp: '^ssl = (on|off)'
     line: "ssl = {{ postgres_server_ssl }}"
   tags:
@@ -150,7 +171,7 @@
 
 - name: Alter postgresql.conf - Update ssl_cert_file
   ansible.builtin.lineinfile:
-    path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
+    path: "{{ pg_conf_dir }}/postgresql.conf"
     regexp: '^ssl_cert_file ='
     line: "ssl_cert_file = '{{ systems_postgres_server_ssl_cert_file_dest }}'"
   when:
@@ -162,7 +183,7 @@
 
 - name: Alter postgresql.conf - Update ssl_key_file
   ansible.builtin.lineinfile:
-    path: /etc/postgresql/{{ postgres_server_version }}/main/postgresql.conf
+    path: "{{ pg_conf_dir }}/postgresql.conf"
     regexp: '^ssl_key_file ='
     line: "ssl_key_file = '{{ systems_postgres_server_ssl_key_file_dest }}'"
   when:
@@ -172,10 +193,9 @@
     - install
     - update
 
-# TODO: This should be adjusted to enhance security
 - name: Alter pg_hba.conf
   ansible.builtin.lineinfile:
-    path: /etc/postgresql/{{ postgres_server_version }}/main/pg_hba.conf
+    path: "{{ pg_conf_dir }}/pg_hba.conf"
     line: "{{ item }}"
   with_items:
     - '#'
@@ -187,11 +207,22 @@
     - install
     - update
 
-- name: Enable/Restart postgres daemon
+- name: Enable/Restart postgres daemon (Debian/Ubuntu)
   ansible.builtin.systemd:
     name: postgresql
     state: restarted
     enabled: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Enable/Restart postgres daemon (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: "postgresql-{{ postgres_server_version }}"
+    state: restarted
+    enabled: true
+  when: ansible_os_family == "RedHat"
   tags:
     - install
     - update

@@ -1,26 +1,34 @@
 # Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+# =============================================================================
+# vSphere – provider data sources (only evaluated when deployment_type=vsphere)
+# =============================================================================
+
 data "vsphere_datacenter" "dc" {
-  name = var.vsphere_datacenter
+  count = var.deployment_type == "vsphere" ? 1 : 0
+  name  = var.vsphere_datacenter
 }
 
 data "vsphere_resource_pool" "pool" {
+  count         = var.deployment_type == "vsphere" ? 1 : 0
   name          = var.vsphere_resource_pool
-  datacenter_id = data.vsphere_datacenter.dc.id
+  datacenter_id = data.vsphere_datacenter.dc[0].id
 }
 
-# Kubernetes - Node setup
+# =============================================================================
+# vSphere – Kubernetes node modules
+# =============================================================================
 
 ## Control Plane Nodes
 module "control_plane" {
   source = "./modules/vm"
 
-  for_each = local.control_plane_nodes
+  for_each = var.deployment_type == "vsphere" ? local.control_plane_nodes : {}
 
   name             = replace(lower(each.key), "_", "-")
-  datacenter_id    = data.vsphere_datacenter.dc.id
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
@@ -43,11 +51,11 @@ module "control_plane" {
 module "system" {
   source = "./modules/vm"
 
-  for_each = local.system_nodes
+  for_each = var.deployment_type == "vsphere" ? local.system_nodes : {}
 
   name             = replace(lower(each.key), "_", "-")
-  datacenter_id    = data.vsphere_datacenter.dc.id
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
@@ -70,11 +78,11 @@ module "system" {
 module "node" {
   source = "./modules/vm"
 
-  for_each = local.nodes
+  for_each = var.deployment_type == "vsphere" ? local.nodes : {}
 
   name             = replace(lower(each.key), "_", "-")
-  datacenter_id    = data.vsphere_datacenter.dc.id
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
@@ -97,12 +105,12 @@ module "jump" {
   source = "./modules/vm"
 
   name             = "jump"
-  instance_count   = var.create_jump ? 1 : 0
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  instance_count   = (var.deployment_type == "vsphere" && var.create_jump) ? 1 : 0
+  resource_pool_id = var.deployment_type == "vsphere" ? data.vsphere_resource_pool.pool[0].id : ""
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = var.deployment_type == "vsphere" ? data.vsphere_datacenter.dc[0].id : ""
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
@@ -119,12 +127,12 @@ module "nfs" {
   source = "./modules/vm"
 
   name             = "nfs"
-  instance_count   = var.create_nfs ? 1 : 0
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  instance_count   = (var.deployment_type == "vsphere" && var.create_nfs) ? 1 : 0
+  resource_pool_id = var.deployment_type == "vsphere" ? data.vsphere_resource_pool.pool[0].id : ""
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = var.deployment_type == "vsphere" ? data.vsphere_datacenter.dc[0].id : ""
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
@@ -141,12 +149,12 @@ module "cr" {
   source = "./modules/vm"
 
   name             = "cr"
-  instance_count   = var.create_cr ? 1 : 0
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  instance_count   = (var.deployment_type == "vsphere" && var.create_cr) ? 1 : 0
+  resource_pool_id = var.deployment_type == "vsphere" ? data.vsphere_resource_pool.pool[0].id : ""
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = var.deployment_type == "vsphere" ? data.vsphere_datacenter.dc[0].id : ""
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
@@ -162,14 +170,14 @@ module "cr" {
 module "postgresql" {
   source = "./modules/server"
 
-  for_each = local.postgres_servers != null ? length(local.postgres_servers) != 0 ? local.postgres_servers : {} : {}
+  for_each = (var.deployment_type == "vsphere" && local.postgres_servers != null) ? length(local.postgres_servers) != 0 ? local.postgres_servers : {} : {}
 
   name             = lower("${local.cluster_name}-${each.key}-pgsql")
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   dns_servers      = var.dns_servers
@@ -181,15 +189,167 @@ module "postgresql" {
   ip_address       = each.value.server_ip
 }
 
+# =============================================================================
+# OpenStack – Kubernetes node modules
+# =============================================================================
+
+## Control Plane Nodes
+module "os_control_plane" {
+  source = "./modules/openstack-vm"
+
+  for_each = var.deployment_type == "openstack" ? local.control_plane_nodes : {}
+
+  name              = replace(lower(each.key), "_", "-")
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.openstack_image_name
+  flavor_name       = lookup(each.value, "flavor", null) != null ? each.value.flavor : var.openstack_flavor_defaults
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.openstack_network_name
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
+  os_disk_size      = each.value.os_disk
+  misc_disks        = each.value.misc_disks
+  ip_addresses      = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
+}
+
+## System Nodes
+module "os_system" {
+  source = "./modules/openstack-vm"
+
+  for_each = var.deployment_type == "openstack" ? local.system_nodes : {}
+
+  name              = replace(lower(each.key), "_", "-")
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.openstack_image_name
+  flavor_name       = lookup(each.value, "flavor", null) != null ? each.value.flavor : var.openstack_flavor_defaults
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.openstack_network_name
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
+  os_disk_size      = each.value.os_disk
+  misc_disks        = each.value.misc_disks
+  ip_addresses      = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
+}
+
+## Nodes
+module "os_node" {
+  source = "./modules/openstack-vm"
+
+  for_each = var.deployment_type == "openstack" ? local.nodes : {}
+
+  name              = replace(lower(each.key), "_", "-")
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.openstack_image_name
+  flavor_name       = lookup(each.value, "flavor", null) != null ? each.value.flavor : var.openstack_flavor_defaults
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.openstack_network_name
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = length(each.value.ip_addresses) != 0 ? length(each.value.ip_addresses) : each.value.count
+  os_disk_size      = each.value.os_disk
+  misc_disks        = each.value.misc_disks
+  ip_addresses      = length(each.value.ip_addresses) != 0 ? each.value.ip_addresses : []
+}
+
+## Jump Server
+module "os_jump" {
+  source = "./modules/openstack-vm"
+
+  name              = "jump"
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.deployment_type == "openstack" ? var.openstack_image_name : "placeholder"
+  flavor_name       = var.deployment_type == "openstack" ? var.openstack_flavor_defaults : "placeholder"
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.deployment_type == "openstack" ? var.openstack_network_name : "placeholder"
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = (var.deployment_type == "openstack" && var.create_jump) ? 1 : 0
+  os_disk_size      = var.jump_disk_size
+  ip_addresses      = var.jump_ip != null ? [var.jump_ip] : []
+}
+
+## NFS Server
+module "os_nfs" {
+  source = "./modules/openstack-vm"
+
+  name              = "nfs"
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.deployment_type == "openstack" ? var.openstack_image_name : "placeholder"
+  flavor_name       = var.deployment_type == "openstack" ? var.openstack_flavor_defaults : "placeholder"
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.deployment_type == "openstack" ? var.openstack_network_name : "placeholder"
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = (var.deployment_type == "openstack" && var.create_nfs) ? 1 : 0
+  os_disk_size      = var.nfs_disk_size
+  ip_addresses      = var.nfs_ip != null ? [var.nfs_ip] : []
+}
+
+## Container Registry Server
+module "os_cr" {
+  source = "./modules/openstack-vm"
+
+  name              = "cr"
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.deployment_type == "openstack" ? var.openstack_image_name : "placeholder"
+  flavor_name       = var.deployment_type == "openstack" ? var.openstack_flavor_defaults : "placeholder"
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.deployment_type == "openstack" ? var.openstack_network_name : "placeholder"
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = (var.deployment_type == "openstack" && var.create_cr) ? 1 : 0
+  os_disk_size      = var.cr_disk_size
+  ip_addresses      = var.cr_ip != null ? [var.cr_ip] : []
+}
+
+## PostgreSQL Servers
+module "os_postgresql" {
+  source = "./modules/openstack-vm"
+
+  for_each = (var.deployment_type == "openstack" && local.postgres_servers != null) ? length(local.postgres_servers) != 0 ? local.postgres_servers : {} : {}
+
+  name              = lower("${local.cluster_name}-${each.key}-pgsql")
+  cluster_name      = local.cluster_name
+  cluster_domain    = var.cluster_domain
+  image_name        = var.openstack_image_name
+  flavor_name       = var.openstack_flavor_defaults
+  keypair_name      = var.openstack_ssh_keypair
+  security_groups   = var.openstack_security_groups
+  network_name      = var.openstack_network_name
+  floating_ip_pool  = var.openstack_floating_ip_pool
+  availability_zone = var.openstack_availability_zone
+  instance_count    = 1
+  os_disk_size      = each.value.server_disk_size
+  ip_addresses      = each.value.server_ip != "" ? [each.value.server_ip] : []
+}
+
+# =============================================================================
+# Ansible inventory + vars files (all deployment types)
+# =============================================================================
+
 resource "local_file" "inventory" {
   filename = var.inventory
   content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {
-    prefix            = replace(var.prefix, "-", "_") # NOTE: Conversion needed in taking a URL value and using it as an Ansible Inventory value
+    prefix            = replace(var.prefix, "-", "_")
     control_plane_ips = length(local.control_plane_ips) > 0 ? local.control_plane_ips : []
     node_ips          = length(local.node_ips) > 0 ? local.node_ips : []
-    nfs_ip            = var.create_nfs ? var.nfs_ip : null
-    jump_ip           = var.create_jump ? var.jump_ip : null
-    cr_ip             = var.create_cr ? var.cr_ip : null
+    nfs_ip            = local.resolved_nfs_ip
+    jump_ip           = local.resolved_jump_ip
+    cr_ip             = local.resolved_cr_ip
     postgres_servers  = local.postgres_servers
     }
   )
@@ -218,9 +378,9 @@ resource "local_file" "ansible_vars" {
     cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
     cluster_lb_type            = var.cluster_lb_type
     cluster_lb_addresses       = local.loadbalancer_addresses
-    nfs_ip                     = var.create_nfs ? var.nfs_ip : null
-    jump_ip                    = var.create_jump ? var.jump_ip : null
-    cr_ip                      = var.create_cr ? var.cr_ip : null
+    nfs_ip                     = local.resolved_nfs_ip
+    jump_ip                    = local.resolved_jump_ip
+    cr_ip                      = local.resolved_cr_ip
     system_ssh_keys_dir        = var.system_ssh_keys_dir
     node_labels                = local.node_labels
     node_taints                = local.node_taints

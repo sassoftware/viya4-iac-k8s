@@ -3,7 +3,7 @@
 
 ---
 # Task to remove all containerd artifacts
-- name: Remove all containderd container, volumes, networks
+- name: Remove all containerd container, volumes, networks
   command: crictl system prune -af --volumes
   ignore_errors: true
   tags:
@@ -28,26 +28,8 @@
   tags:
     - install
 
-# Install required packages for containerd
-- name: Install required packages
-  ansible.builtin.package:
-    name: "{{ packages }}"
-    state: present
-  vars:
-    packages:
-      - apt-transport-https # Also needed for kubeadm tooling
-      - ca-certificates     # Also needed for kubeadm tooling
-      - curl                # Also needed for kubeadm tooling
-      - gnupg2
-      - lsb-release
-      - software-properties-common
-  tags:
-    - install
-    - update
+# ---- Kernel module setup (all distros) ------------------------------------
 
-#
-# containerd - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd
-#
 - name: Add module load file for containerd
   ansible.builtin.copy:
     dest: "/etc/modules-load.d/containerd.conf"
@@ -85,19 +67,40 @@
     - install
     - update
 
-- name: Installing the Docker gpg key for containerd.io
-  ansible.builtin.apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+# ===== Debian/Ubuntu: containerd via Docker APT repo ======================
+
+- name: Install required packages for containerd (Debian/Ubuntu)
+  ansible.builtin.package:
+    name: "{{ packages }}"
     state: present
+  vars:
+    packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg2
+      - lsb-release
+      - software-properties-common
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-- name: Adding the Docker repo for containerd.io
+- name: Install Docker GPG key (Debian/Ubuntu)
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+    state: present
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Add Docker apt repo for containerd.io (Debian/Ubuntu)
   ansible.builtin.apt_repository:
     repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
@@ -106,38 +109,62 @@
   set_fact:
     kubernetes_cri_deb_rev: "-*"
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
-    - kubernetes_cri_version | regex_search("^(\d+\.)(\d+\.)(\d+)$")
+    - ansible_os_family == "Debian"
+    - kubernetes_cri_version | regex_search("^(\\d+\\.)(\\d+\\.)(\\d+)$")
   tags:
     - install
     - update
 
-- name: Installing containerd.io
+- name: Install containerd.io (Debian/Ubuntu)
   ansible.builtin.package:
-    name: "{{ packages }}"
+    name: "containerd.io{% if kubernetes_cri_version is defined and kubernetes_cri_version %}={{ kubernetes_cri_version }}{{ kubernetes_cri_deb_rev }}{% endif %}"
     state: present
     allow_downgrade: true
-  vars:
-    packages:
-      - "containerd.io{% if kubernetes_cri_version is defined and kubernetes_cri_version %}={{ kubernetes_cri_version }}{{ kubernetes_cri_deb_rev }}{%endif %}"
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-# TODO: Verify this needs an OS guard for package. Currently
-#       only tested with Ubuntu 22.04 LTS
-#
-# Installing containerd
-# - name: Installing containerd
-#   ansible.builtin.package:
-#     name: "{{ packages }}"
-#     state: present
-#   vars:
-#     packages:
-#     - containerd
-#   tags:
-#     - install
-#     - update
+# ===== RHEL/Rocky: containerd via Docker DNF repo =========================
+
+- name: Install required packages for containerd (RHEL/Rocky)
+  ansible.builtin.package:
+    name:
+      - curl
+      - ca-certificates
+    state: present
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Add Docker yum repo for containerd.io (RHEL/Rocky)
+  ansible.builtin.copy:
+    dest: /etc/yum.repos.d/docker-ce.repo
+    mode: "0644"
+    content: |
+      [docker-ce-stable]
+      name=Docker CE Stable - $basearch
+      baseurl=https://download.docker.com/linux/centos/$releasever/$basearch/stable
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://download.docker.com/linux/centos/gpg
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Install containerd.io (RHEL/Rocky)
+  ansible.builtin.dnf:
+    name: "containerd.io{% if kubernetes_cri_version is defined and kubernetes_cri_version %}-{{ kubernetes_cri_version }}{% endif %}"
+    state: present
+    disable_gpg_check: false
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+# ===== Configure containerd (all distros) ==================================
 
 - name: Create /etc/containerd directory
   ansible.builtin.file:
@@ -155,6 +182,13 @@
     - install
     - update
 
+- name: Update sandbox image to match Kubernetes 1.30+ (pause:3.10)
+  ansible.builtin.shell: |
+    sed -i 's|sandbox_image = "registry.k8s.io/pause:[^"]*"|sandbox_image = "registry.k8s.io/pause:3.10"|g' /etc/containerd/config.toml
+  tags:
+    - install
+    - update
+
 - name: Enable systemd cgroups for containerd
   ansible.builtin.lineinfile:
     path: /etc/containerd/config.toml
@@ -163,20 +197,6 @@
   tags:
     - install
     - update
-
-# - name: Enable metrics for containerd
-#   ansible.builtin.replace:
-#     path: /etc/containerd/config.toml
-#     regexp: '(^\[metrics\][\s\S]*)\[plugins\]'
-#     replace: |-
-#       [metrics]
-#         address = "0.0.0.0:10257"
-#         grpc_histogram = true
-
-#       [plugins]
-#   tags:
-#     - install
-#     - update
 
 - name: Enabling and starting containerd to start now and on boot
   ansible.builtin.systemd:

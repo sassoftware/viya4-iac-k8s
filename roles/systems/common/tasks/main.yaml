@@ -2,12 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-# TODO: Check for supported operating systems
-#       Currently supported operating systems:
-#
-#       - Ubuntu 22.04 LTS
-#       - Ubuntu 24.04 LTS
-#
+# Supported operating systems:
+#   - Ubuntu 22.04 LTS / 24.04 LTS
+#   - Rocky Linux 9 / RHEL 9
 
 # SSH keys assign to the 'root' user on your systems
 - name: Add ssh keys - root user
@@ -31,25 +28,25 @@
     - install
     - update
 
+# ---- Ubuntu-only: unattended-upgrades cleanup --------------------------------
+
 - name: Disable and turn off unattended-upgrades
   ansible.builtin.systemd:
     name: unattended-upgrades.service
     enabled: false
     state: stopped
   ignore_errors: true
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-#
-# NOTE: This is not a typo here. The process is called unattended-upgrade
-#       Where all other references are plural
-#
 - name: Kill the unattended-upgrade task if it's running
   ansible.builtin.shell: |
     if pgrep -x unattended-upgrade >/dev/null; then
       killall -q -9 unattended-upgrade
     fi
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
@@ -61,13 +58,35 @@
     purge: true
   register: apt_remove_result
   until: apt_remove_result is succeeded
-  retries: 5       # retry up to 5 times
-  delay: 30        # wait 30s between retries
+  retries: 5
+  delay: 30
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-# Update OS on each system
+# ---- RHEL/Rocky: disable firewalld and set SELinux to permissive ------------
+
+- name: Disable firewalld (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: false
+    state: stopped
+  ignore_errors: true
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Set SELinux to permissive (RHEL/Rocky)
+  ansible.builtin.shell: |
+    /usr/sbin/setenforce 0 || true
+    /usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+# ---- OS Update ---------------------------------------------------------------
+
 - name: Update OS
   ansible.builtin.package:
     name: '*'
@@ -77,24 +96,9 @@
     - install
     - update
 
-# TODO: Add code here to support RHEL/CentOS for code
-# - name: Disable the firewalld # CentOS ONLY
-#   systemd:
-#     name: firewalld
-#     enabled: no
-#     state: stopped
-#   tags:
-#     - install
+# ---- Python and NFS packages -------------------------------------------------
 
-# - name: Disable SELinux # CentOS ONLY
-#   shell: |
-#     /usr/sbin/setenforce 0
-#     /usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-#     exit 0
-#   tags:
-#     - install
-
-- name: Install Python and PIP packages
+- name: Install Python and PIP packages (Debian/Ubuntu)
   ansible.builtin.package:
     name: "{{ item }}"
     state: latest
@@ -103,11 +107,28 @@
     - python3-dev
     - python3-pip
     - nfs-common
+  when: ansible_os_family == "Debian"
+  retries: 3
+  delay: 3
   tags:
     - install
     - update
+
+- name: Install Python and NFS packages (RHEL/Rocky)
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python3
+    - python3-devel
+    - python3-pip
+    - nfs-utils
+  when: ansible_os_family == "RedHat"
   retries: 3
   delay: 3
+  tags:
+    - install
+    - update
 
 - name: Update alternatives for Python and PIP
   ansible.builtin.shell: |

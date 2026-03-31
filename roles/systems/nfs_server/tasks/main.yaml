@@ -2,43 +2,88 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-- name: Install nfs server software
+# ---- Install NFS server packages -----------------------------------------
+
+- name: Install nfs server software (Debian/Ubuntu)
   ansible.builtin.package:
     name: "{{ item }}"
     state: present
   with_items:
     - nfs-kernel-server
     - rpcbind
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
+
+# nfs-utils is already installed on Rocky by systems/common; start rpcbind
+- name: Enable and start rpcbind (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: rpcbind
+    enabled: true
+    state: started
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+# nfs-server must be started before exportfs -a so that /var/lib/nfs/etab exists
+- name: Enable and start nfs-server (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: nfs-server
+    enabled: true
+    state: started
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+# ---- Owner/group per distro -----------------------------------------------
+
+- name: Set owner and group for NFS directories (Debian/Ubuntu)
+  ansible.builtin.set_fact:
+    nfs_owner: nobody
+    nfs_group: nogroup
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Set owner and group for NFS directories (RHEL/Rocky)
+  ansible.builtin.set_fact:
+    nfs_owner: nobody
+    nfs_group: nobody
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+# ---- Mount points ---------------------------------------------------------
 
 - name: Setting up /export nfs mount point
   tags:
     - install
     - update
   block:
-    - name: Create nfs mount point
+    - name: Create nfs mount point /export
       ansible.builtin.file:
         path: /export
         state: directory
-        owner: nobody
-        group: nogroup
+        owner: "{{ nfs_owner }}"
+        group: "{{ nfs_group }}"
         mode: "0777"
 
-    - name: Test for export mount point
+    - name: Test for /export mount point in /etc/exports
       ansible.builtin.shell: grep -c "^/export" /etc/exports || true
       register: exports_file_rc
 
-    # TODO - Determine access CIDR for /export mount and cluster. * is for POC
-    # TODO - Verify these are the correct nfs options needed
-    - name: Add exported mount point to /etc/exports file - New entry
+    - name: Add /export to /etc/exports (new entry)
       ansible.builtin.lineinfile:
         path: /etc/exports
         line: /export    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: exports_file_rc.stdout == "0"
 
-    - name: Add exported mount point to /etc/exports file - Update entry
+    - name: Update /export in /etc/exports (existing entry)
       ansible.builtin.lineinfile:
         path: /etc/exports
         regexp: '^/export'
@@ -54,23 +99,21 @@
       ansible.builtin.file:
         path: /pvs
         state: directory
-        owner: nobody
-        group: nogroup
+        owner: "{{ nfs_owner }}"
+        group: "{{ nfs_group }}"
         mode: "0777"
 
-    - name: Test for /pvs export mount point
+    - name: Test for /pvs in /etc/exports
       ansible.builtin.shell: grep -c "^/pvs" /etc/exports || true
       register: pvs_file_rc
 
-    # TODO - Determine access CIDR for /pvs mount and cluster. * is for POC
-    # TODO - Verify these are the correct nfs options needed
-    - name: Add /pvs exported mount point to /etc/exports file - New entry
+    - name: Add /pvs to /etc/exports (new entry)
       ansible.builtin.lineinfile:
         path: /etc/exports
         line: /pvs    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: pvs_file_rc.stdout == "0"
 
-    - name: Add /pvs exported mount point to /etc/exports file - Update entry
+    - name: Update /pvs in /etc/exports (existing entry)
       ansible.builtin.lineinfile:
         path: /etc/exports
         regexp: '^/pvs'
@@ -82,27 +125,25 @@
     - install
     - update
   block:
-    - name: Create nfs mount point
+    - name: Create /srv/nfs/kubernetes/sc/default nfs mount point
       ansible.builtin.file:
         path: /srv/nfs/kubernetes/sc/default
         state: directory
-        owner: nobody
-        group: nogroup
+        owner: "{{ nfs_owner }}"
+        group: "{{ nfs_group }}"
         mode: "0777"
 
-    - name: Test for export mount point
+    - name: Test for /srv/nfs/kubernetes/sc/default in /etc/exports
       ansible.builtin.shell: grep -c "^/srv/nfs/kubernetes/sc/default" /etc/exports || true
       register: kubernetes_sc_default_file_rc
 
-    # TODO - Determine access CIDR for /export mount and cluster. * is for POC
-    # TODO - Verify these are the correct nfs options needed
-    - name: Add exported mount point to /etc/exports file - New entry
+    - name: Add /srv/nfs/kubernetes/sc/default to /etc/exports (new entry)
       ansible.builtin.lineinfile:
         path: /etc/exports
         line: /srv/nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
       when: kubernetes_sc_default_file_rc.stdout == "0"
 
-    - name: Add exported mount point to /etc/exports file - Update entry
+    - name: Update /srv/nfs/kubernetes/sc/default in /etc/exports (existing entry)
       ansible.builtin.lineinfile:
         path: /etc/exports
         regexp: '^/srv/nfs/kubernetes/sc/default'
@@ -111,11 +152,14 @@
 
 - name: Export file system
   ansible.builtin.command: exportfs -a
+  ignore_errors: true
   tags:
     - install
     - update
 
-- name: Start the nfs_kernel_server, portmap, and rpc-statd
+# ---- Start NFS services ---------------------------------------------------
+
+- name: Start NFS services (Debian/Ubuntu)
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
@@ -124,6 +168,22 @@
     - nfs-server
     - portmap
     - rpc-statd
+  ignore_errors: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Start NFS services (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: restarted
+  with_items:
+    - nfs-server
+    - rpcbind
+  ignore_errors: true
+  when: ansible_os_family == "RedHat"
   tags:
     - install
     - update
