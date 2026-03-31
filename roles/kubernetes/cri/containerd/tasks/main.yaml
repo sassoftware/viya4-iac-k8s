@@ -183,8 +183,10 @@
     - update
 
 - name: Update sandbox image to match Kubernetes 1.30+ (pause:3.10)
-  ansible.builtin.shell: |
-    sed -i 's|sandbox_image = "registry.k8s.io/pause:[^"]*"|sandbox_image = "registry.k8s.io/pause:3.10"|g' /etc/containerd/config.toml
+  ansible.builtin.lineinfile:
+    path: /etc/containerd/config.toml
+    regexp: 'sandbox_image = "registry.k8s.io/pause:[^"]*"'
+    line: '      sandbox_image = "registry.k8s.io/pause:3.10"'
   tags:
     - install
     - update
