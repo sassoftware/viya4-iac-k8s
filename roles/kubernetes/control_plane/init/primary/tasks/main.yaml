@@ -25,6 +25,14 @@
     - install
     - update
 
+# Initialize Kubernetes Control Plane
+- name: Check if kubeadm already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_admin_conf
+  tags:
+    - install
+
 # Workaround for https://github.com/kube-vip/kube-vip/issues/684
 # to use super-admin.conf during kubeadm init (fixed in future kube-vip releases)
 - name: Update kube-vip.yaml to use super-admin.conf for kubeadm init in 1.29+
@@ -32,20 +40,21 @@
     path: /etc/kubernetes/manifests/kube-vip.yaml
     regexp: "path: /etc/kubernetes/admin.conf"
     replace: "path: /etc/kubernetes/super-admin.conf"
-  when: kubernetes_version is version("1.29.0", "ge", version_type="semver")
+  when:
+    - not kubeadm_admin_conf.stat.exists
+    - kubernetes_version is version("1.29.0", "ge", version_type="semver")
   tags:
     - install
-    - update
 
-# Initialize Kubernetes Control Plane
 - name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
   register: kubeadm_init
   changed_when: "'initialized successfully' in kubeadm_init.stdout or 'This node has joined the cluster' in kubeadm_init.stdout"
+  when: not kubeadm_admin_conf.stat.exists
   tags:
     - install
 
-# Workaround revert — restore original kube-vip.yaml
+# Workaround revert — restore original kube-vip.yaml (runs regardless of skip)
 - name: Restore kube-vip.yaml to use admin.conf for kubeadm init in 1.29+
   ansible.builtin.replace:
     path: /etc/kubernetes/manifests/kube-vip.yaml

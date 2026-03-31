@@ -1,0 +1,56 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# OpenStack VMs use Rocky Linux / RHEL-family images with virtio block devices.
+# This role handles OS-level init tasks appropriate for that environment.
+
+- name: Set owner and group for RHEL/Rocky Linux OS
+  ansible.builtin.set_fact:
+    owner: nobody
+    group: nobody
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Set owner and group for Ubuntu OS
+  ansible.builtin.set_fact:
+    owner: nobody
+    group: nogroup
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Create /mnt/sas/volumes directory
+  ansible.builtin.file:
+    path: /mnt/sas/volumes
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: "0777"
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+#
+# Create local-static-provisioner symlinks for unpartitioned data disks
+#
+
+- name: Copy link creation script
+  ansible.builtin.copy:
+    src: ./files/link_devs.sh
+    dest: /tmp/link_devs.sh
+    owner: root
+    group: root
+    mode: "0700"
+  tags:
+    - install
+
+- name: Run link creation script
+  ansible.builtin.shell: |
+    /tmp/link_devs.sh
+  tags:
+    - install

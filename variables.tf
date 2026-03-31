@@ -6,8 +6,13 @@
 #
 variable "deployment_type" {
   type        = string
-  description = "Options are: bare_metal or vsphere"
+  description = "Options are: bare_metal, vsphere, or openstack"
   default     = "bare_metal"
+
+  validation {
+    condition     = contains(["bare_metal", "vsphere", "openstack"], var.deployment_type)
+    error_message = "ERROR: Valid values for deployment_type are: bare_metal, vsphere, openstack"
+  }
 }
 
 #
@@ -67,9 +72,99 @@ variable "vsphere_network" {
   default     = null
 }
 
-# 
-# Misc.
 #
+# OpenStack
+#
+variable "openstack_auth_url" {
+  type        = string
+  description = "The OpenStack Identity (Keystone) authentication URL."
+  default     = null
+}
+
+variable "openstack_user_name" {
+  type        = string
+  description = "The username to authenticate with OpenStack."
+  default     = null
+}
+
+variable "openstack_password" {
+  type        = string
+  description = "The password to authenticate with OpenStack."
+  default     = null
+  sensitive   = true
+}
+
+variable "openstack_tenant_name" {
+  type        = string
+  description = "The OpenStack project/tenant name."
+  default     = null
+}
+
+variable "openstack_domain_name" {
+  type        = string
+  description = "The OpenStack domain name (usually 'Default')."
+  default     = "Default"
+}
+
+variable "openstack_region" {
+  type        = string
+  description = "The OpenStack region to deploy resources in."
+  default     = null
+}
+
+variable "openstack_network_name" {
+  type        = string
+  description = "The name of the OpenStack (Neutron) network to attach VMs to."
+  default     = null
+}
+
+variable "openstack_floating_ip_pool" {
+  type        = string
+  description = "The name of the external network / floating-IP pool for VM floating IPs."
+  default     = null
+}
+
+variable "openstack_image_name" {
+  type        = string
+  description = "The name of the OpenStack Glance image to use for VMs (e.g. Ubuntu 22.04)."
+  default     = null
+}
+
+variable "openstack_ssh_keypair" {
+  type        = string
+  description = "Name of the existing OpenStack Nova keypair to inject into VMs."
+  default     = null
+}
+
+variable "openstack_security_groups" {
+  type        = list(string)
+  description = "List of OpenStack security group names to apply to every VM."
+  default     = ["default"]
+}
+
+variable "openstack_availability_zone" {
+  type        = string
+  description = "OpenStack availability zone in which to create VMs."
+  default     = "nova"
+}
+
+variable "openstack_insecure" {
+  type        = bool
+  description = "Set to true to disable TLS certificate verification for the OpenStack endpoint."
+  default     = false
+}
+
+variable "openstack_cacert_file" {
+  type        = string
+  description = "Path to a CA certificate file to verify the OpenStack endpoint TLS certificate."
+  default     = null
+}
+
+variable "openstack_flavor_defaults" {
+  type        = string
+  description = "Default OpenStack Nova flavor name used when a node pool does not specify its own flavor."
+  default     = "m1.large"
+}
 variable "gateway" {
   type        = string
   description = "Gateway IP (if using static ips)"
@@ -126,6 +221,7 @@ variable "node_pool_defaults" {
     ip_addresses = []
     node_taints  = []
     node_labels  = {}
+    flavor       = null # OpenStack Nova flavor name; overrides openstack_flavor_defaults
   }
 }
 
@@ -296,8 +392,14 @@ variable "cluster_domain" {
 }
 
 variable "cluster_version" {
-  type    = string
-  default = "1.30.8"
+  type        = string
+  description = "Kubernetes version to install. Supported versions: 1.32.x, 1.33.x, 1.34.x"
+  default     = "1.32.7"
+
+  validation {
+    condition     = can(regex("^1\\.(3[2-4])\\.", var.cluster_version))
+    error_message = "ERROR: cluster_version must be a supported Kubernetes version: 1.32.x, 1.33.x, or 1.34.x"
+  }
 }
 
 variable "cluster_cni" {
