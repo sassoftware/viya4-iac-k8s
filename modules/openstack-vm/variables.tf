@@ -54,12 +54,6 @@ variable "cluster_name" {
   description = "Kubernetes cluster name used as a prefix in instance names."
 }
 
-variable "cluster_domain" {
-  type        = string
-  description = "DNS domain suffix for the cluster."
-  default     = null
-}
-
 variable "ip_addresses" {
   type        = list(string)
   description = "List of static IP addresses to assign to instances. If empty, DHCP is used."

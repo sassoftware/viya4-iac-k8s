@@ -18,18 +18,21 @@ variable "deployment_type" {
 #
 # vSphere
 #
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_server" {
   type        = string
   description = "This is the vSphere server for the environment."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_user" {
   type        = string
   description = "vSphere server user for the environment."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_password" {
   type        = string
   description = "vSphere server password"
