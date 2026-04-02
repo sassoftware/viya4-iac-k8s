@@ -27,6 +27,7 @@
 - name: Clean up IPTables
   ansible.builtin.shell: |
     iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+  ignore_errors: true
   tags:
     - uninstall
 
