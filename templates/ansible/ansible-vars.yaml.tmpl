@@ -38,7 +38,7 @@ kubernetes_cluster_dns     : "${ cluster_dns_ip }"
 #   VIP IP Address : https://kube-vip.io/docs/installation/static/
 #
 kubernetes_vip_version : "${ cluster_vip_version }"
-kubernetes_vip_ip      : "${ cluster_vip_ip }"
+kubernetes_vip_ip      : "${ cluster_vip_ip != null ? cluster_vip_ip : "" }"
 kubernetes_vip_fqdn    : "${ cluster_vip_fqdn }"
 
 # Kubernetes - Load Balancer

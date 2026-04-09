@@ -396,12 +396,12 @@ variable "cluster_domain" {
 
 variable "cluster_version" {
   type        = string
-  description = "Kubernetes version to install. Supported versions: 1.32.x, 1.33.x, 1.34.x"
+  description = "Kubernetes version to install. Supported versions: 1.32.x, 1.33.x, 1.34.x, 1.35.x"
   default     = "1.32.7"
 
   validation {
-    condition     = can(regex("^1\\.(3[2-4])\\.", var.cluster_version))
-    error_message = "ERROR: cluster_version must be a supported Kubernetes version: 1.32.x, 1.33.x, or 1.34.x"
+    condition     = can(regex("^1\\.(3[2-5])\\.", var.cluster_version))
+    error_message = "ERROR: cluster_version must be a supported Kubernetes version: 1.32.x, 1.33.x, 1.34.x, or 1.35.x"
   }
 }
 

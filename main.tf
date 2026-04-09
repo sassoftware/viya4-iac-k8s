@@ -179,7 +179,7 @@ resource "local_file" "ansible_vars" {
     cluster_dns_ip             = local.cluster_dns_ip
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
     cluster_vip_version        = var.cluster_vip_version
-    cluster_vip_ip             = var.cluster_vip_ip
+    cluster_vip_ip             = var.cluster_vip_ip != null ? var.cluster_vip_ip : ""
     cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
     cluster_lb_type            = var.cluster_lb_type
     cluster_lb_addresses       = local.loadbalancer_addresses
