@@ -3,7 +3,11 @@ ansible_user     : "${ ansible_user }"
 ansible_password : "${ ansible_password }"
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS
+# NOTE: Kubernetes 1.35+ requires cgroup v2. Only the following OSes are supported:
+#   ubuntu  → Ubuntu 22.04 (Jammy) or 24.04 (Noble)
+#   rocky   → Rocky Linux 9 / RHEL 9
+# Ubuntu 20.04 and Rocky/RHEL 8 use cgroup v1 by default and are NOT supported.
+vm_os   : "ubuntu" # Choices : [ubuntu, rocky]
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
