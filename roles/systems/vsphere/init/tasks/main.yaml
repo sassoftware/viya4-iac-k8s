@@ -1,13 +1,26 @@
 # Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# TODO: Check for supported operating systems
-#       Currently supported operating systems:
+# Supported operating systems:
+#   - Ubuntu 22.04 LTS (cgroup v2 default)
+#   - Ubuntu 24.04 LTS (cgroup v2 default)
 #
-#       - Ubuntu 22.04 LTS
-#       - Ubuntu 24.04 LTS
-#
+# Kubernetes 1.35 drops cgroup v1 support. Ubuntu 20.04 and older use
+# cgroup v1 by default and are NOT supported with Kubernetes >= 1.35.
 ---
+- name: Verify OS supports cgroup v2 (required for Kubernetes 1.35+)
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == "Ubuntu"
+      - ansible_distribution_version in ["22.04", "24.04"]
+    fail_msg: >
+      Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}.
+      Kubernetes 1.35+ requires cgroup v2. Supported OSes: Ubuntu 22.04/24.04.
+    success_msg: "OS cgroup v2 check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  tags:
+    - install
+    - update
+
 - name: Configure partition for Ubuntu 22.04 LTS Operating System
   ansible.builtin.set_fact:
     partition_number: 2
