@@ -8,8 +8,8 @@ prefix          : "" # Prefix for the deployment e.g. prod.
 # Kubernetes - Common
 #
 # Consult SAS Viya Documentation for supported kubernetes versions for the release that is being deployed.
-kubernetes_version         : "" # Supported versions "1.32.x" - "1.34.x"
-kubernetes_cri_version     : "" # Choices : [Ubuntu 22.04: "1.7.24", Ubuntu 24.04: "1.7.28"]
+kubernetes_version         : "" # Supported versions "1.32.x" - "1.35.x"
+kubernetes_cri_version     : "" # Choices : [Ubuntu 22.04/24.04: "2.2.2"] - requires containerd >= 2.0.0 for KubeletCgroupDriverFromCRI (K8s 1.34+)
 kubernetes_cluster_dns     : "" # DNS IP for kubelet (should be service_subnet first IP + .10)
 
 # Kubernetes - VIP : https://kube-vip.io

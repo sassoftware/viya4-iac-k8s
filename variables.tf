@@ -422,8 +422,8 @@ variable "cluster_cri" {
 
 variable "cluster_cri_version" {
   type        = string
-  description = "Version of containerd to install. Must be >= 1.7.x for cgroup v2 support required by Kubernetes 1.35+."
-  default     = "1.7.28"
+  description = "Version of containerd to install. Must be >= 2.0.0 for KubeletCgroupDriverFromCRI auto-detection (GA in K8s 1.34). Required for K8s 1.36+ which drops the cgroupDriver setting."
+  default     = "2.2.2"
 }
 
 variable "cluster_service_subnet" {
