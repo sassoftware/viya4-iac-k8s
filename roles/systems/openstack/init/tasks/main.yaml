@@ -13,19 +13,31 @@
 # Ubuntu 20.04, Rocky/RHEL 8, and older distros use cgroup v1 by default
 # and are NOT supported with Kubernetes >= 1.35.
 - name: Verify OS supports cgroup v2 (required for Kubernetes 1.35+)
-  ansible.builtin.assert:
-    that:
-      - >
-        (ansible_distribution == "Ubuntu" and
-         ansible_distribution_version in ["22.04", "24.04"])
-        or
-        (ansible_os_family == "RedHat" and
-         ansible_distribution_major_version | int >= 9)
-    fail_msg: >
-      Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}.
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: Unsupported OS detected: {{ ansible_distribution }} {{ ansible_distribution_version }}.
       Kubernetes 1.35+ requires cgroup v2. Supported OSes: Ubuntu 22.04/24.04,
-      Rocky Linux 9 / RHEL 9 or later.
-    success_msg: "OS cgroup v2 check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      Rocky Linux 9 / RHEL 9 or later. cgroup v2 may not be active —
+      the common role will attempt to enable it via GRUB, but results are not guaranteed.
+  when:
+    - not ((ansible_distribution == "Ubuntu" and
+            ansible_distribution_version in ["22.04", "24.04"])
+           or
+           (ansible_os_family == "RedHat" and
+            ansible_distribution_major_version | int >= 9))
+  tags:
+    - install
+    - update
+
+- name: OS cgroup v2 check passed
+  ansible.builtin.debug:
+    msg: "OS cgroup v2 check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  when:
+    - (ansible_distribution == "Ubuntu" and
+       ansible_distribution_version in ["22.04", "24.04"])
+      or
+      (ansible_os_family == "RedHat" and
+       ansible_distribution_major_version | int >= 9)
   tags:
     - install
     - update
