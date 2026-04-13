@@ -80,6 +80,77 @@ azure_create_nsg_rules        = true   # Auto-create security rules for SSH, K8s
 # azure_use_custom_dns      = true
 # azure_custom_dns_servers  = ["10.0.0.4", "10.0.0.5"]
 
+# ==========================================
+# Kubernetes-Specific Network Configuration
+# ==========================================
+
+# The Azure network module automatically configures NSG rules for Kubernetes ports:
+#
+# Port        Purpose                      Access Level
+# -------     --------------------------   ----------------------------------------
+# 22          SSH to VMs                   Restricted by azure_vm_public_access_cidrs
+# 6443        Kubernetes API Server        Restricted by azure_cluster_endpoint_public_access_cidrs
+# 10250       Kubelet API                  Internal VNet only (automatic)
+# 10256       kube-proxy health checks     Internal VNet only (automatic)
+# 5473        Calico Typha (CNI)           Internal VNet only (automatic)
+# 179         BGP (Calico routing)         Internal VNet only (automatic)
+# 2379-2380   etcd server                  Internal VNet only (automatic)
+# 30000-32767 NodePort Services            Optional - configure below
+
+# NodePort Services Access (Optional)
+# Uncomment if you plan to use NodePort services and need external access
+# WARNING: Be restrictive with NodePort access - consider using LoadBalancer/Ingress instead
+# azure_nodeport_source_cidrs = [
+#   "203.0.113.0/24"  # Example: Specific network that needs NodePort access
+# ]
+
+# ==========================================
+# Network Planning Recommendations
+# ==========================================
+
+# VNet Size Guidelines:
+# - Small cluster (< 20 nodes):     /20 or /16 (4K-65K IPs)
+# - Medium cluster (20-100 nodes):  /16 (65K IPs)  
+# - Large cluster (100+ nodes):     /12 or larger (1M+ IPs)
+
+# Subnet Size Guidelines:
+# - k8s subnet (nodes):   
+#     Small: /22 (1024 IPs), Medium: /20 (4096 IPs), Large: /18+ (16K+ IPs)
+# - misc subnet (infra):  
+#     /24 (256 IPs) usually sufficient for jump box, NFS, container registry
+
+# Production Cluster Example (50 nodes):
+# azure_vnet_address_space = "10.100.0.0/16"
+# azure_subnets = {
+#   k8s = {
+#     prefixes          = ["10.100.0.0/20"]   # 4096 IPs for K8s nodes and pods
+#     service_endpoints = []
+#   }
+#   misc = {
+#     prefixes          = ["10.100.16.0/24"]  # 256 IPs for infrastructure
+#     service_endpoints = []
+#   }
+# }
+
+# ==========================================
+# Security Best Practices
+# ==========================================
+
+# 1. SSH Access - Restrict to your management network only
+#    ✓ Good: azure_vm_public_access_cidrs = ["203.0.113.0/24"]
+#    ✗ Bad:  azure_vm_public_access_cidrs = ["0.0.0.0/0"]
+
+# 2. Kubernetes API Access - Limit to authorized networks
+#    ✓ Good: azure_cluster_endpoint_public_access_cidrs = ["203.0.113.0/24", "198.51.100.0/24"]
+#    ✗ Bad:  azure_cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
+
+# 3. Internal Ports - Automatically secured to VNet only
+#    Ports 10250, 10256, 5473, 179, 2379-2380 are restricted to VNet internal traffic
+#    No configuration needed - this is handled automatically by the module
+
+# 4. NodePort Services - Avoid if possible, use LoadBalancer/Ingress instead
+#    If needed, restrict to specific CIDRs
+
 # Alternative: Use Managed Identity (when running Terraform on an Azure VM)
 # This is more secure than using a Service Principal
 # azure_use_msi = true

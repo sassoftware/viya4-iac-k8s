@@ -228,6 +228,65 @@ This creates:
 - A subnet for infrastructure VMs (`192.168.4.0/24` - 256 IPs)
 - Network Security Group with rules for SSH and Kubernetes API
 
+### Kubernetes Network Requirements
+
+When deploying self-managed Kubernetes on Azure VMs, the networking module automatically configures NSG rules for all required Kubernetes ports.
+
+#### Required Ports (Automatically Configured)
+
+| Port Range | Protocol | Purpose | Access Level |
+|------------|----------|---------|--------------|
+| **22** | TCP | SSH to VMs | Restricted by `azure_vm_public_access_cidrs` |
+| **6443** | TCP | Kubernetes API Server | Restricted by `azure_cluster_endpoint_public_access_cidrs` |
+| **10250** | TCP | Kubelet API | Internal VNet only (automatic) |
+| **10256** | TCP | kube-proxy health checks | Internal VNet only (automatic) |
+| **5473** | TCP | Calico Typha (CNI) | Internal VNet only (automatic) |
+| **179** | TCP | BGP routing (Calico) | Internal VNet only (automatic) |
+| **2379-2380** | TCP | etcd server (control plane) | Internal VNet only (automatic) |
+| **30000-32767** | TCP | NodePort services (optional) | Configurable via `azure_nodeport_source_cidrs` |
+
+**Security Note**: Ports marked as "Internal VNet only" are automatically restricted to VNet internal traffic using Azure's `VirtualNetwork` service tag and cannot be accessed from the internet.
+
+#### Port Configuration Examples
+
+**Secure Production Setup:**
+```hcl
+# SSH access from office network only
+azure_vm_public_access_cidrs = ["203.0.113.0/24"]
+
+# Kubernetes API access from office and VPN networks
+azure_cluster_endpoint_public_access_cidrs = [
+  "203.0.113.0/24",  # Office network
+  "198.51.100.0/24"  # VPN network
+]
+
+# NodePort services disabled (recommended - use LoadBalancer/Ingress instead)
+# Do not configure azure_nodeport_source_cidrs
+```
+
+**Development/Testing Setup:**
+```hcl
+# More permissive for development (NOT recommended for production)
+azure_default_public_access_cidrs = ["0.0.0.0/0"]  # ⚠️ Warning: Public access
+
+# Or use only your current IP
+azure_default_public_access_cidrs = ["203.0.113.42/32"]  # Your IP only
+```
+
+**With NodePort Services:**
+```hcl
+# If you must use NodePort services (not recommended for production)
+azure_vm_public_access_cidrs = ["203.0.113.0/24"]
+azure_cluster_endpoint_public_access_cidrs = ["203.0.113.0/24"]
+
+# Allow NodePort access from specific networks
+azure_nodeport_source_cidrs = [
+  "203.0.113.0/24"  # Only from your office network
+]
+```
+
+**Important**: The module automatically creates NSG rules for all listed ports. You do not need to manually configure rules for internal Kubernetes communication (ports 10250, 10256, 5473, 179, 2379-2380).
+
 ### Using Existing VNet (Bring Your Own Network)
 
 To use an existing VNet and subnets:
