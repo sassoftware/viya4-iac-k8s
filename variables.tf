@@ -203,6 +203,18 @@ variable "azure_custom_dns_servers" {
   }
 }
 
+variable "tags" {
+  description = "Tags to apply to all Azure resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "ssh_public_key" {
+  type        = string
+  description = "Path to SSH public key file for VM access (e.g., ~/.ssh/id_rsa.pub)"
+  default     = null
+}
+
 #
 # vSphere
 #
@@ -380,6 +392,19 @@ variable "jump_disk_size" {
   default = 100
 }
 
+# Azure-specific jump server variables
+variable "jump_machine_type" {
+  type        = string
+  description = "Azure VM size for jump server (e.g., Standard_B2s)"
+  default     = "Standard_B2s"
+}
+
+variable "jump_os_disk" {
+  type        = number
+  description = "OS disk size in GB for jump server"
+  default     = 64
+}
+
 # nfs
 variable "create_nfs" {
   type    = bool
@@ -403,6 +428,25 @@ variable "nfs_num_cpu" {
 variable "nfs_disk_size" {
   type    = number
   default = 400
+}
+
+# Azure-specific NFS server variables
+variable "nfs_machine_type" {
+  type        = string
+  description = "Azure VM size for NFS server (e.g., Standard_D4s_v5)"
+  default     = "Standard_D4s_v5"
+}
+
+variable "nfs_os_disk" {
+  type        = number
+  description = "OS disk size in GB for NFS server"
+  default     = 100
+}
+
+variable "nfs_data_disks" {
+  type        = list(number)
+  description = "List of data disk sizes in GB for NFS server (e.g., [1024, 1024, 1024, 1024] for 4x1TB RAID configuration)"
+  default     = [1024, 1024, 1024, 1024]
 }
 
 # container registry - TODO

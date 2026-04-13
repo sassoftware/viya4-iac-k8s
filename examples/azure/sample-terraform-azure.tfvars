@@ -162,30 +162,187 @@ azure_create_nsg_rules        = true   # Auto-create security rules for SSH, K8s
 
 # **************  RECOMMENDED  VARIABLES  ***************
 
-# Additional configuration examples:
-# See CONFIG-VARS.md for all available variables
+# ==========================================
+# Cluster Node Pools Configuration
+# ==========================================
+# 
+# Your cluster requires:
+#   - control_plane: Kubernetes control plane (1 or 3 for HA with kube-vip)
+#   - system:        Kubernetes infrastructure workloads (DNS, metrics, CNI, ingress)
+#   - cas:           Optional - Analytics workloads (comment out to disable)
+#   - generic:       General purpose workloads (compute, stateless, stateful apps)
+#
+# Azure VM Sizing Reference:
+#   D-series (General compute):   D2s_v5 (2v/8GB) to D64s_v5 (64v/256GB)
+#   E-series (Memory-optimized):  E4s_v5 (4v/32GB) to E80s_v5 (80v/504GB)
+#
+# Data Disks:
+#   - cas node:     2x512GB for memory spill
+#   - generic node: 1x256GB for cache/temp storage
+#   - system node:  No additional disks (OS only)
+#   - nfs server:   4x1TB for RAID configuration
 
-# Example: Node pools configuration
+node_pools = {
+  # REQUIRED: Control Plane - Kubernetes etcd and API server
+  # Use count=1 for single-master or count=3 for HA (with kube-vip)
+  control_plane = {
+    count        = 1
+    machine_type = "Standard_D4s_v5"      # 4 vCPU, 16 GB RAM
+    os_disk      = 100                    # 100 GB OS disk
+    data_disks   = []                     # No additional disks
+    node_taints  = ["node-role.kubernetes.io/control-plane:NoSchedule"]
+    node_labels  = {}
+  },
+
+  # REQUIRED: System Node - Infrastructure workloads
+  # Runs: DNS, kube-proxy, metrics-server, CNI (Calico), ingress controller
+  system = {
+    count        = 1
+    machine_type = "Standard_D8s_v5"      # 8 vCPU, 32 GB RAM
+    os_disk      = 100                    # 100 GB OS disk
+    data_disks   = []                     # No additional disks
+    node_taints  = []
+    node_labels  = {
+      "kubernetes.azure.com/mode" = "system"
+    }
+  },
+
+  # OPTIONAL: CAS Node - Analytics workloads (Memory-optimized)
+  # Comment out this block if you don't need CAS workloads
+  cas = {
+    count        = 1
+    machine_type = "Standard_E16s_v5"     # 16 vCPU, 128 GB RAM (memory-optimized)
+    os_disk      = 100                    # 100 GB OS disk
+    data_disks   = [512, 512]             # 2x512GB for memory spill
+    node_taints  = ["workload.sas.com/class=cas:NoSchedule"]
+    node_labels  = {
+      "workload.sas.com/class" = "cas"
+    }
+  },
+
+  # General Purpose Node Pool
+  # Handles: compute, stateless, stateful workloads
+  generic = {
+    count        = 1
+    machine_type = "Standard_D16s_v5"     # 16 vCPU, 64 GB RAM
+    os_disk      = 100                    # 100 GB OS disk
+    data_disks   = [256]                  # 1x256GB for cache/temp data
+    node_taints  = []
+    node_labels  = {
+      "workload.sas.com/class"        = "compute"
+      "launcher.sas.com/prepullImage" = "sas-programming-environment"
+    }
+  }
+}
+
+# ==========================================
+# Infrastructure VMs (Non-Kubernetes)
+# ==========================================
+
+# Jump Box / Bastion Host
+create_jump        = true
+jump_machine_type  = "Standard_B2s"       # 2 vCPU, 4 GB RAM
+jump_os_disk       = 64                   # 64 GB OS disk
+
+# NFS Server (for Persistent Volumes)
+create_nfs         = true
+nfs_machine_type   = "Standard_D4s_v5"    # 4 vCPU, 16 GB RAM
+nfs_os_disk        = 100                  # 100 GB OS disk
+nfs_data_disks     = [1024, 1024, 1024, 1024]  # 4x1TB for RAID1
+
+
+# ==========================================
+# Example Configurations
+# ==========================================
+
+# Example 1: Minimal/Development (smallest viable setup)
 # node_pools = {
 #   control_plane = {
-#     count = 3
-#     cpus = 4
-#     memory = 8192
-#     os_disk = 100
-#   }
+#     count        = 1
+#     machine_type = "Standard_D2s_v5"      # 2 vCPU, 8 GB
+#     os_disk      = 50
+#     data_disks   = []
+#     node_taints  = []
+#     node_labels  = {}
+#   },
 #   system = {
-#     count = 3
-#     cpus = 8
-#     memory = 16384
-#     os_disk = 200
-#     node_labels = {
-#       "kubernetes.azure.com/mode" = "system"
-#     }
+#     count        = 1
+#     machine_type = "Standard_D2s_v5"      # 2 vCPU, 8 GB
+#     os_disk      = 50
+#     data_disks   = []
+#     node_taints  = []
+#     node_labels  = {"kubernetes.azure.com/mode" = "system"}
+#   },
+#   generic = {
+#     count        = 2
+#     machine_type = "Standard_D4s_v5"      # 4 vCPU, 16 GB
+#     os_disk      = 100
+#     data_disks   = [256]
+#     node_taints  = []
+#     node_labels  = {}
 #   }
-#   compute = {
-#     count = 2
-#     cpus = 16
-#     memory = 32768
-#     os_disk = 200
+# }
+
+# Example 2: Production with HA Control Plane
+# node_pools = {
+#   control_plane = {
+#     count        = 3                      # HA with kube-vip
+#     machine_type = "Standard_D4s_v5"
+#     os_disk      = 150
+#     data_disks   = []
+#     node_taints  = []
+#     node_labels  = {}
+#   },
+#   system = {
+#     count        = 2
+#     machine_type = "Standard_D8s_v5"
+#     os_disk      = 150
+#     data_disks   = []
+#     node_taints  = []
+#     node_labels  = {"kubernetes.azure.com/mode" = "system"}
+#   },
+#   cas = {
+#     count        = 2
+#     machine_type = "Standard_E20s_v5"     # 20 vCPU, 160 GB (larger CAS)
+#     os_disk      = 200
+#     data_disks   = [500, 500]
+#     node_taints  = ["workload.sas.com/class=cas:NoSchedule"]
+#     node_labels  = {"workload.sas.com/class" = "cas"}
+#   },
+#   generic = {
+#     count        = 5
+#     machine_type = "Standard_D16s_v5"
+#     os_disk      = 200
+#     data_disks   = [512]
+#     node_taints  = []
+#     node_labels  = {"workload.sas.com/class" = "compute"}
+#   }
+# }
+
+# Example 3: Without CAS (Programming-only deployment)
+# node_pools = {
+#   control_plane = {
+#     count        = 1
+#     machine_type = "Standard_D4s_v5"
+#     os_disk      = 100
+#     data_disks   = []
+#     node_taints  = []
+#     node_labels  = {}
+#   },
+#   system = {
+#     count        = 1
+#     machine_type = "Standard_D8s_v5"
+#     os_disk      = 100
+#     data_disks   = []
+#     node_taints  = []
+#     node_labels  = {"kubernetes.azure.com/mode" = "system"}
+#   },
+#   generic = {
+#     count        = 3
+#     machine_type = "Standard_D8s_v5"
+#     os_disk      = 150
+#     data_disks   = [256]
+#     node_taints  = []
+#     node_labels  = {"workload.sas.com/class" = "compute"}
 #   }
 # }

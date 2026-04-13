@@ -181,6 +181,292 @@ module "postgresql" {
   ip_address       = each.value.server_ip
 }
 
+# ==========================================
+# Azure Network Deployment (Kubernetes Cluster)
+# ==========================================
+
+## Azure Virtual Network and Subnets
+module "azure_network" {
+  count = var.deployment_type == "azure" ? 1 : 0
+
+  source = "./modules/azure_network"
+
+  # Basic Configuration
+  prefix              = var.prefix
+  resource_group_name = var.azure_resource_group
+  location            = var.azure_location
+  
+  # VNet Configuration
+  vnet_name = var.azure_vnet_name
+  vnet_resource_group_name = var.azure_vnet_resource_group_name
+  vnet_address_space = [var.azure_vnet_address_space]
+  
+  # Existing Subnet Names (Bring Your Own Network)
+  existing_subnet_names = var.azure_subnet_names
+  
+  # Subnet Configuration (used when creating new VNet)
+  subnets = var.azure_subnets
+  
+  # NSG Configuration
+  nsg_name         = null  # Create new NSG with default name
+  create_nsg_rules = var.azure_create_nsg_rules
+  
+  # NSG Rules Configuration - CIDR access controls
+  ssh_source_cidrs = length(var.azure_vm_public_access_cidrs) > 0 ? var.azure_vm_public_access_cidrs : var.azure_default_public_access_cidrs
+  api_server_source_cidrs = length(var.azure_cluster_endpoint_public_access_cidrs) > 0 ? var.azure_cluster_endpoint_public_access_cidrs : var.azure_default_public_access_cidrs
+  nodeport_source_cidrs = []  # Disabled by default
+  
+  # Custom DNS (if needed)
+  dns_servers = var.azure_use_custom_dns ? var.azure_custom_dns_servers : []
+  
+  # Tags
+  tags = var.tags
+
+  depends_on = []
+}
+
+# ==========================================
+# Azure VM Deployment (Kubernetes Nodes)
+# ==========================================
+
+## Azure Control Plane Nodes
+module "azure_control_plane" {
+  for_each = var.deployment_type == "azure" ? local.azure_node_pools.control_plane != null ? {
+    for i in range(local.azure_node_pools.control_plane.count) :
+    "${local.azure_node_pools.control_plane.pool_name}-${i + 1}" => {
+      index       = i + 1
+      pool_config = local.azure_node_pools.control_plane
+    }
+  } : {} : {}
+
+  source = "./modules/azure_vm"
+
+  vm_name             = "${local.cluster_name}-control-plane-${each.value.index}"
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  vm_size             = each.value.pool_config.machine_type
+  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
+  nsg_id              = module.azure_network[0].nsg_id
+  ssh_public_key      = file(var.ssh_public_key)
+  admin_username      = "azureuser"
+
+  os_disk_size       = each.value.pool_config.os_disk
+  data_disk_sizes    = each.value.pool_config.data_disks
+  assign_public_ip   = false
+  accelerated_networking = var.azure_accelerated_networking
+
+  node_taints = each.value.pool_config.node_taints
+  node_labels = each.value.pool_config.node_labels
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${local.cluster_name}-control-plane-${each.value.index}"
+      NodeType    = "control-plane"
+      NodePool    = "control-plane"
+      Cluster     = local.cluster_name
+    }
+  )
+
+  depends_on = [module.azure_network]
+}
+
+## Azure System Nodes
+module "azure_system" {
+  for_each = var.deployment_type == "azure" ? local.azure_node_pools.system != null ? {
+    for i in range(local.azure_node_pools.system.count) :
+    "${local.azure_node_pools.system.pool_name}-${i + 1}" => {
+      index       = i + 1
+      pool_config = local.azure_node_pools.system
+    }
+  } : {} : {}
+
+  source = "./modules/azure_vm"
+
+  vm_name             = "${local.cluster_name}-system-${each.value.index}"
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  vm_size             = each.value.pool_config.machine_type
+  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
+  nsg_id              = module.azure_network[0].nsg_id
+  ssh_public_key      = file(var.ssh_public_key)
+  admin_username      = "azureuser"
+
+  os_disk_size       = each.value.pool_config.os_disk
+  data_disk_sizes    = each.value.pool_config.data_disks
+  assign_public_ip   = false
+  accelerated_networking = var.azure_accelerated_networking
+
+  node_taints = each.value.pool_config.node_taints
+  node_labels = each.value.pool_config.node_labels
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${local.cluster_name}-system-${each.value.index}"
+      NodeType    = "system"
+      NodePool    = "system"
+      Cluster     = local.cluster_name
+    }
+  )
+
+  depends_on = [module.azure_network]
+}
+
+## Azure CAS Worker Nodes
+module "azure_cas" {
+  for_each = var.deployment_type == "azure" ? local.azure_node_pools.cas != null ? {
+    for i in range(local.azure_node_pools.cas.count) :
+    "${local.azure_node_pools.cas.pool_name}-${i + 1}" => {
+      index       = i + 1
+      pool_config = local.azure_node_pools.cas
+    }
+  } : {} : {}
+
+  source = "./modules/azure_vm"
+
+  vm_name             = "${local.cluster_name}-cas-${each.value.index}"
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  vm_size             = each.value.pool_config.machine_type
+  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
+  nsg_id              = module.azure_network[0].nsg_id
+  ssh_public_key      = file(var.ssh_public_key)
+  admin_username      = "azureuser"
+
+  os_disk_size       = each.value.pool_config.os_disk
+  data_disk_sizes    = each.value.pool_config.data_disks
+  assign_public_ip   = false
+  accelerated_networking = var.azure_accelerated_networking
+
+  node_taints = each.value.pool_config.node_taints
+  node_labels = each.value.pool_config.node_labels
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${local.cluster_name}-cas-${each.value.index}"
+      NodeType    = "cas"
+      NodePool    = "cas"
+      Cluster     = local.cluster_name
+    }
+  )
+
+  depends_on = [module.azure_network]
+}
+
+## Azure Generic Worker Nodes (compute, stateless, stateful)
+module "azure_generic" {
+  for_each = var.deployment_type == "azure" ? local.azure_node_pools.generic != null ? {
+    for i in range(local.azure_node_pools.generic.count) :
+    "${local.azure_node_pools.generic.pool_name}-${i + 1}" => {
+      index       = i + 1
+      pool_config = local.azure_node_pools.generic
+    }
+  } : {} : {}
+
+  source = "./modules/azure_vm"
+
+  vm_name             = "${local.cluster_name}-generic-${each.value.index}"
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  vm_size             = each.value.pool_config.machine_type
+  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
+  nsg_id              = module.azure_network[0].nsg_id
+  ssh_public_key      = file(var.ssh_public_key)
+  admin_username      = "azureuser"
+
+  os_disk_size       = each.value.pool_config.os_disk
+  data_disk_sizes    = each.value.pool_config.data_disks
+  assign_public_ip   = false
+  accelerated_networking = var.azure_accelerated_networking
+
+  node_taints = each.value.pool_config.node_taints
+  node_labels = each.value.pool_config.node_labels
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${local.cluster_name}-generic-${each.value.index}"
+      NodeType    = "worker"
+      NodePool    = "generic"
+      Cluster     = local.cluster_name
+    }
+  )
+
+  depends_on = [module.azure_network]
+}
+
+## Azure Jump Server
+module "azure_jump" {
+  count = var.deployment_type == "azure" && var.create_jump ? 1 : 0
+
+  source = "./modules/azure_vm"
+
+  vm_name             = "${local.cluster_name}-jump"
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  vm_size             = var.jump_machine_type
+  subnet_id           = module.azure_network[0].subnet_ids["misc"]
+  nsg_id              = module.azure_network[0].nsg_id
+  ssh_public_key      = file(var.ssh_public_key)
+  admin_username      = "jumpuser"
+
+  os_disk_size       = var.jump_os_disk
+  data_disk_sizes    = []
+  assign_public_ip   = true
+  accelerated_networking = false
+
+  node_taints = []
+  node_labels = {}
+
+  tags = merge(
+    var.tags,
+    {
+      Name     = "${local.cluster_name}-jump"
+      Role     = "jump-box"
+      Cluster  = local.cluster_name
+    }
+  )
+
+  depends_on = [module.azure_network]
+}
+
+## Azure NFS Server
+module "azure_nfs" {
+  count = var.deployment_type == "azure" && var.create_nfs ? 1 : 0
+
+  source = "./modules/azure_vm"
+
+  vm_name             = "${local.cluster_name}-nfs"
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  vm_size             = var.nfs_machine_type
+  subnet_id           = module.azure_network[0].subnet_ids["misc"]
+  nsg_id              = module.azure_network[0].nsg_id
+  ssh_public_key      = file(var.ssh_public_key)
+  admin_username      = "nfsuser"
+
+  os_disk_size       = var.nfs_os_disk
+  data_disk_sizes    = var.nfs_data_disks
+  assign_public_ip   = var.azure_vm_public_ip_enabled
+  accelerated_networking = var.azure_accelerated_networking
+
+  node_taints = []
+  node_labels = {}
+
+  tags = merge(
+    var.tags,
+    {
+      Name     = "${local.cluster_name}-nfs"
+      Role     = "nfs-server"
+      Cluster  = local.cluster_name
+    }
+  )
+
+  depends_on = [module.azure_network]
+}
+
 resource "local_file" "inventory" {
   filename = var.inventory
   content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {

@@ -46,4 +46,45 @@ locals {
     }
   } : {}
 
+  # Azure-specific node pool configuration
+  # Filters node_pools for Azure deployment and creates numbered VM names
+  azure_node_pools = var.deployment_type == "azure" ? {
+    for k, v in local.node_pools : k => {
+      pool_name   = k
+      count       = v.count
+      machine_type = lookup(v, "machine_type", "Standard_D4s_v5")
+      os_disk     = lookup(v, "os_disk", 100)
+      data_disks  = lookup(v, "data_disks", [])
+      node_taints = lookup(v, "node_taints", [])
+      node_labels = lookup(v, "node_labels", {})
+    }
+  } : {}
+
+  # Create a flat list of Azure VMs for module instantiation
+  # Maps pool names to VM instances with sequential numbering
+  azure_vms = {
+    for pool_name, pool_config in local.azure_node_pools :
+    pool_name => {
+      for i in range(pool_config.count) :
+      "${pool_name}-${i + 1}" => {
+        vm_name     = "${local.cluster_name}-${pool_name}-${i + 1}"
+        machine_type = pool_config.machine_type
+        os_disk     = pool_config.os_disk
+        data_disks  = pool_config.data_disks
+        node_taints = pool_config.node_taints
+        node_labels = pool_config.node_labels
+      }
+    }
+  }
+
+  # Flatten Azure VMs for easier module instantiation
+  azure_vms_flat = flatten([
+    for pool_name, vms in local.azure_vms : [
+      for vm_key, vm_config in vms : merge(vm_config, {
+        pool_name = pool_name
+        vm_key    = vm_key
+      })
+    ]
+  ])
+
 }
