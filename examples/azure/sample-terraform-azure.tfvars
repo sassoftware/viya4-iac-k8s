@@ -33,6 +33,53 @@ azure_location       = "eastus"  # Options: eastus, westus2, centralus, etc.
 
 # **************  RECOMMENDED  VARIABLES  ***************
 
+# Azure Networking Configuration
+# VNet and Subnets will be created with these defaults if not using existing network
+azure_vnet_address_space = "192.168.0.0/16"
+
+azure_subnets = {
+  k8s = {
+    prefixes          = ["192.168.0.0/22"]  # 1024 IPs for Kubernetes nodes
+    service_endpoints = []
+  }
+  misc = {
+    prefixes          = ["192.168.4.0/24"]  # 256 IPs for jump box, NFS, etc.
+    service_endpoints = []
+  }
+}
+
+# Security: Define which IP addresses can access your infrastructure
+# IMPORTANT: Replace with your specific IP addresses for production
+# Example: Your office network, VPN, etc.
+azure_default_public_access_cidrs = [
+  # "203.0.113.0/24"  # Example: Your office network
+  # "198.51.100.0/24" # Example: Your VPN network
+]
+
+# Network features
+azure_vm_public_ip_enabled    = true   # Enable public IPs for jump box and NFS
+azure_accelerated_networking  = true   # Enable accelerated networking for better performance
+azure_create_nsg_rules        = true   # Auto-create security rules for SSH, K8s API, etc.
+
+# Optional: Use existing VNet and NSG (Bring Your Own Network)
+# Uncomment and configure if you want to use existing network resources
+# azure_vnet_name                = "my-existing-vnet"
+# azure_vnet_resource_group_name = "my-network-rg"
+# azure_nsg_name                 = "my-existing-nsg"
+# azure_subnet_names = {
+#   k8s  = "my-k8s-subnet"
+#   misc = "my-misc-subnet"
+# }
+
+# Optional: Configure specific access CIDRs for different resource types
+# If not specified, azure_default_public_access_cidrs will be used
+# azure_vm_public_access_cidrs              = ["203.0.113.0/24"]  # SSH access to VMs
+# azure_cluster_endpoint_public_access_cidrs = ["203.0.113.0/24"]  # K8s API access
+
+# Optional: Custom DNS servers
+# azure_use_custom_dns      = true
+# azure_custom_dns_servers  = ["10.0.0.4", "10.0.0.5"]
+
 # Alternative: Use Managed Identity (when running Terraform on an Azure VM)
 # This is more secure than using a Service Principal
 # azure_use_msi = true

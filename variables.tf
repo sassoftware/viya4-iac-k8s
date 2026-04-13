@@ -63,6 +63,147 @@ variable "azure_location" {
 }
 
 #
+# Azure Networking
+#
+variable "azure_vnet_resource_group_name" {
+  type        = string
+  description = "Name of pre-existing resource group containing the VNet. Leave blank to use the main resource group."
+  default     = null
+}
+
+variable "azure_vnet_name" {
+  type        = string
+  description = "Name of pre-existing VNet. Leave blank to create a new VNet."
+  default     = null
+}
+
+variable "azure_vnet_address_space" {
+  type        = string
+  description = "Address space for the VNet to be created. Only used if azure_vnet_name is not specified."
+  default     = "192.168.0.0/16"
+
+  validation {
+    condition     = can(cidrnetmask(var.azure_vnet_address_space))
+    error_message = "ERROR: azure_vnet_address_space must be a valid CIDR notation."
+  }
+}
+
+variable "azure_subnet_names" {
+  description = "Map subnet usage roles to existing subnet names. Example: {k8s = 'my-k8s-subnet', misc = 'my-misc-subnet'}"
+  type        = map(string)
+  default     = {}
+}
+
+variable "azure_subnets" {
+  description = "Subnets to be created and their CIDR prefixes. Only used if azure_vnet_name is not specified."
+  type = map(object({
+    prefixes          = list(string)
+    service_endpoints = list(string)
+  }))
+  default = {
+    k8s = {
+      prefixes          = ["192.168.0.0/22"] # 1024 IPs for K8s nodes
+      service_endpoints = []
+    }
+    misc = {
+      prefixes          = ["192.168.4.0/24"] # 256 IPs for jump, NFS, etc.
+      service_endpoints = []
+    }
+  }
+
+  validation {
+    condition = alltrue([
+      for subnet_key, subnet in var.azure_subnets : alltrue([
+        for prefix in subnet.prefixes : can(cidrnetmask(prefix))
+      ])
+    ])
+    error_message = "ERROR: All subnet prefixes must be valid CIDR notations."
+  }
+}
+
+variable "azure_nsg_name" {
+  type        = string
+  description = "Name of pre-existing Network Security Group. Leave blank to create a new NSG."
+  default     = null
+}
+
+variable "azure_create_nsg_rules" {
+  type        = bool
+  description = "Create default NSG rules for SSH, Kubernetes API, etc. Set to false if using existing NSG."
+  default     = true
+}
+
+variable "azure_default_public_access_cidrs" {
+  description = "Default list of CIDRs allowed to access Azure resources (VMs, etc.). Use ['0.0.0.0/0'] for public access (NOT recommended for production)."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.azure_default_public_access_cidrs == null ? true : alltrue([
+      for cidr in var.azure_default_public_access_cidrs : can(cidrnetmask(cidr))
+    ])
+    error_message = "ERROR: All CIDRs in azure_default_public_access_cidrs must be valid CIDR notations."
+  }
+}
+
+variable "azure_vm_public_access_cidrs" {
+  description = "List of CIDRs allowed to SSH into VMs (jump box, NFS, etc.). Defaults to azure_default_public_access_cidrs if not specified."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.azure_vm_public_access_cidrs == null ? true : alltrue([
+      for cidr in var.azure_vm_public_access_cidrs : can(cidrnetmask(cidr))
+    ])
+    error_message = "ERROR: All CIDRs in azure_vm_public_access_cidrs must be valid CIDR notations."
+  }
+}
+
+variable "azure_cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDRs allowed to access Kubernetes API endpoint. Defaults to azure_default_public_access_cidrs if not specified."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.azure_cluster_endpoint_public_access_cidrs == null ? true : alltrue([
+      for cidr in var.azure_cluster_endpoint_public_access_cidrs : can(cidrnetmask(cidr))
+    ])
+    error_message = "ERROR: All CIDRs in azure_cluster_endpoint_public_access_cidrs must be valid CIDR notations."
+  }
+}
+
+variable "azure_vm_public_ip_enabled" {
+  type        = bool
+  description = "Enable public IP addresses for VMs (jump box, NFS, etc.). Required if accessing from external networks."
+  default     = true
+}
+
+variable "azure_accelerated_networking" {
+  type        = bool
+  description = "Enable Azure Accelerated Networking for improved network performance on supported VM sizes."
+  default     = true
+}
+
+variable "azure_use_custom_dns" {
+  type        = bool
+  description = "Use custom DNS servers instead of Azure-provided DNS."
+  default     = false
+}
+
+variable "azure_custom_dns_servers" {
+  description = "List of custom DNS server IP addresses for the VNet. Only used if azure_use_custom_dns is true."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = var.azure_use_custom_dns == false || (
+      var.azure_use_custom_dns && length(var.azure_custom_dns_servers) > 0
+    )
+    error_message = "ERROR: azure_custom_dns_servers must be provided when azure_use_custom_dns is true."
+  }
+}
+
+#
 # vSphere
 #
 variable "vsphere_server" {
