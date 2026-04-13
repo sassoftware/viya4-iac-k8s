@@ -182,11 +182,11 @@
     - install
     - update
 
-- name: Update sandbox image to match Kubernetes 1.30+ (pause:3.10)
+- name: Update sandbox image to match Kubernetes 1.34+ (pause:3.10.1)
   ansible.builtin.lineinfile:
     path: /etc/containerd/config.toml
     regexp: 'sandbox_image = "registry.k8s.io/pause:[^"]*"'
-    line: '      sandbox_image = "registry.k8s.io/pause:3.10"'
+    line: '      sandbox_image = "registry.k8s.io/pause:3.10.1"'
   tags:
     - install
     - update
@@ -194,8 +194,9 @@
 - name: Enable systemd cgroups for containerd
   ansible.builtin.lineinfile:
     path: /etc/containerd/config.toml
-    regexp: '^            SystemdCgroup = false'
+    regexp: '^(\s+)SystemdCgroup = false'
     line: '            SystemdCgroup = true'
+    backrefs: false
   tags:
     - install
     - update
