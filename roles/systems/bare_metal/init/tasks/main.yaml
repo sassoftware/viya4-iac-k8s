@@ -3,12 +3,24 @@
 
 ---
 - name: Verify Ubuntu version is supported
-  ansible.builtin.assert:
-    that:
-      - ansible_distribution == "Ubuntu"
-      - ansible_distribution_version in ["22.04", "24.04"]
-    fail_msg: "Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}. Only Ubuntu 22.04 and 24.04 are supported."
-    success_msg: "OS version check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: Unsupported OS detected: {{ ansible_distribution }} {{ ansible_distribution_version }}.
+      Only Ubuntu 22.04 and 24.04 are supported. cgroup v2 may not be active —
+      the common role will attempt to enable it via GRUB, but results are not guaranteed.
+  when:
+    - not (ansible_distribution == "Ubuntu" and
+           ansible_distribution_version in ["22.04", "24.04"])
+  tags:
+    - install
+    - update
+
+- name: OS version check passed
+  ansible.builtin.debug:
+    msg: "OS version check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_version in ["22.04", "24.04"]
   tags:
     - install
     - update
