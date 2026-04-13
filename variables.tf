@@ -6,8 +6,60 @@
 #
 variable "deployment_type" {
   type        = string
-  description = "Options are: bare_metal or vsphere"
+  description = "Options are: bare_metal, vsphere, or azure"
   default     = "bare_metal"
+
+  validation {
+    condition     = contains(["bare_metal", "vsphere", "azure"], var.deployment_type)
+    error_message = "ERROR: deployment_type must be one of: bare_metal, vsphere, or azure."
+  }
+}
+
+#
+# Azure
+#
+variable "azure_subscription_id" {
+  type        = string
+  description = "The ID of the Azure Subscription."
+  default     = null
+}
+
+variable "azure_tenant_id" {
+  type        = string
+  description = "The ID of the Tenant to which the subscription belongs."
+  default     = null
+}
+
+variable "azure_client_id" {
+  type        = string
+  description = "The Client ID for the Service Principal."
+  default     = null
+  sensitive   = true
+}
+
+variable "azure_client_secret" {
+  type        = string
+  description = "The Client Secret for the Service Principal."
+  default     = null
+  sensitive   = true
+}
+
+variable "azure_use_msi" {
+  type        = bool
+  description = "Use Managed Identity for Authentication (Azure VMs only)."
+  default     = false
+}
+
+variable "azure_resource_group" {
+  type        = string
+  description = "Azure resource group name."
+  default     = null
+}
+
+variable "azure_location" {
+  type        = string
+  description = "The Azure Region to provision resources."
+  default     = "eastus"
 }
 
 #

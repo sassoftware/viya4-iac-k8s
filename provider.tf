@@ -1,6 +1,19 @@
 # Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+provider "azurerm" {
+  subscription_id = var.azure_subscription_id
+  tenant_id       = var.azure_tenant_id
+  client_id       = var.azure_client_id
+  client_secret   = var.azure_client_secret
+
+  use_msi = var.azure_use_msi
+
+  features {}
+
+  skip_provider_registration = true
+}
+
 provider "vsphere" {
   user           = var.vsphere_user
   password       = var.vsphere_password
