@@ -22,12 +22,12 @@ variable "vm_name" {
 
 variable "vm_size" {
   type        = string
-  description = "Azure VM size (e.g., Standard_D4s_v5, Standard_E16s_v5)"
+  description = "Azure VM size (e.g., Standard_D4s_v5, Standard_E16s_v5, Standard_B2s)"
   nullable    = false
 
   validation {
-    condition     = can(regex("^Standard_[A-Z][0-9]+s?_v[0-9]$", var.vm_size))
-    error_message = "VM size must be a valid Azure Standard SKU (e.g., Standard_D4s_v5)"
+    condition     = can(regex("^Standard_[A-Z]+[0-9]+[a-z]*(_v[0-9]+)?$", var.vm_size))
+    error_message = "VM size must be a valid Azure Standard SKU (e.g., Standard_D4s_v5, Standard_B2s)"
   }
 }
 

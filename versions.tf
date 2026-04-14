@@ -8,10 +8,11 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.48"
     }
-    vsphere = {
-      source  = "hashicorp/vsphere"
-      version = "~> 2.6"
-    }
+    # Uncomment for vsphere deployments
+    # vsphere = {
+    #   source  = "hashicorp/vsphere"
+    #   version = "~> 2.6"
+    # }
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"
