@@ -15,11 +15,9 @@ provider "azurerm" {
 }
 
 provider "vsphere" {
-  count = var.deployment_type == "vsphere" ? 1 : 0
-
-  user           = var.vsphere_user
-  password       = var.vsphere_password
-  vsphere_server = var.vsphere_server
+  user           = var.vsphere_user != null ? var.vsphere_user : "placeholder"
+  password       = var.vsphere_password != null ? var.vsphere_password : "placeholder"
+  vsphere_server = var.vsphere_server != null ? var.vsphere_server : "placeholder"
 
   # If you have a self-signed cert
   allow_unverified_ssl = true
