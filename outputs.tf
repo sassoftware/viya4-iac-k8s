@@ -103,31 +103,31 @@ output "node_taints_by_pool" {
 }
 
 output "kubernetes_nodes_info" {
-  description = "Kubernetes node information for deployment automation"
+  description = "Kubernetes node information for deployment automation (PSCLOUD-772)"
   value = var.deployment_type == "azure" ? {
     control_plane = {
-      count       = try(length(module.azure_control_plane), 0)
-      node_type   = "control-plane"
-      labels      = try(local.node_pools.control_plane.node_labels, {})
-      taints      = try(local.node_pools.control_plane.node_taints, [])
+      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "control_plane"])
+      node_type    = "control-plane"
+      labels       = try(local.node_pools.control_plane.node_labels, {})
+      taints       = try(local.node_pools.control_plane.node_taints, [])
       machine_type = try(local.node_pools.control_plane.machine_type, "")
     }
     system = {
-      count        = try(length(module.azure_system), 0)
+      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "system"])
       node_type    = "system"
       labels       = try(local.node_pools.system.node_labels, {})
       taints       = try(local.node_pools.system.node_taints, [])
       machine_type = try(local.node_pools.system.machine_type, "")
     }
     cas = {
-      count        = try(length(module.azure_cas), 0)
+      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "cas"])
       node_type    = "cas"
       labels       = try(local.node_pools.cas.node_labels, {})
       taints       = try(local.node_pools.cas.node_taints, [])
       machine_type = try(local.node_pools.cas.machine_type, "")
     }
     generic = {
-      count        = try(length(module.azure_generic), 0)
+      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "generic"])
       node_type    = "worker"
       labels       = try(local.node_pools.generic.node_labels, {})
       taints       = try(local.node_pools.generic.node_taints, [])

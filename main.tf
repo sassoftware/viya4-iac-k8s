@@ -226,171 +226,39 @@ module "azure_network" {
 }
 
 # ==========================================
-# Azure VM Deployment (Kubernetes Nodes)
+# PSCLOUD-784: Azure VM Deployment (Kubernetes Nodes) - Consolidated for_each
 # ==========================================
 
-## Azure Control Plane Nodes
-module "azure_control_plane" {
-  for_each = var.deployment_type == "azure" ? local.azure_node_pools.control_plane != null ? {
-    for i in range(local.azure_node_pools.control_plane.count) :
-    "${local.azure_node_pools.control_plane.pool_name}-${i + 1}" => {
-      index       = i + 1
-      pool_config = local.azure_node_pools.control_plane
-    }
-  } : {} : {}
+## Azure Kubernetes Nodes (Control Plane, System, CAS, Generic)
+module "azure_vms" {
+  for_each = var.deployment_type == "azure" ? local.azure_vms_flat : {}
 
   source = "./modules/azure_vm"
 
-  vm_name             = "${local.cluster_name}-control-plane-${each.value.index}"
+  vm_name             = each.value.vm_name
   resource_group_name = var.azure_resource_group
   azure_location      = var.azure_location
-  vm_size             = each.value.pool_config.machine_type
+  vm_size             = each.value.machine_type
   subnet_id           = module.azure_network[0].subnet_ids["k8s"]
   nsg_id              = module.azure_network[0].nsg_id
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "azureuser"
 
-  os_disk_size       = each.value.pool_config.os_disk
-  data_disk_sizes    = each.value.pool_config.data_disks
-  assign_public_ip   = false
+  os_disk_size           = each.value.os_disk
+  data_disk_sizes        = each.value.data_disks
+  assign_public_ip       = false
   accelerated_networking = var.azure_accelerated_networking
 
-  node_taints = each.value.pool_config.node_taints
-  node_labels = each.value.pool_config.node_labels
+  node_taints = each.value.node_taints
+  node_labels = each.value.node_labels
 
   tags = merge(
     var.tags,
     {
-      Name        = "${local.cluster_name}-control-plane-${each.value.index}"
-      NodeType    = "control-plane"
-      NodePool    = "control-plane"
-      Cluster     = local.cluster_name
-    }
-  )
-
-  depends_on = [module.azure_network]
-}
-
-## Azure System Nodes
-module "azure_system" {
-  for_each = var.deployment_type == "azure" ? local.azure_node_pools.system != null ? {
-    for i in range(local.azure_node_pools.system.count) :
-    "${local.azure_node_pools.system.pool_name}-${i + 1}" => {
-      index       = i + 1
-      pool_config = local.azure_node_pools.system
-    }
-  } : {} : {}
-
-  source = "./modules/azure_vm"
-
-  vm_name             = "${local.cluster_name}-system-${each.value.index}"
-  resource_group_name = var.azure_resource_group
-  azure_location      = var.azure_location
-  vm_size             = each.value.pool_config.machine_type
-  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
-  nsg_id              = module.azure_network[0].nsg_id
-  ssh_public_key      = file(var.ssh_public_key)
-  admin_username      = "azureuser"
-
-  os_disk_size       = each.value.pool_config.os_disk
-  data_disk_sizes    = each.value.pool_config.data_disks
-  assign_public_ip   = false
-  accelerated_networking = var.azure_accelerated_networking
-
-  node_taints = each.value.pool_config.node_taints
-  node_labels = each.value.pool_config.node_labels
-
-  tags = merge(
-    var.tags,
-    {
-      Name        = "${local.cluster_name}-system-${each.value.index}"
-      NodeType    = "system"
-      NodePool    = "system"
-      Cluster     = local.cluster_name
-    }
-  )
-
-  depends_on = [module.azure_network]
-}
-
-## Azure CAS Worker Nodes
-module "azure_cas" {
-  for_each = var.deployment_type == "azure" ? local.azure_node_pools.cas != null ? {
-    for i in range(local.azure_node_pools.cas.count) :
-    "${local.azure_node_pools.cas.pool_name}-${i + 1}" => {
-      index       = i + 1
-      pool_config = local.azure_node_pools.cas
-    }
-  } : {} : {}
-
-  source = "./modules/azure_vm"
-
-  vm_name             = "${local.cluster_name}-cas-${each.value.index}"
-  resource_group_name = var.azure_resource_group
-  azure_location      = var.azure_location
-  vm_size             = each.value.pool_config.machine_type
-  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
-  nsg_id              = module.azure_network[0].nsg_id
-  ssh_public_key      = file(var.ssh_public_key)
-  admin_username      = "azureuser"
-
-  os_disk_size       = each.value.pool_config.os_disk
-  data_disk_sizes    = each.value.pool_config.data_disks
-  assign_public_ip   = false
-  accelerated_networking = var.azure_accelerated_networking
-
-  node_taints = each.value.pool_config.node_taints
-  node_labels = each.value.pool_config.node_labels
-
-  tags = merge(
-    var.tags,
-    {
-      Name        = "${local.cluster_name}-cas-${each.value.index}"
-      NodeType    = "cas"
-      NodePool    = "cas"
-      Cluster     = local.cluster_name
-    }
-  )
-
-  depends_on = [module.azure_network]
-}
-
-## Azure Generic Worker Nodes (compute, stateless, stateful)
-module "azure_generic" {
-  for_each = var.deployment_type == "azure" ? local.azure_node_pools.generic != null ? {
-    for i in range(local.azure_node_pools.generic.count) :
-    "${local.azure_node_pools.generic.pool_name}-${i + 1}" => {
-      index       = i + 1
-      pool_config = local.azure_node_pools.generic
-    }
-  } : {} : {}
-
-  source = "./modules/azure_vm"
-
-  vm_name             = "${local.cluster_name}-generic-${each.value.index}"
-  resource_group_name = var.azure_resource_group
-  azure_location      = var.azure_location
-  vm_size             = each.value.pool_config.machine_type
-  subnet_id           = module.azure_network[0].subnet_ids["k8s"]
-  nsg_id              = module.azure_network[0].nsg_id
-  ssh_public_key      = file(var.ssh_public_key)
-  admin_username      = "azureuser"
-
-  os_disk_size       = each.value.pool_config.os_disk
-  data_disk_sizes    = each.value.pool_config.data_disks
-  assign_public_ip   = false
-  accelerated_networking = var.azure_accelerated_networking
-
-  node_taints = each.value.pool_config.node_taints
-  node_labels = each.value.pool_config.node_labels
-
-  tags = merge(
-    var.tags,
-    {
-      Name        = "${local.cluster_name}-generic-${each.value.index}"
-      NodeType    = "worker"
-      NodePool    = "generic"
-      Cluster     = local.cluster_name
+      Name     = each.value.vm_name
+      NodeType = each.value.pool_name
+      NodePool = each.value.pool_name
+      Cluster  = local.cluster_name
     }
   )
 
@@ -471,10 +339,10 @@ resource "local_file" "inventory" {
   filename = var.inventory
   content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {
     prefix            = replace(var.prefix, "-", "_") # NOTE: Conversion needed in taking a URL value and using it as an Ansible Inventory value
-    control_plane_ips = length(local.control_plane_ips) > 0 ? local.control_plane_ips : []
-    node_ips          = length(local.node_ips) > 0 ? local.node_ips : []
-    nfs_ip            = var.create_nfs ? var.nfs_ip : null
-    jump_ip           = var.create_jump ? var.jump_ip : null
+    control_plane_ips = length(local.final_control_plane_ips) > 0 ? local.final_control_plane_ips : []
+    node_ips          = length(local.final_node_ips) > 0 ? local.final_node_ips : []
+    nfs_ip            = local.final_nfs_ip
+    jump_ip           = local.final_jump_ip
     cr_ip             = var.create_cr ? var.cr_ip : null
     postgres_servers  = local.postgres_servers
     }
@@ -504,8 +372,8 @@ resource "local_file" "ansible_vars" {
     cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
     cluster_lb_type            = var.cluster_lb_type
     cluster_lb_addresses       = local.loadbalancer_addresses
-    nfs_ip                     = var.create_nfs ? var.nfs_ip : null
-    jump_ip                    = var.create_jump ? var.jump_ip : null
+    nfs_ip                     = local.final_nfs_ip
+    jump_ip                    = local.final_jump_ip
     cr_ip                      = var.create_cr ? var.cr_ip : null
     system_ssh_keys_dir        = var.system_ssh_keys_dir
     node_labels                = local.node_labels

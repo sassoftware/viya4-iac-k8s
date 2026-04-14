@@ -87,4 +87,27 @@ locals {
     ]
   ])
 
+  # ==========================================
+  # PSCLOUD-785: Azure IP Extraction
+  # ==========================================
+  
+  # Extract IPs from consolidated azure_vms module
+  azure_control_plane_ips = var.deployment_type == "azure" ? [
+    for vm in module.azure_vms : vm.private_ip_address if vm.pool_name == "control_plane"
+  ] : []
+
+  azure_node_ips = var.deployment_type == "azure" ? [
+    for vm in module.azure_vms : vm.private_ip_address if contains(["system", "cas", "generic"], vm.pool_name)
+  ] : []
+
+  azure_jump_ip = var.deployment_type == "azure" && var.create_jump ? module.azure_jump[0].private_ip_address : null
+
+  azure_nfs_ip = var.deployment_type == "azure" && var.create_nfs ? module.azure_nfs[0].private_ip_address : null
+
+  # Select appropriate IPs based on deployment type
+  final_control_plane_ips = var.deployment_type == "azure" ? local.azure_control_plane_ips : local.control_plane_ips
+  final_node_ips = var.deployment_type == "azure" ? local.azure_node_ips : local.node_ips
+  final_jump_ip = var.deployment_type == "azure" ? local.azure_jump_ip : (var.create_jump ? var.jump_ip : null)
+  final_nfs_ip = var.deployment_type == "azure" ? local.azure_nfs_ip : (var.create_nfs ? var.nfs_ip : null)
+
 }
