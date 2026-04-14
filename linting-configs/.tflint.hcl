@@ -7,8 +7,9 @@
 # For more information on TFlint Ruleset for GCP, see https://github.com/terraform-linters/tflint-ruleset-google/blob/master/README.md
 
 config {
-  # Enables module inspection.
-  call_module_type = "all"
+  # Disable module inspection to avoid scanning Ansible roles and non-Terraform directories
+  # This prevents TFLint plugin crashes when scanning examples/, roles/, tests/, etc.
+  call_module_type = "none"
 }
 
 plugin "terraform" {

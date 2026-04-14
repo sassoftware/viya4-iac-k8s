@@ -77,27 +77,38 @@ locals {
     }
   }
 
-  # Flatten Azure VMs for easier module instantiation
-  azure_vms_flat = flatten([
-    for pool_name, vms in local.azure_vms : [
-      for vm_key, vm_config in vms : merge(vm_config, {
-        pool_name = pool_name
-        vm_key    = vm_key
-      })
-    ]
-  ])
+  # Flatten Azure VMs to map for for_each (keyed by pool_name-vm_key)
+  azure_vms_flat = {
+    for item in flatten([
+      for pool_name, vms in local.azure_vms : [
+        for vm_key, vm_config in vms : {
+          key       = "${pool_name}-${vm_key}"
+          pool_name = pool_name
+          vm_key    = vm_key
+          config    = vm_config
+        }
+      ]
+      ]) : item.key => merge(item.config, {
+      pool_name = item.pool_name
+      vm_key    = item.vm_key
+    })
+  }
 
   # ==========================================
   # PSCLOUD-785: Azure IP Extraction
   # ==========================================
 
-  # Extract IPs from consolidated azure_vms module
+  # Extract IPs from consolidated azure_vms module (keys are "pool_name-vm_key")
   azure_control_plane_ips = var.deployment_type == "azure" ? [
-    for vm in module.azure_vms : vm.private_ip_address if vm.pool_name == "control_plane"
+    for key, vm in module.azure_vms : vm.private_ip_address if startswith(key, "control_plane-")
   ] : []
 
   azure_node_ips = var.deployment_type == "azure" ? [
-    for vm in module.azure_vms : vm.private_ip_address if contains(["system", "cas", "generic"], vm.pool_name)
+    for key, vm in module.azure_vms : vm.private_ip_address if anytrue([
+      startswith(key, "system-"),
+      startswith(key, "cas-"),
+      startswith(key, "generic-")
+    ])
   ] : []
 
   azure_jump_ip = var.deployment_type == "azure" && var.create_jump ? module.azure_jump[0].private_ip_address : null

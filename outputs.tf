@@ -106,28 +106,28 @@ output "kubernetes_nodes_info" {
   description = "Kubernetes node information for deployment automation (PSCLOUD-772)"
   value = var.deployment_type == "azure" ? {
     control_plane = {
-      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "control_plane"])
+      count        = length([for key, vm in module.azure_vms : vm if startswith(key, "control_plane-")])
       node_type    = "control-plane"
       labels       = try(local.node_pools.control_plane.node_labels, {})
       taints       = try(local.node_pools.control_plane.node_taints, [])
       machine_type = try(local.node_pools.control_plane.machine_type, "")
     }
     system = {
-      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "system"])
+      count        = length([for key, vm in module.azure_vms : vm if startswith(key, "system-")])
       node_type    = "system"
       labels       = try(local.node_pools.system.node_labels, {})
       taints       = try(local.node_pools.system.node_taints, [])
       machine_type = try(local.node_pools.system.machine_type, "")
     }
     cas = {
-      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "cas"])
+      count        = length([for key, vm in module.azure_vms : vm if startswith(key, "cas-")])
       node_type    = "cas"
       labels       = try(local.node_pools.cas.node_labels, {})
       taints       = try(local.node_pools.cas.node_taints, [])
       machine_type = try(local.node_pools.cas.machine_type, "")
     }
     generic = {
-      count        = length([for vm in module.azure_vms : vm if vm.pool_name == "generic"])
+      count        = length([for key, vm in module.azure_vms : vm if startswith(key, "generic-")])
       node_type    = "worker"
       labels       = try(local.node_pools.generic.node_labels, {})
       taints       = try(local.node_pools.generic.node_taints, [])
