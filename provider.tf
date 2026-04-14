@@ -26,14 +26,15 @@ provider "azurerm" {
   resource_provider_registrations = "none"
 }
 
-# --- vSphere Provider (for deployment_type = "vsphere") ---
-# Uncomment when using vsphere deployment type
-#
-# provider "vsphere" {
-#   user           = var.vsphere_user
-#   password       = var.vsphere_password
-#   vsphere_server = var.vsphere_server
-#
-#   # If you have a self-signed cert
-#   allow_unverified_ssl = true
-# }
+# --- vSphere Provider ---
+# For Azure deployments: provide dummy values (provider won't be used since all vsphere modules have count=0)
+# For vsphere deployments: provide actual credentials
+provider "vsphere" {
+  user           = var.deployment_type == "vsphere" ? var.vsphere_user : "dummy"
+  password       = var.deployment_type == "vsphere" ? var.vsphere_password : "dummy"
+  vsphere_server = var.deployment_type == "vsphere" ? var.vsphere_server : "localhost"
+
+  # If you have a self-signed cert
+  allow_unverified_ssl = true
+}
+
