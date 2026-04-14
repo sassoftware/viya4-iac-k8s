@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 data "vsphere_datacenter" "dc" {
-  name = var.vsphere_datacenter
+  count = var.deployment_type == "vsphere" ? 1 : 0
+  name  = var.vsphere_datacenter
 }
 
 data "vsphere_resource_pool" "pool" {
+  count         = var.deployment_type == "vsphere" ? 1 : 0
   name          = var.vsphere_resource_pool
-  datacenter_id = data.vsphere_datacenter.dc.id
+  datacenter_id = data.vsphere_datacenter.dc[0].id
 }
 
 # Kubernetes - Node setup
@@ -16,11 +18,11 @@ data "vsphere_resource_pool" "pool" {
 module "control_plane" {
   source = "./modules/vm"
 
-  for_each = local.control_plane_nodes
+  for_each = var.deployment_type == "vsphere" ? local.control_plane_nodes : {}
 
   name             = replace(lower(each.key), "_", "-")
-  datacenter_id    = data.vsphere_datacenter.dc.id
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
@@ -43,11 +45,11 @@ module "control_plane" {
 module "system" {
   source = "./modules/vm"
 
-  for_each = local.system_nodes
+  for_each = var.deployment_type == "vsphere" ? local.system_nodes : {}
 
   name             = replace(lower(each.key), "_", "-")
-  datacenter_id    = data.vsphere_datacenter.dc.id
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
@@ -70,11 +72,11 @@ module "system" {
 module "node" {
   source = "./modules/vm"
 
-  for_each = local.nodes
+  for_each = var.deployment_type == "vsphere" ? local.nodes : {}
 
   name             = replace(lower(each.key), "_", "-")
-  datacenter_id    = data.vsphere_datacenter.dc.id
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
