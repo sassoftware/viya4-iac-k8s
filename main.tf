@@ -212,8 +212,8 @@ module "azure_network" {
   create_nsg_rules = var.azure_create_nsg_rules
 
   # NSG Rules Configuration - CIDR access controls
-  ssh_source_cidrs        = length(var.azure_vm_public_access_cidrs) > 0 ? var.azure_vm_public_access_cidrs : var.azure_default_public_access_cidrs
-  api_server_source_cidrs = length(var.azure_cluster_endpoint_public_access_cidrs) > 0 ? var.azure_cluster_endpoint_public_access_cidrs : var.azure_default_public_access_cidrs
+  ssh_source_cidrs        = try(length(var.azure_vm_public_access_cidrs) > 0, false) ? var.azure_vm_public_access_cidrs : var.azure_default_public_access_cidrs
+  api_server_source_cidrs = try(length(var.azure_cluster_endpoint_public_access_cidrs) > 0, false) ? var.azure_cluster_endpoint_public_access_cidrs : var.azure_default_public_access_cidrs
   nodeport_source_cidrs   = [] # Disabled by default
 
   # Custom DNS (if needed)
