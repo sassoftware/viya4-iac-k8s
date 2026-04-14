@@ -9,13 +9,13 @@ output "jump_admin_username" {
   value = "root"
 }
 
-output "jump_private_ip" {
-  value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
-}
+# output "jump_private_ip" {
+#   value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
+# }
 
-output "jump_public_ip" {
-  value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
-}
+# output "jump_public_ip" {
+#   value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
+# }
 
 # TODO: Fix this must be a variable
 output "jump_rwx_filestore_path" {
@@ -34,13 +34,13 @@ output "nfs_admin_username" {
   value = "root"
 }
 
-output "nfs_private_ip" {
-  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
-}
+# output "nfs_private_ip" {
+#   value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
+# }
 
-output "nfs_public_ip" {
-  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
-}
+# output "nfs_public_ip" {
+#   value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
+# }
 
 output "prefix" {
   value = var.prefix
@@ -54,9 +54,9 @@ output "provder_account" {
   value = "oss"
 }
 
-output "rwx_filestore_endpoint" {
-  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
-}
+# output "rwx_filestore_endpoint" {
+#   value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
+# }
 
 # TODO: Fix this must be a variable
 output "rwx_filestore_path" {
