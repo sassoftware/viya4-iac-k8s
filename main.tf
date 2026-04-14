@@ -346,51 +346,51 @@ module "azure_nfs" {
   depends_on = [module.azure_network]
 }
 
-resource "local_file" "inventory" {
-  count    = var.deployment_type != "azure" ? 1 : 0
-  filename = var.inventory
-  content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {
-    prefix            = replace(var.prefix, "-", "_") # NOTE: Conversion needed in taking a URL value and using it as an Ansible Inventory value
-    control_plane_ips = length(local.final_control_plane_ips) > 0 ? local.final_control_plane_ips : []
-    node_ips          = length(local.final_node_ips) > 0 ? local.final_node_ips : []
-    nfs_ip            = local.final_nfs_ip
-    jump_ip           = local.final_jump_ip
-    cr_ip             = var.create_cr ? var.cr_ip : null
-    postgres_servers  = local.postgres_servers
-    }
-  )
-}
+# resource "local_file" "inventory" {
+#   count    = var.deployment_type != "azure" ? 1 : 0
+#   filename = var.inventory
+#   content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {
+#     prefix            = replace(var.prefix, "-", "_") # NOTE: Conversion needed in taking a URL value and using it as an Ansible Inventory value
+#     control_plane_ips = length(local.final_control_plane_ips) > 0 ? local.final_control_plane_ips : []
+#     node_ips          = length(local.final_node_ips) > 0 ? local.final_node_ips : []
+#     nfs_ip            = local.final_nfs_ip
+#     jump_ip           = local.final_jump_ip
+#     cr_ip             = var.create_cr ? var.cr_ip : null
+#     postgres_servers  = local.postgres_servers
+#     }
+#   )
+# }
 
-resource "local_file" "ansible_vars" {
-  count    = var.deployment_type != "azure" ? 1 : 0
-  filename = var.ansible_vars
-  content = templatefile("${path.module}/templates/ansible/ansible-vars.yaml.tmpl", {
-    ansible_user               = var.ansible_user
-    ansible_password           = var.ansible_password
-    deployment_type            = var.deployment_type
-    iac_tooling                = var.iac_tooling
-    prefix                     = var.prefix
-    cluster_name               = local.cluster_name
-    cluster_version            = var.cluster_version
-    cluster_cni                = var.cluster_cni
-    cluster_cni_version        = var.cluster_cni_version
-    cluster_cri                = var.cluster_cri
-    cluster_cri_version        = var.cluster_cri_version
-    cluster_service_subnet     = var.cluster_service_subnet
-    cluster_pod_subnet         = var.cluster_pod_subnet
-    cluster_dns_ip             = local.cluster_dns_ip
-    control_plane_ssh_key_name = var.control_plane_ssh_key_name
-    cluster_vip_version        = var.cluster_vip_version
-    cluster_vip_ip             = var.cluster_vip_ip
-    cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${coalesce(var.cluster_domain, "local")}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${coalesce(var.cluster_domain, "local")}"
-    cluster_lb_type            = var.cluster_lb_type
-    cluster_lb_addresses       = local.loadbalancer_addresses
-    nfs_ip                     = local.final_nfs_ip
-    jump_ip                    = local.final_jump_ip
-    cr_ip                      = var.create_cr ? var.cr_ip : null
-    system_ssh_keys_dir        = var.system_ssh_keys_dir
-    node_labels                = local.node_labels
-    node_taints                = local.node_taints
-    }
-  )
-}
+# resource "local_file" "ansible_vars" {
+#   count    = var.deployment_type != "azure" ? 1 : 0
+#   filename = var.ansible_vars
+#   content = templatefile("${path.module}/templates/ansible/ansible-vars.yaml.tmpl", {
+#     ansible_user               = var.ansible_user
+#     ansible_password           = var.ansible_password
+#     deployment_type            = var.deployment_type
+#     iac_tooling                = var.iac_tooling
+#     prefix                     = var.prefix
+#     cluster_name               = local.cluster_name
+#     cluster_version            = var.cluster_version
+#     cluster_cni                = var.cluster_cni
+#     cluster_cni_version        = var.cluster_cni_version
+#     cluster_cri                = var.cluster_cri
+#     cluster_cri_version        = var.cluster_cri_version
+#     cluster_service_subnet     = var.cluster_service_subnet
+#     cluster_pod_subnet         = var.cluster_pod_subnet
+#     cluster_dns_ip             = local.cluster_dns_ip
+#     control_plane_ssh_key_name = var.control_plane_ssh_key_name
+#     cluster_vip_version        = var.cluster_vip_version
+#     cluster_vip_ip             = var.cluster_vip_ip
+#     cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${coalesce(var.cluster_domain, "local")}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${coalesce(var.cluster_domain, "local")}"
+#     cluster_lb_type            = var.cluster_lb_type
+#     cluster_lb_addresses       = local.loadbalancer_addresses
+#     nfs_ip                     = local.final_nfs_ip
+#     jump_ip                    = local.final_jump_ip
+#     cr_ip                      = var.create_cr ? var.cr_ip : null
+#     system_ssh_keys_dir        = var.system_ssh_keys_dir
+#     node_labels                = local.node_labels
+#     node_taints                = local.node_taints
+#     }
+#   )
+# }
