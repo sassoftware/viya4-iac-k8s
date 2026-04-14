@@ -7,6 +7,19 @@ locals {
 
   # Create cloud-init script if provided, otherwise empty
   cloud_init_script = var.cloud_init_enabled && var.cloud_init_script != "" ? base64encode(var.cloud_init_script) : ""
+
+  # Sanitize tag keys by replacing "/" with "-" (Azure tag name restrictions)
+  # Azure tag names cannot contain: < > % & \ ? / or control characters
+  # These are allowed only if tag names start with "hidden" or "link" prefix
+  sanitized_tags = {
+    for key, value in var.tags :
+    replace(key, "/", "-") => value
+  }
+
+  sanitized_node_labels = {
+    for key, value in var.node_labels :
+    replace(key, "/", "-") => value
+  }
 }
 
 # Public IP Address (optional, for jump and NFS servers)
@@ -20,7 +33,7 @@ resource "azurerm_public_ip" "vm" {
   sku                 = "Standard"
 
   tags = merge(
-    var.tags,
+    local.sanitized_tags,
     {
       Name = "${local.vm_name_normalized}-public-ip"
     }
@@ -41,7 +54,7 @@ resource "azurerm_network_interface" "vm" {
   }
 
   tags = merge(
-    var.tags,
+    local.sanitized_tags,
     {
       Name = "${local.vm_name_normalized}-nic"
     }
@@ -70,7 +83,7 @@ resource "azurerm_managed_disk" "data_disk" {
   disk_size_gb         = each.value
 
   tags = merge(
-    var.tags,
+    local.sanitized_tags,
     {
       Name = "${local.vm_name_normalized}-data-disk-${each.key}"
     }
@@ -127,8 +140,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   custom_data = local.cloud_init_script != "" ? local.cloud_init_script : null
 
   tags = merge(
-    var.tags,
-    var.node_labels,
+    local.sanitized_tags,
+    local.sanitized_node_labels,
     {
       Name = local.vm_name_normalized
     }
