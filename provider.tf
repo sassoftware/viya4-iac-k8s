@@ -27,14 +27,14 @@ provider "azurerm" {
 }
 
 # --- vSphere Provider ---
-# IMPORTANT: Uncomment vsphere block below ONLY when deployment_type = "vsphere"
-# For azure/bare_metal deployments, keep vsphere commented out
-#
+# NOTE: This provider is required at init time because modules/vm contains vsphere resources.
+# Even for deployment_type="azure", vsphere provider must be configured (but won't be used).
+# For azure/bare_metal deployments, use dummy localhost credentials.
 # provider "vsphere" {
-#   user           = var.vsphere_user
-#   password       = var.vsphere_password
-#   vsphere_server = var.vsphere_server
-#
+#   user           = try(var.vsphere_user, "placeholder@localhost")
+#   password       = try(var.vsphere_password, "placeholder")
+#   vsphere_server = try(var.vsphere_server, "localhost")
+
 #   # If you have a self-signed cert
 #   allow_unverified_ssl = true
 # }
