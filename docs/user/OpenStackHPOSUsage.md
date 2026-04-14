@@ -15,8 +15,9 @@ HPOS (HPC/Private OpenStack) environment using `viya4-iac-k8s`.
 - [Cluster Configuration](#cluster-configuration)
   - [Step 7 — Create terraform.tfvars](#step-7--create-terraformtfvars)
 - [Execution](#execution)
-  - [Step 8 — Provision and Install](#step-8--provision-and-install)
-  - [Step 9 — Verify the Cluster](#step-9--verify-the-cluster)
+  - [Step 8 — Build the Docker Image (optional)](#step-8--build-the-docker-image-optional)
+  - [Step 9 — Provision and Install](#step-9--provision-and-install)
+  - [Step 10 — Verify the Cluster](#step-10--verify-the-cluster)
 - [Tear Down](#tear-down)
 
 ---
@@ -208,8 +209,8 @@ openstack_floating_ip_pool  = null                 # null = no floating IPs (sta
 openstack_insecure          = true
 
 # Kubernetes
-cluster_version     = "1.35.3"   # Latest supported: 1.32.x – 1.35.x
-cluster_cri_version = "1.7.28"
+cluster_version     = "1.34.6"   # Latest supported: 1.32.x – 1.35.x
+cluster_cri_version = "2.2.2"
 cluster_domain      = "example.sas.com"   # ← CHANGE
 
 # VIP — populated by allocate-vip.sh (Step 6)
@@ -292,16 +293,55 @@ nfs_ip     = null
 
 ## Execution
 
-### Step 8 — Provision and Install
+### Step 8 — Build the Docker Image (optional)
+
+If you prefer to run `oss-k8s.sh` inside Docker (recommended for reproducibility),
+build the image first from the repo root:
+
+```bash
+cd /path/to/viya4-iac-k8s
+docker build -t viya4-iac-k8s:latest .
+```
+
+> Skip this step if running `oss-k8s.sh` natively.
+
+---
+
+### Step 9 — Provision and Install
+
+#### Option A — Native
 
 ```bash
 cd /path/to/viya4-iac-k8s
 
+source $HOME/.openstack_creds.env
 export SYSTEM=openstack
 
 # Full cluster provisioning in one command:
 ./oss-k8s.sh apply setup install
 ```
+
+#### Option B — Docker
+
+```bash
+cd /path/to/viya4-iac-k8s
+
+docker run --rm -it \
+  --group-add root \
+  --user $(id -u):$(id -g) \
+  --env SYSTEM=openstack \
+  --env IAC_TOOLING=docker \
+  --env-file $HOME/.openstack_creds.env \
+  --volume $(pwd):/workspace \
+  viya4-iac-k8s:latest apply setup install
+```
+
+> **Docker notes:**
+> - `--env-file` injects all `OS_*` and `TF_VAR_*` credentials automatically.
+> - `--volume $(pwd):/workspace` mounts your local directory so `terraform.tfvars`,
+>   `terraform.tfstate`, `inventory`, and `ansible-vars.yaml` are written back to your host.
+> - `--env IAC_TOOLING=docker` is set automatically by the image entrypoint but can
+>   be set explicitly for clarity.
 
 | Sub-command | What it does |
 |---|---|
@@ -316,12 +356,18 @@ export SYSTEM=openstack
 
 ---
 
-### Step 9 — Verify the Cluster
+### Step 10 — Verify the Cluster
 
-After a successful run, a kubeconfig file is generated in the repo root:
+After a successful run, a kubeconfig file is generated in the repo root
+(or `/workspace` if using Docker):
 
 ```bash
+# Native
 export KUBECONFIG=$(ls *-oss-kubeconfig.conf | head -1)
+
+# Docker (file is in the mounted workspace directory)
+export KUBECONFIG=$(pwd)/$(ls *-oss-kubeconfig.conf | head -1)
+
 kubectl get nodes -o wide
 ```
 
@@ -338,9 +384,24 @@ mycluster-oss-cas-01          Ready    <none>          8m    v1.35.3
 
 ## Tear Down
 
+#### Option A — Native
+
 ```bash
 export SYSTEM=openstack
 ./oss-k8s.sh uninstall cleanup destroy
+```
+
+#### Option B — Docker
+
+```bash
+docker run --rm -it \
+  --group-add root \
+  --user $(id -u):$(id -g) \
+  --env SYSTEM=openstack \
+  --env IAC_TOOLING=docker \
+  --env-file $HOME/.openstack_creds.env \
+  --volume $(pwd):/workspace \
+  viya4-iac-k8s:latest uninstall cleanup destroy
 ```
 
 | Sub-command | What it does |
