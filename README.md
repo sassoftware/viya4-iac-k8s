@@ -165,6 +165,91 @@ In order to use this repository, modify the [inventory file](./examples/bare-met
 
 Modify the [ansible-vars.yaml file](./examples/bare-metal/sample-ansible-vars.yaml) to customize the configuration settings for your environment.
 
+#### Worker Node Configuration (PSCLOUD-771)
+
+The `viya4-iac-k8s` module supports fine-grained control over Kubernetes worker node configuration, including machine types, disk settings, scheduling constraints (taints), and pod affinity labels.
+
+**Node Pool Types:**
+
+The module supports four node pool types:
+
+- **control_plane**: Kubernetes control plane (API server, etcd). 1 node for single-master, 3+ for HA.
+- **system**: Kubernetes system components (DNS, kube-proxy, CNI, ingress). Typically 1-2 nodes.
+- **cas**: (Optional) SAS Analytics Compute nodes. Memory-optimized machines for in-memory analytics.
+- **generic**: General-purpose worker nodes for application workloads (programming, compute, storage).
+
+**Configuration Variables:**
+
+Each node pool type can be configured with:
+
+- `machine_type`: Azure VM size (e.g., `Standard_D4s_v5`) or cloud provider equivalent
+- `os_disk`: OS disk size in GB
+- `data_disks`: List of data disk sizes in GB for attached storage
+- `node_taints`: Kubernetes taints for scheduling constraints (list of `{key, value, effect}` objects)
+- `node_labels`: Kubernetes labels for pod affinity and scheduling
+
+**Usage Examples:**
+
+Define node pools in `terraform.tfvars`:
+
+```hcl
+# Method 1: Complete node_pools definition with all details
+node_pools = {
+  control_plane = {
+    count        = 1
+    machine_type = "Standard_D4s_v5"
+    os_disk      = 100
+    data_disks   = []
+    node_taints  = [
+      {
+        key    = "node-role.kubernetes.io/control-plane"
+        value  = ""
+        effect = "NoSchedule"
+      }
+    ]
+    node_labels  = {
+      "node-role.kubernetes.io/control-plane" = ""
+    }
+  }
+  # ... additional node pools
+}
+```
+
+Alternatively, use overrides for specific node types:
+
+```hcl
+# Method 2: Override specific node type configurations
+control_plane_machine_type = "Standard_D4s_v5"
+control_plane_labels = {
+  "node-role.kubernetes.io/control-plane" = ""
+  "cluster-role"                          = "master"
+}
+
+cas_node_machine_type = "Standard_E32s_v5"      # 32 vCPU, 256 GB
+cas_node_data_disks   = [1024, 1024]             # 2x1TB for memory spill
+cas_node_taints = [
+  {
+    key    = "workload/cas"
+    value  = "true"
+    effect = "NoSchedule"
+  }
+]
+```
+
+**Common Taint/Label Patterns:**
+
+- **Control Plane**: `node-role.kubernetes.io/control-plane=:NoSchedule` (prevents user workloads)
+- **System Nodes**: `CriticalAddonsOnly=true:NoSchedule` (for Kubernetes infrastructure)
+- **CAS Nodes**: Custom taints like `workload/cas=true:NoSchedule` (isolates analytics workloads)
+- **Pod Affinity**: Labels enable `nodeSelector` and `affinity` rules in pod specs
+
+**Azure VM Size Reference:**
+
+- D-series (General compute): D2s_v5 (2v/8GB) to D64s_v5 (64v/256GB)
+- E-series (Memory-optimized): E4s_v5 (4v/32GB) to E80s_v5 (80v/504GB)
+
+For more details, see the example configurations in `./examples/azure/sample-terraform-azure.tfvars`.
+
 ### Create and Manage Cluster Resources
 
 Create and manage the required cluster resources for your SAS Viya 4 deployment. Perform one of the following steps, based on whether you are using Docker:

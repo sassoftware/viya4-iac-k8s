@@ -248,7 +248,7 @@ jump_os_disk       = 64                   # 64 GB OS disk
 create_nfs         = true
 nfs_machine_type   = "Standard_D4s_v5"    # 4 vCPU, 16 GB RAM
 nfs_os_disk        = 100                  # 100 GB OS disk
-nfs_data_disks     = [1024, 1024, 1024, 1024]  # 4x1TB for RAID1
+nfs_data_disks     = [256, 256, 256, 256]  # 4x256 GB for RAID1
 
 
 # ==========================================
@@ -346,3 +346,68 @@ nfs_data_disks     = [1024, 1024, 1024, 1024]  # 4x1TB for RAID1
 #     node_labels  = {"workload.sas.com/class" = "compute"}
 #   }
 # }
+
+# ==========================================
+# PSCLOUD-771: Worker Node Configuration (Optional)
+# ==========================================
+# 
+# These variables can be used to override the machine types, disk sizes, and 
+# scheduling constraints (taints/labels) for different node pool types.
+# 
+# If not specified, the node_pools variable above will be used directly.
+# If specified, these variables will be merged with node_pools to update
+# specific configuration aspects like machine_type, os_disk, taints, and labels.
+#
+# Usage Scenarios:
+# 1. Override specific node types without redefining entire node_pools
+# 2. Use node-specific templates that apply consistently across deployments  
+# 3. Separate infrastructure code from deployment specifications
+
+# Example 1: Override only CAS machine type and taints
+# control_plane_machine_type = "Standard_D4s_v5"
+# cas_node_machine_type      = "Standard_E32s_v5"   # 32 vCPU, 256 GB (larger CAS)
+# cas_node_taints = [
+#   {
+#     key    = "workload/cas"
+#     value  = "true"
+#     effect = "NoSchedule"
+#   }
+# ]
+
+# Example 2: High-performance compute cluster with dedicated node labels
+# control_plane_machine_type = "Standard_D4s_v5"
+# control_plane_labels = {
+#   "node-role.kubernetes.io/control-plane" = ""
+#   "cluster-role.kubernetes.io/master"     = ""
+# }
+#
+# system_node_machine_type = "Standard_D8s_v5"
+# system_node_labels = {
+#   "node-role.kubernetes.io/system" = ""
+#   "kubernetes.io/purpose"          = "infrastructure"
+# }
+#
+# cas_node_machine_type = "Standard_E64s_v5"      # 64 vCPU, 512 GB
+# cas_node_data_disks   = [1024, 1024]             # 2x1TB for large memory spill
+# cas_node_labels = {
+#   "workload/cas"        = "true"
+#   "resource-class"      = "memory-optimized"
+#   "performance-tier"    = "production"
+# }
+#
+# generic_worker_machine_type = "Standard_D32s_v5"  # 32 vCPU, 128 GB
+# generic_worker_labels = {
+#   "workload/compute"     = "true"
+#   "resource-class"       = "general-purpose"
+#   "launcher.sas.com/prepullImage" = "sas-programming-environment"
+# }
+
+# Example 3: Cost-optimized development cluster
+# control_plane_machine_type = "Standard_D2s_v5"   # 2 vCPU, 8 GB (minimal)
+# system_node_machine_type   = "Standard_D2s_v5"
+# cas_node_machine_type      = "Standard_D8s_v5"   # Minimal CAS
+# generic_worker_machine_type = "Standard_D4s_v5"
+
+# ==========================================
+# Kubernetes Configuration
+# ==========================================

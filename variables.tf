@@ -505,6 +505,179 @@ variable "postgres_servers" {
 
 # Regex for validation : ^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$
 
+# ==========================================
+# PSCLOUD-771: Worker Node Configuration Variables
+# ==========================================
+# These variables define machine types, disk configurations, and scheduling constraints (taints/labels) for Azure Kubernetes worker nodes
+
+variable "worker_node_template" {
+  description = "Template configuration for worker nodes with Azure-specific settings (machine_type, os_disk, data_disks, taints, labels)"
+  type = object({
+    machine_type = optional(string, "Standard_D4s_v5")
+    os_disk      = optional(number, 128)
+    data_disks   = optional(list(number), [])
+    node_taints  = optional(list(object({
+      key    = string
+      value  = string
+      effect = string
+    })), [])
+    node_labels = optional(map(string), {})
+  })
+  default = {
+    machine_type = "Standard_D4s_v5"
+    os_disk      = 128
+    data_disks   = []
+    node_taints  = []
+    node_labels  = {}
+  }
+}
+
+variable "control_plane_machine_type" {
+  description = "Azure VM size for control plane nodes (e.g., Standard_D4s_v5). Should be sized for etcd and API server workloads."
+  type        = string
+  default     = "Standard_D4s_v5"
+}
+
+variable "control_plane_os_disk" {
+  description = "OS disk size in GB for control plane nodes"
+  type        = number
+  default     = 128
+}
+
+variable "control_plane_taints" {
+  description = "Kubernetes taints for control plane nodes to prevent pod scheduling (e.g., node-role.kubernetes.io/control-plane=:NoSchedule)"
+  type = list(object({
+    key    = string
+    value  = string
+    effect = string
+  }))
+  default = [
+    {
+      key    = "node-role.kubernetes.io/control-plane"
+      value  = ""
+      effect = "NoSchedule"
+    }
+  ]
+}
+
+variable "control_plane_labels" {
+  description = "Kubernetes labels for control plane nodes for pod scheduling"
+  type        = map(string)
+  default = {
+    "node-role.kubernetes.io/control-plane" = ""
+  }
+}
+
+variable "system_node_machine_type" {
+  description = "Azure VM size for system nodes (e.g., Standard_D4s_v5). These run Kubernetes system components."
+  type        = string
+  default     = "Standard_D4s_v5"
+}
+
+variable "system_node_os_disk" {
+  description = "OS disk size in GB for system nodes"
+  type        = number
+  default     = 128
+}
+
+variable "system_node_taints" {
+  description = "Kubernetes taints for system nodes (e.g., CriticalAddonsOnly=true:NoSchedule)"
+  type = list(object({
+    key    = string
+    value  = string
+    effect = string
+  }))
+  default = [
+    {
+      key    = "CriticalAddonsOnly"
+      value  = "true"
+      effect = "NoSchedule"
+    }
+  ]
+}
+
+variable "system_node_labels" {
+  description = "Kubernetes labels for system nodes"
+  type        = map(string)
+  default = {
+    "node-role.kubernetes.io/system" = ""
+  }
+}
+
+variable "cas_node_machine_type" {
+  description = "Azure VM size for CAS nodes (e.g., Standard_D32s_v5 or higher). These are memory-intensive."
+  type        = string
+  default     = "Standard_D32s_v5"
+}
+
+variable "cas_node_os_disk" {
+  description = "OS disk size in GB for CAS nodes"
+  type        = number
+  default     = 128
+}
+
+variable "cas_node_data_disks" {
+  description = "List of data disk sizes in GB for CAS nodes (e.g., [1024, 1024] for 2x1TB storage)"
+  type        = list(number)
+  default     = []
+}
+
+variable "cas_node_taints" {
+  description = "Kubernetes taints for CAS nodes to enforce pod affinity (e.g., workload/cas=true:NoSchedule)"
+  type = list(object({
+    key    = string
+    value  = string
+    effect = string
+  }))
+  default = [
+    {
+      key    = "workload/cas"
+      value  = "true"
+      effect = "NoSchedule"
+    }
+  ]
+}
+
+variable "cas_node_labels" {
+  description = "Kubernetes labels for CAS nodes for pod scheduling"
+  type        = map(string)
+  default = {
+    "workload/cas" = "true"
+  }
+}
+
+variable "generic_worker_machine_type" {
+  description = "Azure VM size for generic worker nodes (e.g., Standard_D4s_v5)"
+  type        = string
+  default     = "Standard_D4s_v5"
+}
+
+variable "generic_worker_os_disk" {
+  description = "OS disk size in GB for generic worker nodes"
+  type        = number
+  default     = 128
+}
+
+variable "generic_worker_data_disks" {
+  description = "List of data disk sizes in GB for generic worker nodes"
+  type        = list(number)
+  default     = []
+}
+
+variable "generic_worker_labels" {
+  description = "Kubernetes labels for generic worker nodes"
+  type        = map(string)
+  default = {
+    "node-role.kubernetes.io/worker" = ""
+  }
+}
+
+variable "node_taints_enable_cas_only" {
+  description = "If true, only CAS nodes have taints. All other worker nodes (control_plane, system, generic) run unrestricted workloads. If false, each node type has specific taints."
+  type        = bool
+  default     = true
+}
+
 # Ansible
 variable "ansible_user" {
   type    = string

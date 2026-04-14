@@ -67,3 +67,71 @@ output "postgres_servers" {
   value     = length(local.postgres_servers) != 0 ? local.postgres_outputs : null
   sensitive = true
 }
+
+# ==========================================
+# PSCLOUD-771: Worker Node Configuration Outputs
+# ==========================================
+
+output "node_pools_summary" {
+  description = "Summary of configured node pools with taints, labels, and machine types"
+  value = var.deployment_type == "azure" ? {
+    for pool_name, pool_config in local.node_pools : pool_name => {
+      count          = pool_config.count
+      machine_type   = lookup(pool_config, "machine_type", "N/A")
+      os_disk        = pool_config.os_disk
+      data_disks     = pool_config.data_disks
+      node_taints    = pool_config.node_taints
+      node_labels    = pool_config.node_labels
+    }
+  } : null
+}
+
+output "node_selector_labels" {
+  description = "Labels for pod nodeSelector usage (for scheduling workloads to specific node pools)"
+  value = var.deployment_type == "azure" ? {
+    for pool_name, pool_config in local.node_pools :
+    pool_name => pool_config.node_labels
+  } : null
+}
+
+output "node_taints_by_pool" {
+  description = "Taints applied to each node pool (for pod toleration configuration)"
+  value = var.deployment_type == "azure" ? {
+    for pool_name, pool_config in local.node_pools :
+    pool_name => pool_config.node_taints
+  } : null
+}
+
+output "kubernetes_nodes_info" {
+  description = "Kubernetes node information for deployment automation"
+  value = var.deployment_type == "azure" ? {
+    control_plane = {
+      count       = try(length(module.azure_control_plane), 0)
+      node_type   = "control-plane"
+      labels      = try(local.node_pools.control_plane.node_labels, {})
+      taints      = try(local.node_pools.control_plane.node_taints, [])
+      machine_type = try(local.node_pools.control_plane.machine_type, "")
+    }
+    system = {
+      count        = try(length(module.azure_system), 0)
+      node_type    = "system"
+      labels       = try(local.node_pools.system.node_labels, {})
+      taints       = try(local.node_pools.system.node_taints, [])
+      machine_type = try(local.node_pools.system.machine_type, "")
+    }
+    cas = {
+      count        = try(length(module.azure_cas), 0)
+      node_type    = "cas"
+      labels       = try(local.node_pools.cas.node_labels, {})
+      taints       = try(local.node_pools.cas.node_taints, [])
+      machine_type = try(local.node_pools.cas.machine_type, "")
+    }
+    generic = {
+      count        = try(length(module.azure_generic), 0)
+      node_type    = "worker"
+      labels       = try(local.node_pools.generic.node_labels, {})
+      taints       = try(local.node_pools.generic.node_taints, [])
+      machine_type = try(local.node_pools.generic.machine_type, "")
+    }
+  } : null
+}
