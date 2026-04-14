@@ -76,12 +76,12 @@ output "node_pools_summary" {
   description = "Summary of configured node pools with taints, labels, and machine types"
   value = var.deployment_type == "azure" ? {
     for pool_name, pool_config in local.node_pools : pool_name => {
-      count          = pool_config.count
-      machine_type   = lookup(pool_config, "machine_type", "N/A")
-      os_disk        = pool_config.os_disk
-      data_disks     = pool_config.data_disks
-      node_taints    = pool_config.node_taints
-      node_labels    = pool_config.node_labels
+      count        = pool_config.count
+      machine_type = lookup(pool_config, "machine_type", "N/A")
+      os_disk      = pool_config.os_disk
+      data_disks   = pool_config.data_disks
+      node_taints  = pool_config.node_taints
+      node_labels  = pool_config.node_labels
     }
   } : null
 }

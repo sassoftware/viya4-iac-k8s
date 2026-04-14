@@ -516,7 +516,7 @@ variable "worker_node_template" {
     machine_type = optional(string, "Standard_D4s_v5")
     os_disk      = optional(number, 128)
     data_disks   = optional(list(number), [])
-    node_taints  = optional(list(object({
+    node_taints = optional(list(object({
       key    = string
       value  = string
       effect = string

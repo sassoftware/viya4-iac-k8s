@@ -195,30 +195,30 @@ module "azure_network" {
   prefix              = var.prefix
   resource_group_name = var.azure_resource_group
   location            = var.azure_location
-  
+
   # VNet Configuration
-  vnet_name = var.azure_vnet_name
+  vnet_name                = var.azure_vnet_name
   vnet_resource_group_name = var.azure_vnet_resource_group_name
-  vnet_address_space = [var.azure_vnet_address_space]
-  
+  vnet_address_space       = [var.azure_vnet_address_space]
+
   # Existing Subnet Names (Bring Your Own Network)
   existing_subnet_names = var.azure_subnet_names
-  
+
   # Subnet Configuration (used when creating new VNet)
   subnets = var.azure_subnets
-  
+
   # NSG Configuration
-  nsg_name         = null  # Create new NSG with default name
+  nsg_name         = null # Create new NSG with default name
   create_nsg_rules = var.azure_create_nsg_rules
-  
+
   # NSG Rules Configuration - CIDR access controls
-  ssh_source_cidrs = length(var.azure_vm_public_access_cidrs) > 0 ? var.azure_vm_public_access_cidrs : var.azure_default_public_access_cidrs
+  ssh_source_cidrs        = length(var.azure_vm_public_access_cidrs) > 0 ? var.azure_vm_public_access_cidrs : var.azure_default_public_access_cidrs
   api_server_source_cidrs = length(var.azure_cluster_endpoint_public_access_cidrs) > 0 ? var.azure_cluster_endpoint_public_access_cidrs : var.azure_default_public_access_cidrs
-  nodeport_source_cidrs = []  # Disabled by default
-  
+  nodeport_source_cidrs   = [] # Disabled by default
+
   # Custom DNS (if needed)
   dns_servers = var.azure_use_custom_dns ? var.azure_custom_dns_servers : []
-  
+
   # Tags
   tags = var.tags
 
@@ -280,9 +280,9 @@ module "azure_jump" {
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "jumpuser"
 
-  os_disk_size       = var.jump_os_disk
-  data_disk_sizes    = []
-  assign_public_ip   = true
+  os_disk_size           = var.jump_os_disk
+  data_disk_sizes        = []
+  assign_public_ip       = true
   accelerated_networking = false
 
   node_taints = []
@@ -291,9 +291,9 @@ module "azure_jump" {
   tags = merge(
     var.tags,
     {
-      Name     = "${local.cluster_name}-jump"
-      Role     = "jump-box"
-      Cluster  = local.cluster_name
+      Name    = "${local.cluster_name}-jump"
+      Role    = "jump-box"
+      Cluster = local.cluster_name
     }
   )
 
@@ -315,9 +315,9 @@ module "azure_nfs" {
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "nfsuser"
 
-  os_disk_size       = var.nfs_os_disk
-  data_disk_sizes    = var.nfs_data_disks
-  assign_public_ip   = var.azure_vm_public_ip_enabled
+  os_disk_size           = var.nfs_os_disk
+  data_disk_sizes        = var.nfs_data_disks
+  assign_public_ip       = var.azure_vm_public_ip_enabled
   accelerated_networking = var.azure_accelerated_networking
 
   node_taints = []
@@ -326,9 +326,9 @@ module "azure_nfs" {
   tags = merge(
     var.tags,
     {
-      Name     = "${local.cluster_name}-nfs"
-      Role     = "nfs-server"
-      Cluster  = local.cluster_name
+      Name    = "${local.cluster_name}-nfs"
+      Role    = "nfs-server"
+      Cluster = local.cluster_name
     }
   )
 

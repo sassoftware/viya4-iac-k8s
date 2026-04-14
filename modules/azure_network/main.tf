@@ -7,10 +7,10 @@
 locals {
   vnet_name = var.vnet_name != null ? var.vnet_name : "${var.prefix}-vnet"
   nsg_name  = var.nsg_name != null ? var.nsg_name : "${var.prefix}-nsg"
-  
+
   # Determine VNet resource group - use vnet RG if specified, otherwise main RG
   vnet_rg_name = var.vnet_resource_group_name != null ? var.vnet_resource_group_name : var.resource_group_name
-  
+
   # Build subnet map - either from existing or newly created
   subnets = length(var.existing_subnet_names) == 0 ? {
     for k, v in azurerm_subnet.subnet : k => {
@@ -18,7 +18,7 @@ locals {
       name             = v.name
       address_prefixes = v.address_prefixes
     }
-  } : {
+    } : {
     for k, v in data.azurerm_subnet.existing : k => {
       id               = v.id
       name             = v.name
@@ -51,7 +51,7 @@ data "azurerm_subnet" "existing" {
   name                 = each.value
   virtual_network_name = local.vnet_name
   resource_group_name  = local.vnet_rg_name
-  
+
   depends_on = [
     data.azurerm_virtual_network.existing,
     azurerm_virtual_network.vnet
@@ -66,7 +66,7 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name = local.vnet_name
   address_prefixes     = each.value.prefixes
   service_endpoints    = each.value.service_endpoints
-  
+
   depends_on = [
     data.azurerm_virtual_network.existing,
     azurerm_virtual_network.vnet
@@ -106,7 +106,7 @@ resource "azurerm_network_security_rule" "ssh" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -128,7 +128,7 @@ resource "azurerm_network_security_rule" "k8s_api" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -150,7 +150,7 @@ resource "azurerm_network_security_rule" "kubelet" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -172,7 +172,7 @@ resource "azurerm_network_security_rule" "kube_proxy" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -194,7 +194,7 @@ resource "azurerm_network_security_rule" "calico_typha" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -216,7 +216,7 @@ resource "azurerm_network_security_rule" "bgp" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -238,7 +238,7 @@ resource "azurerm_network_security_rule" "etcd" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -260,7 +260,7 @@ resource "azurerm_network_security_rule" "nodeport" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
-  
+
   depends_on = [
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
@@ -272,7 +272,7 @@ resource "azurerm_subnet_network_security_group_association" "nsg" {
   for_each                  = local.subnets
   subnet_id                 = each.value.id
   network_security_group_id = var.nsg_name == null ? azurerm_network_security_group.nsg[0].id : data.azurerm_network_security_group.existing[0].id
-  
+
   depends_on = [
     azurerm_subnet.subnet,
     data.azurerm_subnet.existing,

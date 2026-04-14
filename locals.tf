@@ -7,7 +7,7 @@ locals {
 
   # Kubernetes
   cluster_name = "${var.prefix}-oss"
-  
+
   # Calculate DNS IP as the 10th IP in the service subnet
   cluster_dns_ip = cidrhost(var.cluster_service_subnet, 10)
 
@@ -50,13 +50,13 @@ locals {
   # Filters node_pools for Azure deployment and creates numbered VM names
   azure_node_pools = var.deployment_type == "azure" ? {
     for k, v in local.node_pools : k => {
-      pool_name   = k
-      count       = v.count
+      pool_name    = k
+      count        = v.count
       machine_type = lookup(v, "machine_type", "Standard_D4s_v5")
-      os_disk     = lookup(v, "os_disk", 100)
-      data_disks  = lookup(v, "data_disks", [])
-      node_taints = lookup(v, "node_taints", [])
-      node_labels = lookup(v, "node_labels", {})
+      os_disk      = lookup(v, "os_disk", 100)
+      data_disks   = lookup(v, "data_disks", [])
+      node_taints  = lookup(v, "node_taints", [])
+      node_labels  = lookup(v, "node_labels", {})
     }
   } : {}
 
@@ -67,12 +67,12 @@ locals {
     pool_name => {
       for i in range(pool_config.count) :
       "${pool_name}-${i + 1}" => {
-        vm_name     = "${local.cluster_name}-${pool_name}-${i + 1}"
+        vm_name      = "${local.cluster_name}-${pool_name}-${i + 1}"
         machine_type = pool_config.machine_type
-        os_disk     = pool_config.os_disk
-        data_disks  = pool_config.data_disks
-        node_taints = pool_config.node_taints
-        node_labels = pool_config.node_labels
+        os_disk      = pool_config.os_disk
+        data_disks   = pool_config.data_disks
+        node_taints  = pool_config.node_taints
+        node_labels  = pool_config.node_labels
       }
     }
   }
@@ -90,7 +90,7 @@ locals {
   # ==========================================
   # PSCLOUD-785: Azure IP Extraction
   # ==========================================
-  
+
   # Extract IPs from consolidated azure_vms module
   azure_control_plane_ips = var.deployment_type == "azure" ? [
     for vm in module.azure_vms : vm.private_ip_address if vm.pool_name == "control_plane"
@@ -106,8 +106,8 @@ locals {
 
   # Select appropriate IPs based on deployment type
   final_control_plane_ips = var.deployment_type == "azure" ? local.azure_control_plane_ips : local.control_plane_ips
-  final_node_ips = var.deployment_type == "azure" ? local.azure_node_ips : local.node_ips
-  final_jump_ip = var.deployment_type == "azure" ? local.azure_jump_ip : (var.create_jump ? var.jump_ip : null)
-  final_nfs_ip = var.deployment_type == "azure" ? local.azure_nfs_ip : (var.create_nfs ? var.nfs_ip : null)
+  final_node_ips          = var.deployment_type == "azure" ? local.azure_node_ips : local.node_ips
+  final_jump_ip           = var.deployment_type == "azure" ? local.azure_jump_ip : (var.create_jump ? var.jump_ip : null)
+  final_nfs_ip            = var.deployment_type == "azure" ? local.azure_nfs_ip : (var.create_nfs ? var.nfs_ip : null)
 
 }

@@ -27,7 +27,7 @@ deployment_type = "azure"
 
 # Azure resource settings
 azure_resource_group = "my-k8s-resource-group"
-azure_location       = "eastus"  # Options: eastus, westus2, centralus, etc.
+azure_location       = "eastus" # Options: eastus, westus2, centralus, etc.
 
 # ****************  REQUIRED VARIABLES  ****************
 
@@ -39,11 +39,11 @@ azure_vnet_address_space = "192.168.0.0/16"
 
 azure_subnets = {
   k8s = {
-    prefixes          = ["192.168.0.0/22"]  # 1024 IPs for Kubernetes nodes
+    prefixes          = ["192.168.0.0/22"] # 1024 IPs for Kubernetes nodes
     service_endpoints = []
   }
   misc = {
-    prefixes          = ["192.168.4.0/24"]  # 256 IPs for jump box, NFS, etc.
+    prefixes          = ["192.168.4.0/24"] # 256 IPs for jump box, NFS, etc.
     service_endpoints = []
   }
 }
@@ -57,9 +57,9 @@ azure_default_public_access_cidrs = [
 ]
 
 # Network features
-azure_vm_public_ip_enabled    = true   # Enable public IPs for jump box and NFS
-azure_accelerated_networking  = true   # Enable accelerated networking for better performance
-azure_create_nsg_rules        = true   # Auto-create security rules for SSH, K8s API, etc.
+azure_vm_public_ip_enabled   = true # Enable public IPs for jump box and NFS
+azure_accelerated_networking = true # Enable accelerated networking for better performance
+azure_create_nsg_rules       = true # Auto-create security rules for SSH, K8s API, etc.
 
 # Optional: Use existing VNet and NSG (Bring Your Own Network)
 # Uncomment and configure if you want to use existing network resources
@@ -187,9 +187,9 @@ node_pools = {
   # Use count=1 for single-master or count=3 for HA (with kube-vip)
   control_plane = {
     count        = 1
-    machine_type = "Standard_D4s_v5"      # 4 vCPU, 16 GB RAM
-    os_disk      = 100                    # 100 GB OS disk
-    data_disks   = []                     # No additional disks
+    machine_type = "Standard_D4s_v5" # 4 vCPU, 16 GB RAM
+    os_disk      = 100               # 100 GB OS disk
+    data_disks   = []                # No additional disks
     node_taints  = ["node-role.kubernetes.io/control-plane:NoSchedule"]
     node_labels  = {}
   },
@@ -198,11 +198,11 @@ node_pools = {
   # Runs: DNS, kube-proxy, metrics-server, CNI (Calico), ingress controller
   system = {
     count        = 1
-    machine_type = "Standard_D8s_v5"      # 8 vCPU, 32 GB RAM
-    os_disk      = 100                    # 100 GB OS disk
-    data_disks   = []                     # No additional disks
+    machine_type = "Standard_D8s_v5" # 8 vCPU, 32 GB RAM
+    os_disk      = 100               # 100 GB OS disk
+    data_disks   = []                # No additional disks
     node_taints  = []
-    node_labels  = {
+    node_labels = {
       "kubernetes.azure.com/mode" = "system"
     }
   },
@@ -211,11 +211,11 @@ node_pools = {
   # Comment out this block if you don't need CAS workloads
   cas = {
     count        = 1
-    machine_type = "Standard_E16s_v5"     # 16 vCPU, 128 GB RAM (memory-optimized)
-    os_disk      = 100                    # 100 GB OS disk
-    data_disks   = [512, 512]             # 2x512GB for memory spill
+    machine_type = "Standard_E16s_v5" # 16 vCPU, 128 GB RAM (memory-optimized)
+    os_disk      = 100                # 100 GB OS disk
+    data_disks   = [512, 512]         # 2x512GB for memory spill
     node_taints  = ["workload.sas.com/class=cas:NoSchedule"]
-    node_labels  = {
+    node_labels = {
       "workload.sas.com/class" = "cas"
     }
   },
@@ -224,11 +224,11 @@ node_pools = {
   # Handles: compute, stateless, stateful workloads
   generic = {
     count        = 1
-    machine_type = "Standard_D16s_v5"     # 16 vCPU, 64 GB RAM
-    os_disk      = 100                    # 100 GB OS disk
-    data_disks   = [256]                  # 1x256GB for cache/temp data
+    machine_type = "Standard_D16s_v5" # 16 vCPU, 64 GB RAM
+    os_disk      = 100                # 100 GB OS disk
+    data_disks   = [256]              # 1x256GB for cache/temp data
     node_taints  = []
-    node_labels  = {
+    node_labels = {
       "workload.sas.com/class"        = "compute"
       "launcher.sas.com/prepullImage" = "sas-programming-environment"
     }
@@ -240,15 +240,15 @@ node_pools = {
 # ==========================================
 
 # Jump Box / Bastion Host
-create_jump        = true
-jump_machine_type  = "Standard_B2s"       # 2 vCPU, 4 GB RAM
-jump_os_disk       = 64                   # 64 GB OS disk
+create_jump       = true
+jump_machine_type = "Standard_B2s" # 2 vCPU, 4 GB RAM
+jump_os_disk      = 64             # 64 GB OS disk
 
 # NFS Server (for Persistent Volumes)
-create_nfs         = true
-nfs_machine_type   = "Standard_D4s_v5"    # 4 vCPU, 16 GB RAM
-nfs_os_disk        = 100                  # 100 GB OS disk
-nfs_data_disks     = [256, 256, 256, 256]  # 4x256 GB for RAID1
+create_nfs       = true
+nfs_machine_type = "Standard_D4s_v5"    # 4 vCPU, 16 GB RAM
+nfs_os_disk      = 100                  # 100 GB OS disk
+nfs_data_disks   = [256, 256, 256, 256] # 4x256 GB for RAID1
 
 
 # ==========================================

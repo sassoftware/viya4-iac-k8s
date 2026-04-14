@@ -4,7 +4,7 @@
 locals {
   # Normalize vm_name by removing/replacing invalid characters
   vm_name_normalized = replace(var.vm_name, "_", "-")
-  
+
   # Create cloud-init script if provided, otherwise empty
   cloud_init_script = var.cloud_init_enabled && var.cloud_init_script != "" ? base64encode(var.cloud_init_script) : ""
 }
@@ -62,12 +62,12 @@ resource "azurerm_managed_disk" "data_disk" {
     for idx, disk_size in var.data_disk_sizes : idx => disk_size
   }
 
-  name                = "${local.vm_name_normalized}-datadisk-${each.key}"
-  location            = var.azure_location
-  resource_group_name = var.resource_group_name
+  name                 = "${local.vm_name_normalized}-datadisk-${each.key}"
+  location             = var.azure_location
+  resource_group_name  = var.resource_group_name
   storage_account_type = var.data_disk_storage_type
-  create_option       = "Empty"
-  disk_size_gb        = each.value
+  create_option        = "Empty"
+  disk_size_gb         = each.value
 
   tags = merge(
     var.tags,
@@ -98,7 +98,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   resource_group_name = var.resource_group_name
   size                = var.vm_size
 
-  admin_username = var.admin_username
+  admin_username                  = var.admin_username
   disable_password_authentication = true
 
   admin_ssh_key {

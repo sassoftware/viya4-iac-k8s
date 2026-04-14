@@ -24,7 +24,7 @@ variable "vm_size" {
   type        = string
   description = "Azure VM size (e.g., Standard_D4s_v5, Standard_E16s_v5)"
   nullable    = false
-  
+
   validation {
     condition     = can(regex("^Standard_[A-Z][0-9]+s?_v[0-9]$", var.vm_size))
     error_message = "VM size must be a valid Azure Standard SKU (e.g., Standard_D4s_v5)"
@@ -37,7 +37,7 @@ variable "os_disk_size" {
   description = "OS disk size in GB"
   default     = 100
   nullable    = false
-  
+
   validation {
     condition     = var.os_disk_size >= 30 && var.os_disk_size <= 4096
     error_message = "OS disk size must be between 30 and 4096 GB"
@@ -49,7 +49,7 @@ variable "os_disk_storage_type" {
   description = "OS disk storage type (Premium_LRS, Standard_LRS, StandardSSD_LRS)"
   default     = "Standard_LRS"
   nullable    = false
-  
+
   validation {
     condition     = contains(["Premium_LRS", "Standard_LRS", "StandardSSD_LRS"], var.os_disk_storage_type)
     error_message = "OS disk storage type must be Premium_LRS, Standard_LRS, or StandardSSD_LRS"
@@ -69,7 +69,7 @@ variable "data_disk_storage_type" {
   description = "Data disk storage type (Premium_LRS, Standard_LRS, StandardSSD_LRS)"
   default     = "Standard_LRS"
   nullable    = false
-  
+
   validation {
     condition     = contains(["Premium_LRS", "Standard_LRS", "StandardSSD_LRS"], var.data_disk_storage_type)
     error_message = "Data disk storage type must be Premium_LRS, Standard_LRS, or StandardSSD_LRS"
