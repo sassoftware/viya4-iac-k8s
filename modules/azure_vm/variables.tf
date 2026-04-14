@@ -90,6 +90,13 @@ variable "nsg_id" {
   nullable    = false
 }
 
+variable "create_nsg_association" {
+  type        = bool
+  description = "Whether to create NSG association (set based on deployment_type at plan time)"
+  default     = true
+  nullable    = false
+}
+
 variable "assign_public_ip" {
   type        = bool
   description = "Whether to assign a public IP address to the VM"

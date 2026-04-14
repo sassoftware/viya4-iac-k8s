@@ -211,8 +211,13 @@ variable "tags" {
 
 variable "ssh_public_key" {
   type        = string
-  description = "Path to SSH public key file for VM access (e.g., ~/.ssh/id_rsa.pub)"
+  description = "Path to SSH public key file for VM access (e.g., ~/.ssh/id_rsa.pub). Required for Azure deployments."
   default     = null
+
+  validation {
+    condition     = var.ssh_public_key == null ? true : fileexists(var.ssh_public_key)
+    error_message = "ssh_public_key file does not exist. Please provide a valid path to your public key file."
+  }
 }
 
 #
@@ -395,8 +400,8 @@ variable "jump_disk_size" {
 # Azure-specific jump server variables
 variable "jump_machine_type" {
   type        = string
-  description = "Azure VM size for jump server (e.g., Standard_B2s)"
-  default     = "Standard_B2s"
+  description = "Azure VM size for jump server (e.g., Standard_D2s_v5)"
+  default     = "Standard_D2s_v5"
 }
 
 variable "jump_os_disk" {

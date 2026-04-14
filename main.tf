@@ -241,6 +241,7 @@ module "azure_vms" {
   vm_size             = each.value.machine_type
   subnet_id           = module.azure_network[0].subnet_ids["k8s"]
   nsg_id              = module.azure_network[0].nsg_id
+  create_nsg_association = var.deployment_type == "azure"
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "azureuser"
 
@@ -277,6 +278,7 @@ module "azure_jump" {
   vm_size             = var.jump_machine_type
   subnet_id           = module.azure_network[0].subnet_ids["misc"]
   nsg_id              = module.azure_network[0].nsg_id
+  create_nsg_association = var.deployment_type == "azure"
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "jumpuser"
 
@@ -312,6 +314,7 @@ module "azure_nfs" {
   vm_size             = var.nfs_machine_type
   subnet_id           = module.azure_network[0].subnet_ids["misc"]
   nsg_id              = module.azure_network[0].nsg_id
+  create_nsg_association = var.deployment_type == "azure"
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "nfsuser"
 
@@ -369,7 +372,7 @@ resource "local_file" "ansible_vars" {
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
     cluster_vip_version        = var.cluster_vip_version
     cluster_vip_ip             = var.cluster_vip_ip
-    cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
+    cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${coalesce(var.cluster_domain, "local")}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${coalesce(var.cluster_domain, "local")}"
     cluster_lb_type            = var.cluster_lb_type
     cluster_lb_addresses       = local.loadbalancer_addresses
     nfs_ip                     = local.final_nfs_ip

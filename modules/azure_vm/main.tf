@@ -50,7 +50,7 @@ resource "azurerm_network_interface" "vm" {
 
 # Associate Network Security Group with Network Interface
 resource "azurerm_network_interface_security_group_association" "vm" {
-  count = var.nsg_id != "" ? 1 : 0
+  count = var.create_nsg_association ? 1 : 0
 
   network_interface_id      = azurerm_network_interface.vm.id
   network_security_group_id = var.nsg_id
