@@ -98,13 +98,15 @@ module "node" {
 module "jump" {
   source = "./modules/vm"
 
+  count = var.deployment_type == "vsphere" && var.create_jump ? 1 : 0
+
   name             = "jump"
-  instance_count   = var.create_jump ? 1 : 0
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  instance_count   = 1
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
@@ -120,13 +122,15 @@ module "jump" {
 module "nfs" {
   source = "./modules/vm"
 
+  count = var.deployment_type == "vsphere" && var.create_nfs ? 1 : 0
+
   name             = "nfs"
-  instance_count   = var.create_nfs ? 1 : 0
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  instance_count   = 1
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
@@ -142,13 +146,15 @@ module "nfs" {
 module "cr" {
   source = "./modules/vm"
 
+  count = var.deployment_type == "vsphere" && var.create_cr ? 1 : 0
+
   name             = "cr"
-  instance_count   = var.create_cr ? 1 : 0
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  instance_count   = 1
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   cluster_name     = local.cluster_name
@@ -164,14 +170,14 @@ module "cr" {
 module "postgresql" {
   source = "./modules/server"
 
-  for_each = local.postgres_servers != null ? length(local.postgres_servers) != 0 ? local.postgres_servers : {} : {}
+  for_each = var.deployment_type == "vsphere" ? (local.postgres_servers != null ? length(local.postgres_servers) != 0 ? local.postgres_servers : {} : {}) : {}
 
   name             = lower("${local.cluster_name}-${each.key}-pgsql")
-  resource_pool_id = data.vsphere_resource_pool.pool.id
+  resource_pool_id = data.vsphere_resource_pool.pool[0].id
   folder           = var.vsphere_folder
   datastore        = var.vsphere_datastore
   network          = var.vsphere_network
-  datacenter_id    = data.vsphere_datacenter.dc.id
+  datacenter_id    = data.vsphere_datacenter.dc[0].id
   template         = var.vsphere_template
   cluster_domain   = var.cluster_domain
   dns_servers      = var.dns_servers
