@@ -8,10 +8,12 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.48"
     }
-    vsphere = {
-      source  = "hashicorp/vsphere"
-      version = "~> 2.6"
-    }
+    # IMPORTANT: Uncomment vsphere below ONLY when deployment_type = "vsphere"
+    # For azure/bare_metal deployments, keep vsphere commented out
+    # vsphere = {
+    #   source  = "hashicorp/vsphere"
+    #   version = "~> 2.6"
+    # }
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"
