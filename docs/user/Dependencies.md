@@ -11,7 +11,7 @@ For dependency installation instructions and sources, links have been provided i
 | ~              | [terraform](https://www.terraform.io/downloads)                                                                                                | >=1.10.5     |
 | ~              | [docker](https://docs.docker.com/engine/install/)                                                                                              | >=20.10.17  |
 | ~              | [helm](https://helm.sh/docs/intro/install/)                                                                                                    | >=3         |
-| ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.32 - 1.34 |
+| ~              | [kubectl](https://kubernetes.io/docs/tasks/tools/)                                                                                             | 1.32 - 1.35 |
 | ~              | [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)                                                                           | any         |
 | ~              | [jq](https://jqlang.github.io/jq/download/)                                                                                                    | >=1.6       |
 | ~              | [sshpass](https://manpages.ubuntu.com/manpages/jammy/man1/sshpass.1.html)                                                                                                    | >=1.09       |
@@ -54,7 +54,7 @@ Example of using build arguments to control specific versions of dependencies in
 ```bash
 # Override kubectl version
 docker build \
- --build-arg KUBECTL_VERSION=1.34.0 \
+ --build-arg KUBECTL_VERSION=1.35.0 \
 	-t viya4-iac-k8s .
 ```
 
