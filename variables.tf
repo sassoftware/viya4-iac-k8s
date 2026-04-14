@@ -39,36 +39,42 @@ variable "vsphere_password" {
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_datacenter" {
   type        = string
   description = "This is the name of the vSphere data center."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_datastore" {
   type        = string
   description = "This is the name of the vSphere data store."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_resource_pool" {
   type        = string
   description = "This is the name of the vSphere resource pool."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_folder" {
   type        = string
   description = "This is the name of the vSphere folder."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_template" {
   type        = string
   description = "This is the name of the VM template to clone."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_network" {
   type        = string
   description = "This is the name of the publicly accessible network for cluster ingress and access."
@@ -168,6 +174,7 @@ variable "openstack_flavor_defaults" {
   description = "Default OpenStack Nova flavor name used when a node pool does not specify its own flavor."
   default     = "m1.large"
 }
+# tflint-ignore: terraform_unused_declarations
 variable "gateway" {
   type        = string
   description = "Gateway IP (if using static ips)"
@@ -180,12 +187,14 @@ variable "nat_ip" {
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "netmask" {
   type        = number
   description = "Netmask (if using static ips)"
   default     = 16
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "dns_servers" {
   description = "DNS servers (if using static ips)"
   default     = ["10.19.1.24", "10.36.1.53"]
@@ -271,11 +280,13 @@ variable "jump_ip" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "jump_memory" {
   type    = number
   default = 8092
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "jump_num_cpu" {
   type    = number
   default = 4
@@ -296,11 +307,13 @@ variable "nfs_ip" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "nfs_memory" {
   type    = number
   default = 16384
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "nfs_num_cpu" {
   type    = number
   default = 4
@@ -321,11 +334,13 @@ variable "cr_ip" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "cr_memory" {
   type    = number
   default = 8092
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "cr_num_cpu" {
   type    = number
   default = 4
