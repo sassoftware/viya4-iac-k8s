@@ -2,10 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
+- name: Resolve registered Kubernetes node name
+  ansible.builtin.shell: |
+    kubectl get nodes -l 'kubernetes.io/hostname in ({{ ansible_hostname }},{{ ansible_fqdn }})' \
+      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true
+  register: k8s_node_name
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+  ignore_errors: true
+  tags:
+    - uninstall
+
 - name: Draining the node
   ansible.builtin.shell: |
-    kubectl drain {{ ansible_hostname }} --delete-emptydir-data --force --ignore-daemonsets --timeout 60s
+    kubectl drain {{ k8s_node_name.stdout }} --delete-emptydir-data --force --ignore-daemonsets --timeout 60s
   delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+  when: k8s_node_name.stdout | length > 0
   ignore_errors: true
   tags:
     - uninstall
@@ -33,8 +44,9 @@
 
 - name: Remove the node
   ansible.builtin.shell: |
-    kubectl delete nodes {{ ansible_hostname }}
+    kubectl delete nodes {{ k8s_node_name.stdout }}
   delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+  when: k8s_node_name.stdout | length > 0
   ignore_errors: true
   tags:
     - uninstall
