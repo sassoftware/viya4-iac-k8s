@@ -145,13 +145,3 @@ resource "azurerm_linux_virtual_machine" "vm" {
     ]
   }
 }
-
-# Apply Kubernetes node taints and labels via cloud-init (advanced)
-# Note: Taints are typically applied at cluster bootstrap time, not during VM creation
-# This serves as documentation of intended taints for the node
-locals {
-  kubernetes_node_info = {
-    taints = var.node_taints
-    labels = var.node_labels
-  }
-}

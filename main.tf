@@ -347,6 +347,7 @@ module "azure_nfs" {
 }
 
 resource "local_file" "inventory" {
+  count    = var.deployment_type != "azure" ? 1 : 0
   filename = var.inventory
   content = templatefile("${path.module}/templates/ansible/inventory.tmpl", {
     prefix            = replace(var.prefix, "-", "_") # NOTE: Conversion needed in taking a URL value and using it as an Ansible Inventory value
@@ -361,6 +362,7 @@ resource "local_file" "inventory" {
 }
 
 resource "local_file" "ansible_vars" {
+  count    = var.deployment_type != "azure" ? 1 : 0
   filename = var.ansible_vars
   content = templatefile("${path.module}/templates/ansible/ansible-vars.yaml.tmpl", {
     ansible_user               = var.ansible_user
