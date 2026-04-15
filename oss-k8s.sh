@@ -34,6 +34,12 @@ TFVARS="$WORKDIR/terraform.tfvars"
 TFSTATE="$WORKDIR/terraform.tfstate"
 ANSIBLE_INVENTORY="$WORKDIR/inventory"
 ANSIBLE_VARS="@$WORKDIR/ansible-vars.yaml"
+# Export absolute paths for Ansible so that the world-writable directory warning
+# (which causes ansible.cfg to be silently ignored) does not break roles_path.
+# ANSIBLE_CONFIG must point to an absolute path; ANSIBLE_ROLES_PATH ensures the
+# repo-root roles/ directory is always on the search path regardless of cwd.
+export ANSIBLE_CONFIG="$BASEDIR/ansible.cfg"
+export ANSIBLE_ROLES_PATH="$BASEDIR/roles"
 TF_COMPAT_ARGS=()
 # main.tf lives alongside the Terraform root module in BASEDIR (the baked image
 # at /viya4-iac-k8s in Docker).  WORKDIR is the user-mounted volume (/workspace)
