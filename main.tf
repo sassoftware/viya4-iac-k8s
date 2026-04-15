@@ -328,7 +328,7 @@ module "azure_nfs" {
 
   os_disk_size           = var.nfs_os_disk
   data_disk_sizes        = var.nfs_data_disks
-  assign_public_ip       = var.azure_vm_public_ip_enabled
+  assign_public_ip       = false
   accelerated_networking = var.azure_accelerated_networking
 
   node_taints = []
