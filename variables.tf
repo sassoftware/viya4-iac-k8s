@@ -52,8 +52,13 @@ variable "azure_use_msi" {
 
 variable "azure_resource_group" {
   type        = string
-  description = "Azure resource group name."
+  description = "Azure resource group name. Will be created by Terraform if deployment_type is azure."
   default     = null
+
+  validation {
+    condition     = var.deployment_type != "azure" || var.azure_resource_group != null
+    error_message = "ERROR: azure_resource_group must be specified when deployment_type is azure."
+  }
 }
 
 variable "azure_location" {

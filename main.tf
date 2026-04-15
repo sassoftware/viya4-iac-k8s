@@ -190,6 +190,17 @@
 # }
 
 # ==========================================
+# Azure Resource Group
+# ==========================================
+
+resource "azurerm_resource_group" "main" {
+  count    = var.deployment_type == "azure" ? 1 : 0
+  name     = var.azure_resource_group
+  location = var.azure_location
+  tags     = var.tags
+}
+
+# ==========================================
 # Azure Network Deployment (Kubernetes Cluster)
 # ==========================================
 
@@ -231,7 +242,7 @@ module "azure_network" {
   # Tags
   tags = var.tags
 
-  depends_on = []
+  depends_on = [azurerm_resource_group.main]
 }
 
 # ==========================================
