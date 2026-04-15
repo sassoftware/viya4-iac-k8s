@@ -123,7 +123,13 @@ variable "azure_subnets" {
 
 variable "azure_nsg_name" {
   type        = string
-  description = "Name of pre-existing Network Security Group. Leave blank to create a new NSG."
+  description = "Name of pre-existing k8s Network Security Group. Leave blank to create a new NSG."
+  default     = null
+}
+
+variable "azure_misc_nsg_name" {
+  type        = string
+  description = "Name of pre-existing misc (jump/nfs) Network Security Group. Leave blank to create a new NSG."
   default     = null
 }
 

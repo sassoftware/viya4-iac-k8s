@@ -216,7 +216,8 @@ module "azure_network" {
   subnets = var.azure_subnets
 
   # NSG Configuration
-  nsg_name         = null # Create new NSG with default name
+  nsg_name         = null # Create new k8s NSG with default name
+  misc_nsg_name    = null # Create new misc NSG for jump/nfs subnet
   create_nsg_rules = var.azure_create_nsg_rules
 
   # NSG Rules Configuration - CIDR access controls
@@ -285,7 +286,7 @@ module "azure_jump" {
   azure_location      = var.azure_location
   vm_size             = var.jump_machine_type
   subnet_id           = module.azure_network[0].subnet_ids["misc"]
-  nsg_id              = module.azure_network[0].nsg_id
+  nsg_id              = module.azure_network[0].nsg_misc_id
   create_nsg_association = var.deployment_type == "azure"
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "jumpuser"
@@ -321,7 +322,7 @@ module "azure_nfs" {
   azure_location      = var.azure_location
   vm_size             = var.nfs_machine_type
   subnet_id           = module.azure_network[0].subnet_ids["misc"]
-  nsg_id              = module.azure_network[0].nsg_id
+  nsg_id              = module.azure_network[0].nsg_misc_id
   create_nsg_association = var.deployment_type == "azure"
   ssh_public_key      = file(var.ssh_public_key)
   admin_username      = "nfsuser"

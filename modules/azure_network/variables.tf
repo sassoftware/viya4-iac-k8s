@@ -63,7 +63,13 @@ variable "existing_subnet_names" {
 # NSG Configuration
 #
 variable "nsg_name" {
-  description = "Name of existing NSG. Leave null to create a new NSG"
+  description = "Name of existing k8s NSG. Leave null to create a new NSG"
+  type        = string
+  default     = null
+}
+
+variable "misc_nsg_name" {
+  description = "Name of existing misc NSG for jump/nfs subnet. Leave null to create a new NSG"
   type        = string
   default     = null
 }

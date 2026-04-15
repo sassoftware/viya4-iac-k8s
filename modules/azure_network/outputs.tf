@@ -29,11 +29,21 @@ output "subnet_details" {
 }
 
 output "nsg_id" {
-  description = "ID of the Network Security Group"
+  description = "ID of the k8s Network Security Group"
   value       = var.nsg_name == null ? azurerm_network_security_group.nsg[0].id : data.azurerm_network_security_group.existing[0].id
 }
 
 output "nsg_name" {
-  description = "Name of the Network Security Group"
+  description = "Name of the k8s Network Security Group"
   value       = local.nsg_name
+}
+
+output "nsg_misc_id" {
+  description = "ID of the misc (jump/nfs) Network Security Group"
+  value       = var.misc_nsg_name == null ? azurerm_network_security_group.nsg_misc[0].id : data.azurerm_network_security_group.existing_misc[0].id
+}
+
+output "nsg_misc_name" {
+  description = "Name of the misc (jump/nfs) Network Security Group"
+  value       = local.misc_nsg_name
 }

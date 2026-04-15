@@ -5,8 +5,9 @@
 # Creates VNet, Subnets, NSG with Kubernetes-specific rules
 
 locals {
-  vnet_name = var.vnet_name != null ? var.vnet_name : "${var.prefix}-vnet"
-  nsg_name  = var.nsg_name != null ? var.nsg_name : "${var.prefix}-nsg"
+  vnet_name     = var.vnet_name != null ? var.vnet_name : "${var.prefix}-vnet"
+  nsg_name      = var.nsg_name != null ? var.nsg_name : "${var.prefix}-k8s-nsg"
+  misc_nsg_name = var.misc_nsg_name != null ? var.misc_nsg_name : "${var.prefix}-misc-nsg"
 
   # Determine VNet resource group - use vnet RG if specified, otherwise main RG
   vnet_rg_name = var.vnet_resource_group_name != null ? var.vnet_resource_group_name : var.resource_group_name
@@ -80,7 +81,7 @@ data "azurerm_network_security_group" "existing" {
   resource_group_name = var.resource_group_name
 }
 
-# Create new NSG
+# Create new k8s NSG
 resource "azurerm_network_security_group" "nsg" {
   count               = var.nsg_name == null ? 1 : 0
   name                = local.nsg_name
@@ -89,13 +90,29 @@ resource "azurerm_network_security_group" "nsg" {
   tags                = var.tags
 }
 
+# Data source for existing misc NSG (jump/nfs subnet)
+data "azurerm_network_security_group" "existing_misc" {
+  count               = var.misc_nsg_name != null ? 1 : 0
+  name                = local.misc_nsg_name
+  resource_group_name = var.resource_group_name
+}
+
+# Create new misc NSG (jump/nfs subnet)
+resource "azurerm_network_security_group" "nsg_misc" {
+  count               = var.misc_nsg_name == null ? 1 : 0
+  name                = local.misc_nsg_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+}
+
 # NSG Rules for Kubernetes
 
-# Rule 1: SSH Access (Port 22)
-resource "azurerm_network_security_rule" "ssh" {
+# Rule 1a: SSH Access (Port 22) on misc NSG - external CIDRs reach jump server
+resource "azurerm_network_security_rule" "ssh_misc" {
   count                       = var.create_nsg_rules && length(var.ssh_source_cidrs) > 0 ? 1 : 0
   name                        = "AllowSSH"
-  description                 = "Allow SSH access to VMs"
+  description                 = "Allow SSH access to jump/nfs VMs from external CIDRs"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
@@ -103,6 +120,28 @@ resource "azurerm_network_security_rule" "ssh" {
   source_port_range           = "*"
   destination_port_range      = "22"
   source_address_prefixes     = var.ssh_source_cidrs
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = local.misc_nsg_name
+
+  depends_on = [
+    azurerm_network_security_group.nsg_misc,
+    data.azurerm_network_security_group.existing_misc
+  ]
+}
+
+# Rule 1b: SSH Access (Port 22) on k8s NSG - only from within VNet (jump server)
+resource "azurerm_network_security_rule" "ssh_k8s" {
+  count                       = var.create_nsg_rules ? 1 : 0
+  name                        = "AllowSSHFromVNet"
+  description                 = "Allow SSH to k8s nodes from within VNet (jump server only)"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "VirtualNetwork"
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
@@ -267,10 +306,9 @@ resource "azurerm_network_security_rule" "nodeport" {
   ]
 }
 
-# Associate NSG with subnets
-resource "azurerm_subnet_network_security_group_association" "nsg" {
-  for_each                  = local.subnets
-  subnet_id                 = each.value.id
+# Associate k8s NSG with k8s subnet
+resource "azurerm_subnet_network_security_group_association" "nsg_k8s" {
+  subnet_id                 = local.subnets["k8s"].id
   network_security_group_id = var.nsg_name == null ? azurerm_network_security_group.nsg[0].id : data.azurerm_network_security_group.existing[0].id
 
   depends_on = [
@@ -278,5 +316,40 @@ resource "azurerm_subnet_network_security_group_association" "nsg" {
     data.azurerm_subnet.existing,
     azurerm_network_security_group.nsg,
     data.azurerm_network_security_group.existing
+  ]
+}
+
+# Associate misc NSG with misc subnet (jump/nfs)
+resource "azurerm_subnet_network_security_group_association" "nsg_misc" {
+  subnet_id                 = local.subnets["misc"].id
+  network_security_group_id = var.misc_nsg_name == null ? azurerm_network_security_group.nsg_misc[0].id : data.azurerm_network_security_group.existing_misc[0].id
+
+  depends_on = [
+    azurerm_subnet.subnet,
+    data.azurerm_subnet.existing,
+    azurerm_network_security_group.nsg_misc,
+    data.azurerm_network_security_group.existing_misc
+  ]
+}
+
+# NFS ports on misc NSG - allow k8s nodes to mount NFS server
+resource "azurerm_network_security_rule" "nfs" {
+  count                       = var.create_nsg_rules ? 1 : 0
+  name                        = "AllowNFS"
+  description                 = "Allow NFS traffic from k8s nodes to NFS server"
+  priority                    = 110
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["111", "2049"]
+  source_address_prefix       = "VirtualNetwork"
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = local.misc_nsg_name
+
+  depends_on = [
+    azurerm_network_security_group.nsg_misc,
+    data.azurerm_network_security_group.existing_misc
   ]
 }
