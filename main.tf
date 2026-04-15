@@ -324,7 +324,7 @@ module "azure_nfs" {
   nsg_id              = module.azure_network[0].nsg_id
   create_nsg_association = var.deployment_type == "azure"
   ssh_public_key      = file(var.ssh_public_key)
-  admin_username      = "nfsuser1"
+  admin_username      = "nfsuser"
 
   os_disk_size           = var.nfs_os_disk
   data_disk_sizes        = var.nfs_data_disks
