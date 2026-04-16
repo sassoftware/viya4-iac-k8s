@@ -160,6 +160,48 @@
         systems_postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
         systems_postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
 
+- name: Create copy of Ubuntu default cert and key
+  when:
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
+    - postgres_server_ssl|lower == "on"
+    - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length == 0)
+  tags:
+    - install
+    - update
+  block:
+    - name: Copy Ubuntu default SSL Cert
+      ansible.builtin.copy:
+        src: /etc/ssl/certs/ssl-cert-snakeoil.pem
+        dest: "/etc/ssl/certs/ssl-cert-sas-{{ ansible_hostname }}.pem"
+        owner: root
+        group: root
+        mode: "0644"
+        remote_src: true
+      register: cert_result
+    - name: Copy Ubuntu default SSL Key
+      ansible.builtin.copy:
+        src: /etc/ssl/private/ssl-cert-snakeoil.key
+        dest: "/etc/ssl/private/ssl-cert-sas-{{ ansible_hostname }}.key"
+        owner: root
+        group: ssl-cert
+        mode: "0640"
+        remote_src: true
+      register: key_result
+    - name: Fetch SSL Cert
+      ansible.builtin.fetch:
+        src: "{{ cert_result.dest }}"
+        dest: "{{ inventory_dir }}/"
+        flat: true
+    - name: Fetch SSL Key
+      ansible.builtin.fetch:
+        src: "{{ key_result.dest }}"
+        dest: "{{ inventory_dir }}/"
+        flat: true
+    - name: Set systems_postgres_server_ssl_cert_file_dest and systems_postgres_server_ssl_key_file_dest
+      ansible.builtin.set_fact:
+        systems_postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
+        systems_postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
+
 - name: Alter postgresql.conf - Update ssl
   ansible.builtin.lineinfile:
     path: "{{ pg_conf_dir }}/postgresql.conf"
@@ -176,6 +218,8 @@
     line: "ssl_cert_file = '{{ systems_postgres_server_ssl_cert_file_dest }}'"
   when:
     - postgres_server_ssl|lower == "on"
+    - systems_postgres_server_ssl_cert_file_dest is defined
+    - systems_postgres_server_ssl_key_file_dest is defined
     - (systems_postgres_server_ssl_cert_file_dest|length > 0) and (systems_postgres_server_ssl_key_file_dest|length > 0)
   tags:
     - install
@@ -188,6 +232,8 @@
     line: "ssl_key_file = '{{ systems_postgres_server_ssl_key_file_dest }}'"
   when:
     - postgres_server_ssl|lower == "on"
+    - systems_postgres_server_ssl_cert_file_dest is defined
+    - systems_postgres_server_ssl_key_file_dest is defined
     - (systems_postgres_server_ssl_cert_file_dest|length > 0) and (systems_postgres_server_ssl_key_file_dest|length > 0)
   tags:
     - install
