@@ -141,7 +141,7 @@ resource "azurerm_network_security_rule" "ssh_k8s" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "22"
-  source_address_prefix       = "VirtualNetwork"
+  source_address_prefix       = var.api_server_source_cidrs
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
@@ -163,7 +163,7 @@ resource "azurerm_network_security_rule" "k8s_api" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "6443"
-  source_address_prefixes     = var.api_server_source_cidrs
+  source_address_prefixes     = "VirtualNetwork"
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = local.nsg_name
