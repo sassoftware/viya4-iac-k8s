@@ -573,6 +573,9 @@ for arg in ${ARGS[@]}; do
   if [[ "$arg" == "destroy" ]]; then
     arguments[6]=destroy
   fi
+  if [[ "$arg" == "cluster-baseline" ]]; then
+    arguments[7]=cluster-baseline
+  fi
 done
 
 #
@@ -584,7 +587,7 @@ done
 #
 # No other combinations are allowed
 #
-creation_items=( apply setup install )
+creation_items=( apply setup install cluster-baseline )
 update_items=( update )
 destruction_items=( uninstall cleanup destroy )
 external_items=( k tf helm )
@@ -685,6 +688,11 @@ for item in "${arguments[@]}"; do
   if [[ "$item" == "install" ]]; then
     ansible_prep
     ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$WORKDIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-install.yaml --flush-cache --tags install
+  fi
+  # cluster-baseline - Deploy cluster baseline components (Contour, cert-manager, StorageClasses, namespaces)
+  if [[ "$item" == "cluster-baseline" ]]; then
+    ansible_prep
+    ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$WORKDIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/cluster-baseline.yaml --flush-cache --tags baseline,install
   fi
   # update- Update systems and/or kubernetes
   if [[ "$item" == "update" ]]; then

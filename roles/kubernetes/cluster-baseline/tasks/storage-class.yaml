@@ -1,0 +1,56 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# StorageClass Definitions
+# Creates the storage classes required for SAS Viya deployments:
+#   - sas          : NFS-backed ReadWriteMany storage (requires NFS CSI driver)
+#   - sas-local-storage : Local disk ReadWriteOnce storage (WaitForFirstConsumer)
+# =============================================================================
+
+- name: Create sas NFS StorageClass
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: sas
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "true"
+      provisioner: nfs.csi.k8s.io
+      parameters:
+        server: "{{ V4_CFG_RWX_FILESTORE_ENDPOINT }}"
+        share: "{{ V4_CFG_RWX_FILESTORE_PATH | default('/export') }}"
+      reclaimPolicy: Delete
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+      mountOptions:
+        - nfsvers=4.1
+        - hard
+        - rsize=1048576
+        - wsize=1048576
+        - timeo=600
+  tags:
+    - install
+    - storage-class
+    - baseline
+
+- name: Create sas-local-storage StorageClass
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: sas-local-storage
+      provisioner: kubernetes.io/no-provisioner
+      volumeBindingMode: WaitForFirstConsumer
+      reclaimPolicy: Retain
+  tags:
+    - install
+    - storage-class
+    - baseline

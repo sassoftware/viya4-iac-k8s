@@ -370,6 +370,15 @@ resource "local_file" "ansible_vars" {
     system_ssh_keys_dir        = var.system_ssh_keys_dir
     node_labels                = local.node_labels
     node_taints                = local.node_taints
+    # Split-plane topology
+    split_plane_topology                   = var.split_plane_topology
+    viya_namespace                         = var.viya_namespace
+    tenants                                = var.tenants
+    run_cluster_baseline                   = var.run_cluster_baseline
+    cluster_baseline_ingress_mode          = var.cluster_baseline_ingress_mode
+    cluster_baseline_contour_version       = var.cluster_baseline_contour_version
+    cluster_baseline_cert_manager_version  = var.cluster_baseline_cert_manager_version
+    cluster_baseline_csi_nfs_version       = var.cluster_baseline_csi_nfs_version
     }
   )
 }

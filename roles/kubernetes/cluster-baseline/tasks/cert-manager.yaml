@@ -1,0 +1,60 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# cert-manager Installation
+# =============================================================================
+
+- name: Install cert-manager via Helm
+  kubernetes.core.helm:
+    name: "{{ CERT_MANAGER_NAME }}"
+    namespace: "{{ CERT_MANAGER_NAMESPACE }}"
+    chart_repo_url: "{{ CERT_MANAGER_CHART_URL }}"
+    chart_ref: "{{ CERT_MANAGER_CHART_NAME }}"
+    chart_version: "{{ CERT_MANAGER_CHART_VERSION }}"
+    values: "{{ CERT_MANAGER_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    create_namespace: true
+    wait: true
+    wait_timeout: "300s"
+  tags:
+    - install
+    - cert-manager
+    - baseline
+
+- name: Wait for cert-manager webhook to be ready
+  kubernetes.core.k8s_info:
+    kind: Deployment
+    name: cert-manager-webhook
+    namespace: "{{ CERT_MANAGER_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  register: cm_webhook
+  until: >-
+    cm_webhook.resources | length > 0 and
+    cm_webhook.resources[0].status.readyReplicas is defined and
+    cm_webhook.resources[0].status.readyReplicas >= 1
+  retries: 30
+  delay: 10
+  tags:
+    - install
+    - cert-manager
+    - baseline
+
+- name: Create self-signed ClusterIssuer
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: selfsigned-issuer
+        labels:
+          app.kubernetes.io/managed-by: cluster-baseline
+      spec:
+        selfSigned: {}
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  tags:
+    - install
+    - cert-manager
+    - baseline

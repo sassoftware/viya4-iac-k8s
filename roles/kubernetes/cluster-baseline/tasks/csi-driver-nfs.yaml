@@ -1,0 +1,29 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# CSI NFS Driver Installation
+# This task file is only executed when BASELINE_ENABLE_CSI_NFS: true.
+# By default that flag is false because roles/kubernetes/storage/nfs-csi-driver
+# in the kubernetes-install playbook already handles the NFS CSI driver.
+# Enable this only when running cluster-baseline standalone (without
+# a preceding kubernetes-install run).
+# =============================================================================
+
+- name: Install CSI NFS Driver via Helm
+  kubernetes.core.helm:
+    name: "{{ CSI_DRIVER_NFS_NAME }}"
+    namespace: "{{ CSI_DRIVER_NFS_NAMESPACE }}"
+    chart_repo_url: "{{ CSI_DRIVER_NFS_CHART_URL }}"
+    chart_ref: "{{ CSI_DRIVER_NFS_CHART_NAME }}"
+    chart_version: "{{ CSI_DRIVER_NFS_CHART_VERSION }}"
+    values: "{{ CSI_DRIVER_NFS_CONFIG }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    create_namespace: true
+    wait: true
+    wait_timeout: "300s"
+  tags:
+    - install
+    - csi-driver-nfs
+    - baseline

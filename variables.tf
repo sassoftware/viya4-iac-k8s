@@ -486,3 +486,82 @@ variable "iac_tooling" {
   type        = string
   default     = "terraform"
 }
+
+# =============================================================================
+# Split-Plane Topology
+# =============================================================================
+
+variable "split_plane_topology" {
+  type        = string
+  description = "SAS Viya namespace topology. 'co_located' deploys all planes (Control, Application, Data) in a single namespace. 'separated' creates a shared Control+Application namespace plus isolated Data Plane namespaces per tenant."
+  default     = "co_located"
+
+  validation {
+    condition     = contains(["co_located", "separated"], var.split_plane_topology)
+    error_message = "ERROR: Valid values for split_plane_topology are: co_located, separated"
+  }
+}
+
+variable "viya_namespace" {
+  type        = string
+  description = "Default Kubernetes namespace for SAS Viya. Acts as the single namespace in co_located topology and as the shared Control+Application Plane namespace in separated topology."
+  default     = "sas-viya"
+}
+
+variable "tenants" {
+  description = "Tenant definitions for separated topology. Each tenant receives an isolated Data Plane namespace with resource quotas and optional NetworkPolicy enforcement."
+  type = map(object({
+    namespace             = string
+    cpu_limit             = optional(string, "40")
+    memory_limit          = optional(string, "128Gi")
+    storage_quota         = optional(string, "200Gi")
+    pvc_count             = optional(string, "50")
+    pod_count             = optional(string, "500")
+    enable_network_policy = optional(bool, false)
+  }))
+  default = {}
+
+  validation {
+    condition     = var.split_plane_topology == "separated" ? length(var.tenants) > 0 : true
+    error_message = "ERROR: At least one tenant must be defined when split_plane_topology is 'separated'."
+  }
+}
+
+# =============================================================================
+# Cluster Baseline (Contour, cert-manager, storage classes)
+# =============================================================================
+
+variable "run_cluster_baseline" {
+  type        = bool
+  description = "Automatically run the cluster-baseline playbook (Contour ingress, cert-manager, storage classes) as part of the 'install' or standalone 'cluster-baseline' action in oss-k8s.sh. The playbook deploys cluster prerequisites on a running Kubernetes cluster."
+  default     = false
+}
+
+variable "cluster_baseline_ingress_mode" {
+  type        = string
+  description = "Ingress access mode for the Contour ingress controller. 'public' exposes the LoadBalancer IP externally; 'private' restricts it to cluster-internal access."
+  default     = "public"
+
+  validation {
+    condition     = contains(["public", "private"], var.cluster_baseline_ingress_mode)
+    error_message = "ERROR: Valid values for cluster_baseline_ingress_mode are: public, private"
+  }
+}
+
+variable "cluster_baseline_contour_version" {
+  type        = string
+  description = "Helm chart version for the Contour ingress controller (bitnami/contour chart repo)."
+  default     = "20.0.4"
+}
+
+variable "cluster_baseline_cert_manager_version" {
+  type        = string
+  description = "Helm chart version for cert-manager (jetstack/cert-manager chart repo)."
+  default     = "1.17.2"
+}
+
+variable "cluster_baseline_csi_nfs_version" {
+  type        = string
+  description = "Helm chart version for the CSI NFS Driver (csi-driver-nfs chart repo). Only used when BASELINE_ENABLE_CSI_NFS is true in ansible-vars.yaml."
+  default     = "4.11.0"
+}

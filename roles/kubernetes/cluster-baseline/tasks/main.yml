@@ -1,0 +1,104 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# Cluster Baseline - Main Orchestration
+# =============================================================================
+# Tags control which components are installed/uninstalled:
+#
+#   Install all:        --tags "baseline,install"
+#   Uninstall all:      --tags "baseline,uninstall"
+#   Install Contour:    --tags "contour,install"
+#   Install cert-mgr:   --tags "cert-manager,install"
+#   Install CSI NFS:    --tags "csi-driver-nfs,install"
+#   Install StorageClass: --tags "storage-class,install"
+#   Install namespaces: --tags "namespaces,install"
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Add Helm repositories
+# ---------------------------------------------------------------------------
+- name: Add bitnami Helm repository (Contour)
+  kubernetes.core.helm_repository:
+    name: bitnami
+    repo_url: "{{ CONTOUR_CHART_URL }}"
+  when: BASELINE_ENABLE_INGRESS | bool
+  tags:
+    - install
+    - contour
+    - baseline
+
+- name: Add jetstack Helm repository (cert-manager)
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: "{{ CERT_MANAGER_CHART_URL }}"
+  when: BASELINE_ENABLE_CERT_MANAGER | bool
+  tags:
+    - install
+    - cert-manager
+    - baseline
+
+- name: Add CSI NFS Driver Helm repository
+  kubernetes.core.helm_repository:
+    name: csi-driver-nfs
+    repo_url: "{{ CSI_DRIVER_NFS_CHART_URL }}"
+  when: BASELINE_ENABLE_CSI_NFS | bool
+  tags:
+    - install
+    - csi-driver-nfs
+    - baseline
+
+# ---------------------------------------------------------------------------
+# Install / uninstall components
+# ---------------------------------------------------------------------------
+- name: Install Contour ingress controller
+  ansible.builtin.include_tasks: contour.yaml
+  when: BASELINE_ENABLE_INGRESS | bool
+  tags:
+    - install
+    - contour
+    - baseline
+
+- name: Install cert-manager
+  ansible.builtin.include_tasks: cert-manager.yaml
+  when: BASELINE_ENABLE_CERT_MANAGER | bool
+  tags:
+    - install
+    - cert-manager
+    - baseline
+
+- name: Install CSI NFS Driver
+  ansible.builtin.include_tasks: csi-driver-nfs.yaml
+  when: BASELINE_ENABLE_CSI_NFS | bool
+  tags:
+    - install
+    - csi-driver-nfs
+    - baseline
+
+- name: Create StorageClasses
+  ansible.builtin.include_tasks: storage-class.yaml
+  when: BASELINE_ENABLE_STORAGE_CLASS | bool
+  tags:
+    - install
+    - storage-class
+    - baseline
+
+# ---------------------------------------------------------------------------
+# Configure Kubernetes namespaces (split-plane topology)
+# ---------------------------------------------------------------------------
+- name: Configure split-plane namespaces
+  ansible.builtin.include_tasks: split-plane-namespaces.yaml
+  tags:
+    - install
+    - namespaces
+    - baseline
+
+# ---------------------------------------------------------------------------
+# Uninstall (reverse order)
+# ---------------------------------------------------------------------------
+- name: Uninstall all baseline components
+  ansible.builtin.include_tasks: uninstall.yml
+  tags:
+    - uninstall
+    - baseline

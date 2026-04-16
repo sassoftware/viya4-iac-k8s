@@ -1,0 +1,68 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# Contour Ingress Controller Installation
+# =============================================================================
+
+- name: Create Contour namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ CONTOUR_NAMESPACE }}"
+        labels:
+          app.kubernetes.io/name: contour
+          app.kubernetes.io/managed-by: cluster-baseline
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  tags:
+    - install
+    - contour
+    - baseline
+
+- name: Install Contour via Helm
+  kubernetes.core.helm:
+    name: "{{ CONTOUR_NAME }}"
+    namespace: "{{ CONTOUR_NAMESPACE }}"
+    chart_repo_url: "{{ CONTOUR_CHART_URL }}"
+    chart_ref: "{{ CONTOUR_CHART_NAME }}"
+    chart_version: "{{ CONTOUR_CHART_VERSION }}"
+    values: >-
+      {{
+        CONTOUR_CONFIG | combine(
+          (V4_CFG_INGRESS_MODE == 'private') | ternary(CONTOUR_CONFIG_PRIVATE_LB, {})
+        )
+      }}
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    create_namespace: false
+    wait: true
+    wait_timeout: "600s"
+  tags:
+    - install
+    - contour
+    - baseline
+
+- name: Wait for Contour Envoy DaemonSet to be ready
+  kubernetes.core.k8s_info:
+    kind: DaemonSet
+    name: envoy
+    namespace: "{{ CONTOUR_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  register: envoy_ds
+  until: >-
+    envoy_ds.resources | length > 0 and
+    envoy_ds.resources[0].status.desiredNumberScheduled is defined and
+    envoy_ds.resources[0].status.numberReady is defined and
+    envoy_ds.resources[0].status.numberReady == envoy_ds.resources[0].status.desiredNumberScheduled
+  retries: 30
+  delay: 10
+  tags:
+    - install
+    - contour
+    - baseline

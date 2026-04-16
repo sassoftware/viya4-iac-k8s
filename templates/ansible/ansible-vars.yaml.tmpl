@@ -166,3 +166,55 @@ V4_CFG_RWX_FILESTORE_PATH: /export
 cr_ip   : "${cr_ip}"
 %{ endif ~}
 %{ endif ~}
+
+# =============================================================================
+# Split-Plane Topology
+# =============================================================================
+
+# Deployment topology: co_located (single namespace) or separated (shared Control+App + isolated Data per tenant)
+split_plane_topology : "${split_plane_topology}"
+
+# Default/shared namespace for SAS Viya deployment
+# - co_located:  all planes deploy here
+# - separated:   Control Plane + Application Plane share this namespace; Data Planes use per-tenant namespaces
+NAMESPACE : "${viya_namespace}"
+
+%{ if split_plane_topology == "separated" && length(tenants) > 0 ~}
+# Tenant Data Plane namespace definitions (separated topology only)
+TENANTS :
+%{ for tenant_name, tenant_config in tenants ~}
+  ${tenant_name}:
+    namespace:             "${tenant_config.namespace}"
+    cpu_limit:             "${tenant_config.cpu_limit}"
+    memory_limit:          "${tenant_config.memory_limit}"
+    storage_quota:         "${tenant_config.storage_quota}"
+    pvc_count:             "${tenant_config.pvc_count}"
+    pod_count:             "${tenant_config.pod_count}"
+    enable_network_policy: ${tenant_config.enable_network_policy}
+%{ endfor ~}
+%{ endif ~}
+
+# =============================================================================
+# Cluster Baseline (Contour ingress, cert-manager, storage classes)
+# =============================================================================
+
+# Set to true to automatically run the cluster-baseline playbook after 'install'
+run_cluster_baseline : ${run_cluster_baseline}
+
+# Ingress configuration
+V4_CFG_INGRESS_TYPE : "contour"
+V4_CFG_INGRESS_MODE : "${cluster_baseline_ingress_mode}"
+V4_CFG_TLS_GENERATOR : "cert-manager"
+
+# Component enablement flags (override per deployment as needed)
+# BASELINE_ENABLE_CSI_NFS is false by default because the kubernetes-install playbook
+# already deploys the NFS CSI driver via roles/kubernetes/storage/nfs-csi-driver.
+BASELINE_ENABLE_INGRESS       : true
+BASELINE_ENABLE_CERT_MANAGER  : true
+BASELINE_ENABLE_CSI_NFS       : false
+BASELINE_ENABLE_STORAGE_CLASS : true
+
+# Helm chart versions
+CONTOUR_CHART_VERSION        : "${cluster_baseline_contour_version}"
+CERT_MANAGER_CHART_VERSION   : "${cluster_baseline_cert_manager_version}"
+CSI_DRIVER_NFS_CHART_VERSION : "${cluster_baseline_csi_nfs_version}"

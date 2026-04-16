@@ -1,0 +1,139 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# Split-Plane Namespace Management
+#
+# Co-located topology:
+#   Creates a single namespace (NAMESPACE / viya_namespace) with topology
+#   label set to "co_located".
+#
+# Separated topology:
+#   Creates the shared Control+App namespace (NAMESPACE) labeled as
+#   "separated" with plane label "control-app", then creates one Data Plane
+#   namespace per tenant entry in TENANTS — each with labels, a ResourceQuota,
+#   and an optional default-deny NetworkPolicy.
+# =============================================================================
+
+# --------------------------------------------------------------------------
+# Shared / primary namespace (applies to both topologies)
+# --------------------------------------------------------------------------
+- name: Create primary Viya namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ NAMESPACE }}"
+        labels:
+          split-plane.sas.com/topology: "{{ split_plane_topology }}"
+          split-plane.sas.com/plane: "{{ 'control-app' if split_plane_topology == 'separated' else 'co-located' }}"
+  tags:
+    - install
+    - namespaces
+    - baseline
+
+# --------------------------------------------------------------------------
+# Separated topology — per-tenant Data Plane namespaces
+# --------------------------------------------------------------------------
+- name: Create tenant Data Plane namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item.value.namespace }}"
+        labels:
+          sas.com/tenant: "{{ item.key }}"
+          split-plane.sas.com/topology: "separated"
+          split-plane.sas.com/plane: "data"
+  loop: "{{ TENANTS | dict2items }}"
+  when: split_plane_topology == "separated" and TENANTS is defined and TENANTS | length > 0
+  tags:
+    - install
+    - namespaces
+    - baseline
+
+- name: Apply ResourceQuota for tenant namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ResourceQuota
+      metadata:
+        name: "{{ item.key }}-quota"
+        namespace: "{{ item.value.namespace }}"
+      spec:
+        hard:
+          requests.cpu: "{{ item.value.cpu_limit }}"
+          limits.cpu: "{{ item.value.cpu_limit }}"
+          requests.memory: "{{ item.value.memory_limit }}"
+          limits.memory: "{{ item.value.memory_limit }}"
+          requests.storage: "{{ item.value.storage_quota }}"
+          persistentvolumeclaims: "{{ item.value.pvc_count }}"
+          pods: "{{ item.value.pod_count }}"
+  loop: "{{ TENANTS | dict2items }}"
+  when: split_plane_topology == "separated" and TENANTS is defined and TENANTS | length > 0
+  tags:
+    - install
+    - namespaces
+    - baseline
+
+- name: Apply default-deny-ingress NetworkPolicy for tenant namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: default-deny-ingress
+        namespace: "{{ item.value.namespace }}"
+      spec:
+        podSelector: {}
+        policyTypes:
+          - Ingress
+  loop: "{{ TENANTS | dict2items }}"
+  when: >
+    split_plane_topology == "separated" and
+    TENANTS is defined and TENANTS | length > 0 and
+    item.value.enable_network_policy | default(false) | bool
+  tags:
+    - install
+    - namespaces
+    - baseline
+
+- name: Allow ingress from shared Control+App namespace to tenant namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: allow-from-shared-namespace
+        namespace: "{{ item.value.namespace }}"
+      spec:
+        podSelector: {}
+        policyTypes:
+          - Ingress
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    split-plane.sas.com/plane: control-app
+  loop: "{{ TENANTS | dict2items }}"
+  when: >
+    split_plane_topology == "separated" and
+    TENANTS is defined and TENANTS | length > 0 and
+    item.value.enable_network_policy | default(false) | bool
+  tags:
+    - install
+    - namespaces
+    - baseline

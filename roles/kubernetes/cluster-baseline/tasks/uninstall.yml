@@ -1,0 +1,124 @@
+# Copyright © 2024-2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# Cluster Baseline Uninstall
+# Removes all resources deployed by the cluster-baseline role in reverse order.
+# =============================================================================
+
+- name: Delete selfsigned ClusterIssuer
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    api_version: cert-manager.io/v1
+    kind: ClusterIssuer
+    name: selfsigned-issuer
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - cert-manager
+    - baseline
+
+- name: Uninstall cert-manager Helm release
+  kubernetes.core.helm:
+    name: "{{ CERT_MANAGER_NAME }}"
+    namespace: "{{ CERT_MANAGER_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    wait: true
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - cert-manager
+    - baseline
+
+- name: Delete cert-manager namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ CERT_MANAGER_NAMESPACE }}"
+    wait: true
+    wait_timeout: 120
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - cert-manager
+    - baseline
+
+- name: Uninstall Contour Helm release
+  kubernetes.core.helm:
+    name: "{{ CONTOUR_NAME }}"
+    namespace: "{{ CONTOUR_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    wait: true
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - contour
+    - baseline
+
+- name: Delete Contour namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ CONTOUR_NAMESPACE }}"
+    wait: true
+    wait_timeout: 120
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - contour
+    - baseline
+
+- name: Uninstall CSI NFS Driver Helm release
+  kubernetes.core.helm:
+    name: "{{ CSI_DRIVER_NFS_NAME }}"
+    namespace: "{{ CSI_DRIVER_NFS_NAMESPACE }}"
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    wait: true
+  ignore_errors: true  # noqa: ignore-errors
+  when: BASELINE_ENABLE_CSI_NFS | default(false) | bool
+  tags:
+    - uninstall
+    - csi-driver-nfs
+    - baseline
+
+- name: Delete tenant Data Plane namespaces
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ item.value.namespace }}"
+    wait: true
+    wait_timeout: 120
+  loop: "{{ TENANTS | dict2items }}"
+  when: split_plane_topology == "separated" and TENANTS is defined and TENANTS | length > 0
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - namespaces
+    - baseline
+  # Note: deleting the namespace automatically removes all NetworkPolicies and ResourceQuotas within it
+
+- name: Delete primary Viya namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ NAMESPACE }}"
+    wait: true
+    wait_timeout: 120
+  ignore_errors: true  # noqa: ignore-errors
+  tags:
+    - uninstall
+    - namespaces
+    - baseline
