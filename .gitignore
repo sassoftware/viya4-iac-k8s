@@ -5,3 +5,5 @@ terraform.tfstate*
 /ansible-vars.yaml
 /*-oss-kubeconfig.conf
 sas-iac-buildinfo-cm.yaml
+/provider_vsphere_active.tf
+/vsphere_compute.tf

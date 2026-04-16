@@ -8,10 +8,9 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.48"
     }
-    # vsphere = {
-    #   source  = "hashicorp/vsphere"
-    #   version = "~> 2.6"
-    # }
+    # vsphere provider is declared in vsphere_compute.tf (activated by oss-k8s.sh
+    # only for DEPLOYMENT_TYPE=vsphere). Keeping it out of static files prevents
+    # Terraform from initialising a vsphere connection for azure/bare_metal runs.
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"

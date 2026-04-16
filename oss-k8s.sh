@@ -9,10 +9,38 @@
 set -e
 
 # Global variables
-ARGS="$@"
 BASEDIR="$(pwd)"
 BINDIR="$BASEDIR/bin"
-SYSTEM="bare_metal"
+
+# Determine deployment type.
+# Priority: --type <value> flag > DEPLOYMENT_TYPE env var > bare_metal default
+#
+#   Option 1 (flag):    ./oss-k8s.sh --type azure apply setup install
+#   Option 2 (env var): DEPLOYMENT_TYPE=azure ./oss-k8s.sh apply setup install
+#   Option 3 (default): bare_metal
+#
+SYSTEM="${DEPLOYMENT_TYPE:-bare_metal}"
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" == "--type" ]]; then
+    _next_is_type=1
+  elif [[ -n "${_next_is_type:-}" ]]; then
+    SYSTEM="$arg"
+    unset _next_is_type
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+# Validate deployment type
+if [[ "$SYSTEM" != "bare_metal" && "$SYSTEM" != "vsphere" && "$SYSTEM" != "azure" ]]; then
+  echo "ERROR: Deployment type '$SYSTEM' is invalid. Valid values: bare_metal, vsphere, azure"
+  echo "  Set via: ./oss-k8s.sh --type azure <actions>"
+  echo "       or: DEPLOYMENT_TYPE=azure ./oss-k8s.sh <actions>"
+  exit 1
+fi
+
+echo "INFO: Deployment type: $SYSTEM"
 
 # Flags
 creation_flag=false
@@ -30,21 +58,58 @@ else
   K8S_TOOL_BASE="$WORKDIR"
 fi
 
-TFVARS="$WORKDIR/terraform.tfvars"
+# Select tfvars file based on deployment type
+if [[ "$SYSTEM" == "azure" ]]; then
+  TFVARS="$WORKDIR/terraform-azure.tfvars"
+else
+  TFVARS="$WORKDIR/terraform.tfvars"
+fi
 TFSTATE="$WORKDIR/terraform.tfstate"
 ANSIBLE_INVENTORY="$WORKDIR/inventory"
 ANSIBLE_VARS="@$WORKDIR/ansible-vars.yaml"
 
 # Functions
 
-# vSphere items (terraform)
-gather_tf_creds() {
-    if [[ -z "$VSPHERE_USER" ]]; then 
+# Activate vsphere Terraform configuration for vsphere deployments.
+# vsphere_compute.tf.disabled holds all vsphere data sources, module calls,
+# provider block, and required_providers entry. Copying it to vsphere_compute.tf
+# makes Terraform see vsphere resources. Removing it for azure/bare_metal means
+# Terraform never initialises a vsphere connection.
+setup_providers() {
+  local vsphere_active="$BASEDIR/vsphere_compute.tf"
+  local vsphere_disabled="$BASEDIR/vsphere_compute.tf.disabled"
+  local lock_file="$BASEDIR/.terraform.lock.hcl"
+
+  if [[ "$SYSTEM" == "vsphere" ]]; then
+    if [[ ! -f "$vsphere_disabled" ]]; then
+      echo "ERROR: $vsphere_disabled not found. Cannot enable vsphere deployment."
+      exit 1
+    fi
+    cp "$vsphere_disabled" "$vsphere_active"
+    echo "INFO: vSphere provider and resources enabled."
+  else
+    # Remove vsphere compute file and stale lock entry so terraform init is clean
+    if [[ -f "$vsphere_active" ]]; then
+      rm -f "$vsphere_active"
+      if [[ -f "$lock_file" ]] && grep -q 'vsphere' "$lock_file" 2>/dev/null; then
+        rm -f "$lock_file"
+        echo "INFO: Lock file cleared (stale vsphere entry removed)."
+      fi
+      echo "INFO: vSphere resources deactivated for $SYSTEM deployment."
+    fi
+    # Also clean up the old provider_vsphere_active.tf from previous approach
+    rm -f "$BASEDIR/provider_vsphere_active.tf"
+  fi
+}
+
+# vSphere credential gathering
+gather_vsphere_creds() {
+    if [[ -z "$VSPHERE_USER" ]]; then
         read -p 'vsphere_user: ' VSPHERE_USER
     fi
     echo
 
-    if [[ -z "$VSPHERE_PASSWORD" ]]; then 
+    if [[ -z "$VSPHERE_PASSWORD" ]]; then
         read -sp 'vsphere_password: ' VSPHERE_PASSWORD
     fi
     echo
@@ -55,8 +120,55 @@ gather_tf_creds() {
     export TF_VAR_ansible_password=$ANSIBLE_PASSWORD
 }
 
+# Azure credential gathering
+# Azure credentials can be provided via env vars (ARM_SUBSCRIPTION_ID, ARM_TENANT_ID,
+# ARM_CLIENT_ID, ARM_CLIENT_SECRET) or Managed Identity (set AZURE_USE_MSI=true).
+gather_azure_creds() {
+    # Check for MSI: honour AZURE_USE_MSI env var, OR detect azure_use_msi=true in tfvars
+    local tfvars_msi
+    tfvars_msi=$(grep -E '^\s*azure_use_msi\s*=\s*true' "$TFVARS" 2>/dev/null || true)
+    if [[ "${AZURE_USE_MSI:-false}" == "true" || -n "$tfvars_msi" ]]; then
+        echo "INFO: Using Managed Identity for Azure authentication."
+        export TF_VAR_azure_use_msi=true
+        return
+    fi
+
+    # Service Principal path: read from env vars (ARM_*) or TF_VAR_* or prompt
+    if [[ -z "${TF_VAR_azure_subscription_id:-}${ARM_SUBSCRIPTION_ID:-}" ]]; then
+        read -p 'azure_subscription_id: ' ARM_SUBSCRIPTION_ID
+        export TF_VAR_azure_subscription_id=$ARM_SUBSCRIPTION_ID
+    fi
+
+    if [[ -z "${TF_VAR_azure_tenant_id:-}${ARM_TENANT_ID:-}" ]]; then
+        read -p 'azure_tenant_id: ' ARM_TENANT_ID
+        export TF_VAR_azure_tenant_id=$ARM_TENANT_ID
+    fi
+
+    if [[ -z "${TF_VAR_azure_client_id:-}${ARM_CLIENT_ID:-}" ]]; then
+        read -p 'azure_client_id: ' ARM_CLIENT_ID
+        export TF_VAR_azure_client_id=$ARM_CLIENT_ID
+    fi
+
+    if [[ -z "${TF_VAR_azure_client_secret:-}${ARM_CLIENT_SECRET:-}" ]]; then
+        read -sp 'azure_client_secret: ' ARM_CLIENT_SECRET
+        echo
+        export TF_VAR_azure_client_secret=$ARM_CLIENT_SECRET
+    fi
+
+    # Export ARM_* aliases so the azurerm provider picks them up too
+    export ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID:-$TF_VAR_azure_subscription_id}
+    export ARM_TENANT_ID=${ARM_TENANT_ID:-$TF_VAR_azure_tenant_id}
+    export ARM_CLIENT_ID=${ARM_CLIENT_ID:-$TF_VAR_azure_client_id}
+    export ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET:-$TF_VAR_azure_client_secret}
+}
+
 terraform_prep() {
-  gather_tf_creds
+  setup_providers
+  if [[ "$SYSTEM" == "vsphere" ]]; then
+    gather_vsphere_creds
+  elif [[ "$SYSTEM" == "azure" ]]; then
+    gather_azure_creds
+  fi
   terraform init
 }
 
@@ -98,17 +210,29 @@ clean_up() {
 
 help() {
   echo ""
-  echo "Usage: $0 [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]"
+  echo "Usage: $0 [--type <deployment_type>] [apply|setup|install|update|uninstall|cleanup|destroy|helm|k|tf]"
+  echo ""
+  echo "  Deployment Type - Specify with --type flag or DEPLOYMENT_TYPE env var (default: bare_metal)"
+  echo ""
+  echo "    --type bare_metal   Physical/manually provisioned servers (Ansible only)"
+  echo "    --type vsphere      VMware vSphere/vCenter               (Terraform + Ansible)"
+  echo "    --type azure        Microsoft Azure VMs                  (Terraform + Ansible)"
+  echo ""
+  echo "  Examples:"
+  echo "    $0 --type azure   apply setup install"
+  echo "    $0 --type vsphere apply setup install"
+  echo "    DEPLOYMENT_TYPE=azure $0 apply setup install"
+  echo "    $0 setup install                           # bare_metal (default)"
   echo ""
   echo "  Actions           - Items and their meanings"
   echo ""
-  echo "    apply           - IaC creation                     : vSphere/vCenter"
-  echo "    setup           - System and software setup        : systems"
-  echo "    install         - Kubernetes install               : systems"
-  echo "    update          - System and/or Kubernetes updates : systems"
-  echo "    uninstall       - Kubernetes uninstall             : systems"
-  echo "    cleanup         - System and software cleanup      : systems"
-  echo "    destroy         - IaC destruction                  : vSphere/vCenter"
+  echo "    apply           - IaC creation                     : vsphere, azure"
+  echo "    setup           - System and software setup        : all types"
+  echo "    install         - Kubernetes install               : all types"
+  echo "    update          - System and/or Kubernetes updates : all types"
+  echo "    uninstall       - Kubernetes uninstall             : all types"
+  echo "    cleanup         - System and software cleanup      : all types"
+  echo "    destroy         - IaC destruction                  : vsphere, azure"
   echo ""
   echo "  Action groupings  - These items can be run together."
   echo "                      Alternate combinations are not allowed."
@@ -121,7 +245,13 @@ help() {
   echo ""
   echo "    helm            - Helm                             : kubernetes"
   echo "    k               - kubectl                          : kubernetes"
-  echo "    tf              - Terraform                        : vSphere/vCenter"
+  echo "    tf              - Terraform                        : vsphere, azure"
+  echo ""
+  echo "  Examples:"
+  echo "    DEPLOYMENT_TYPE=azure   $0 apply setup install"
+  echo "    DEPLOYMENT_TYPE=vsphere $0 apply setup install"
+  echo "    DEPLOYMENT_TYPE=azure   $0 uninstall cleanup destroy"
+  echo "                    $0 setup install          # bare_metal (default)"
   echo ""
   exit 1
 }
@@ -266,9 +396,12 @@ fi
 for item in "${arguments[@]}"; do
   # apply - Create infrastructure
   if [[ "$item" == "apply" ]]; then
-    echo "Infrastructure - Virtual hardware"
-    SYSTEM=vsphere
-    terraform_up
+    if [[ "$SYSTEM" == "bare_metal" ]]; then
+      echo "INFO: bare_metal deployment does not require infrastructure provisioning. Skipping apply."
+    else
+      echo "Infrastructure - Virtual hardware ($SYSTEM)"
+      terraform_up
+    fi
   fi
   # setup - Baseline systems
   if [[ "$item" == "setup" ]]; then
@@ -297,7 +430,10 @@ for item in "${arguments[@]}"; do
   fi
   # destroy - Destroy infrastructure
   if [[ "$item" == "destroy" ]]; then
-    SYSTEM=vsphere
+    if [[ "$SYSTEM" == "bare_metal" ]]; then
+      echo "INFO: bare_metal deployment has no infrastructure to destroy."
+      break
+    fi
     if [[ -e $TFSTATE ]]; then
       if [[ "$IAC_TOOLING" != "docker" ]]; then
         read -p 'Are you absolutely sure: ' CONFIRMATION

@@ -18,15 +18,16 @@ locals {
 
   ## Control plane nodes
   control_plane_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "control_plane" }
-  # control_plane_ips   = flatten(sort(flatten([for item in values(module.control_plane) : values(item)])))
+  # vsphere IP extraction is handled in vsphere_compute.tf (activated by oss-k8s.sh for vsphere deployments)
+  control_plane_ips = []
 
   ## System nodes
-  system_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
-  # system_node_ips = flatten(sort(flatten([for item in values(module.system) : values(item)]))) not used, ref for future use
+  system_nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
+  system_node_ips = [] # computed in vsphere_compute.tf when deployment_type=vsphere
 
   ## Nodes
   nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }
-  # node_ips = flatten(sort(flatten([for item in values(merge(module.system, module.node)) : values(item)])))
+  node_ips = [] # computed in vsphere_compute.tf when deployment_type=vsphere
 
   ## Load Balancer addresses and data items for kube-vip and MetalLB
   loadbalancer_addresses = var.cluster_lb_addresses != null ? length(var.cluster_lb_addresses) > 0 ? [for v in var.cluster_lb_addresses : v] : null : null
@@ -116,8 +117,9 @@ locals {
   azure_nfs_ip = var.deployment_type == "azure" && var.create_nfs ? module.azure_nfs[0].private_ip_address : null
 
   # Select appropriate IPs based on deployment type
-  # final_control_plane_ips = var.deployment_type == "azure" ? local.azure_control_plane_ips : local.control_plane_ips
-  # final_node_ips          = var.deployment_type == "azure" ? local.azure_node_ips : local.node_ips
+  # vsphere IPs are extracted in vsphere_compute.tf (overrides the stubs above)
+  final_control_plane_ips = var.deployment_type == "azure" ? local.azure_control_plane_ips : local.control_plane_ips
+  final_node_ips          = var.deployment_type == "azure" ? local.azure_node_ips : local.node_ips
   final_jump_ip           = var.deployment_type == "azure" ? local.azure_jump_ip : (var.create_jump ? var.jump_ip : null)
   final_nfs_ip            = var.deployment_type == "azure" ? local.azure_nfs_ip : (var.create_nfs ? var.nfs_ip : null)
 

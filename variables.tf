@@ -7,7 +7,6 @@
 variable "deployment_type" {
   type        = string
   description = "Options are: bare_metal, vsphere, or azure"
-  default     = "bare_metal"
 
   validation {
     condition     = contains(["bare_metal", "vsphere", "azure"], var.deployment_type)
