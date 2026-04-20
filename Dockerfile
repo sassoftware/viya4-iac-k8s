@@ -1,14 +1,26 @@
 # Base layer
-FROM ubuntu:22.04 AS baseline
+FROM ubuntu:24.04 AS baseline
+
+# Force HTTPS mirrors and IPv4-only to work in environments where
+# port 80 outbound and IPv6 are blocked by firewall.
+# Note: Ubuntu 24.04 uses /etc/apt/sources.list.d/ubuntu.sources (DEB822 format)
+RUN (sed -i 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g; s|http://security.ubuntu.com|https://archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true) \
+  && echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y \
-      python3 python3-dev python3-pip \
+      python3 python3-dev python3-pip python3-venv \
       curl unzip gnupg lsb-release ca-certificates software-properties-common \
       --no-install-recommends \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
   && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment to comply with PEP 668 (Ubuntu 24.04 Python 3.12 requirement)
+# This ensures pip packages are isolated and don't conflict with system packages
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/venv"
 
 
 # Tool building layer
@@ -59,13 +71,22 @@ COPY --from=tool_builder /usr/local/bin/helm /usr/local/bin/helm
 COPY --from=tool_builder /build/kubectl /usr/local/bin/kubectl
 COPY --from=tool_builder /usr/bin/terraform /usr/bin/terraform
 
+# Copy the virtual environment from baseline
+COPY --from=baseline /opt/venv /opt/venv
+
+# Activate virtual environment
+ENV PATH="/opt/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/venv"
+
 # Copy your source
 WORKDIR /viya4-iac-k8s
 COPY . /viya4-iac-k8s/
 
 ENV HOME=/viya4-iac-k8s
 
-RUN pip install -r ./requirements.txt --no-cache-dir \
+# Upgrade pip and setuptools first to address CVEs, then install requirements
+RUN pip install --upgrade pip setuptools \
+  && pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy install -r ./requirements.yaml \
   && chmod 755 /viya4-iac-k8s/docker-entrypoint.sh /viya4-iac-k8s/oss-k8s.sh \
   && terraform init \
