@@ -35,7 +35,7 @@
 
 - name: Set kubernetes version part facts for crictl
   set_fact:
-    os: xUbuntu_22.04
+    os: "xUbuntu_{{ ansible_distribution_version }}"
     k8s_major_version: "{% if k8s_version_semantic_parts|length > 0 %}{{ k8s_version_semantic_parts.0 }}{% endif %}"
     k8s_minor_version: "{% if k8s_version_semantic_parts|length > 1 %}{{ k8s_version_semantic_parts.1 }}{% endif %}"
     k8s_patch_version: "{% if k8s_version_semantic_parts|length > 2 %}{{ k8s_version_semantic_parts.2 }}{% else %}0{% endif %}"
