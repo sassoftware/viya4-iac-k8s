@@ -10,7 +10,7 @@
 #   ./allocate-vip.sh
 #
 # After running:
-#   1. Register both IPs in names.sas.com (unx.sas.com domain)
+#   1. Register both IPs in your DNS zone (e.g. your-domain.example.com)
 #   2. Update cluster_vip_fqdn in terraform.tfvars
 #   3. Run: export SYSTEM=openstack && ./oss-k8s.sh apply setup install
 
@@ -169,18 +169,21 @@ echo "        services (e.g. the Viya SAS/HTTP ingress controller)."
 echo ""
 echo "  NEXT STEPS:"
 echo ""
-echo "  1. Register both IPs in names.sas.com (unx.sas.com domain):"
-echo "       A    <prefix>-vip.unx.sas.com        ->  $VIP"
-echo "       PTR  $VIP                             ->  <prefix>-vip.unx.sas.com"
-echo "       A    <prefix>-lb.unx.sas.com         ->  $LB_VIP"
-echo "       PTR  $LB_VIP                         ->  <prefix>-lb.unx.sas.com"
+echo "  1. Register both IPs in your DNS zone:"
+echo "       A    <prefix>-vip.<your-dns-zone>        ->  $VIP"
+echo "       PTR  $VIP                               ->  <prefix>-vip.<your-dns-zone>"
+echo "       A    <prefix>-lb.<your-dns-zone>         ->  $LB_VIP"
+echo "       PTR  $LB_VIP                            ->  <prefix>-lb.<your-dns-zone>"
+echo ""
+echo "     where <your-dns-zone> is your OpenStack tenant's DNS domain,"
+echo "     e.g. the value of cluster_domain in terraform.tfvars."
 echo ""
 echo "  2. Update cluster_vip_fqdn in terraform.tfvars:"
-echo "       cluster_vip_fqdn = \"<prefix>-vip.unx.sas.com\""
+echo "       cluster_vip_fqdn = \"<prefix>-vip.<your-dns-zone>\""
 echo ""
 echo "  3. Verify DNS is live:"
-echo "       nslookup <prefix>-vip.unx.sas.com"
-echo "       nslookup <prefix>-lb.unx.sas.com"
+echo "       nslookup <prefix>-vip.<your-dns-zone>"
+echo "       nslookup <prefix>-lb.<your-dns-zone>"
 echo ""
 echo "  4. Then run:"
 echo "       export SYSTEM=openstack"
