@@ -442,17 +442,57 @@ for svc in body.get('token',{}).get('catalog',[]):
 
     echo "patch_vip_allowed_pairs: patching control-plane ports for cluster '${CLUSTER_NAME}' with VIP ${VIP} + LB IPs [${LB_IPS[*]}]"
 
-    # Neutron ?name= filter is exact-match only, so fetch all ports and filter client-side.
+    # Look up ports by device_id (Nova server UUID) from Terraform state to avoid
+    # matching stale orphaned ports from previous runs that share the same name prefix.
+    local SERVER_IDS=()
+    if [[ -f "$TFSTATE" ]]; then
+        while IFS= read -r sid; do
+            [[ -n "$sid" ]] && SERVER_IDS+=("$sid")
+        done < <(python3 -c "
+import sys, json
+with open('${TFSTATE}') as f:
+    state = json.load(f)
+prefix = '${CLUSTER_NAME}-control-plane'
+for res in state.get('resources', []):
+    if res.get('type') != 'openstack_compute_instance_v2':
+        continue
+    for inst in res.get('instances', []):
+        attrs = inst.get('attributes', {})
+        name = attrs.get('name', '')
+        if name.startswith(prefix):
+            sid = attrs.get('id', '')
+            if sid:
+                print(sid)
+" 2>/dev/null)
+    fi
+
     local PORT_LIST
-    PORT_LIST=$(curl -sk -H "X-Auth-Token: $TOKEN" \
-      "${NEUTRON_URL}/v2.0/ports" | \
-      python3 -c "
+    if [[ ${#SERVER_IDS[@]} -gt 0 ]]; then
+        # Filter ports by exact device_id match against known control-plane server UUIDs.
+        local SERVER_IDS_STR
+        SERVER_IDS_STR=$(IFS=,; echo "${SERVER_IDS[*]}")
+        PORT_LIST=$(curl -sk -H "X-Auth-Token: $TOKEN" \
+          "${NEUTRON_URL}/v2.0/ports" | \
+          python3 -c "
+import sys, json
+server_ids = set('${SERVER_IDS_STR}'.split(','))
+for p in json.load(sys.stdin).get('ports', []):
+    if p.get('device_id','') in server_ids:
+        print(p['id'], p['name'])
+" 2>/dev/null)
+    else
+        # Fallback: filter by name prefix (may match stale ports from previous runs).
+        echo "patch_vip_allowed_pairs: WARNING - no server IDs in Terraform state, falling back to name-prefix port lookup."
+        PORT_LIST=$(curl -sk -H "X-Auth-Token: $TOKEN" \
+          "${NEUTRON_URL}/v2.0/ports" | \
+          python3 -c "
 import sys, json
 prefix = '${CLUSTER_NAME}-control-plane'
 for p in json.load(sys.stdin).get('ports', []):
     if p.get('name','').startswith(prefix):
         print(p['id'], p['name'])
 " 2>/dev/null)
+    fi
 
     if [[ -z "$PORT_LIST" ]]; then
         echo "patch_vip_allowed_pairs: no control-plane ports found, skipping."
