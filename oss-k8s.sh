@@ -509,7 +509,15 @@ for p in json.load(sys.stdin).get('ports', []):
           "${NEUTRON_URL}/v2.0/ports/${PORT_ID}" | \
           python3 -c "import sys,json; d=json.load(sys.stdin); p=d.get('port',{}); print('OK' if p.get('allowed_address_pairs') else str(d.get('NeutronError','unknown error')))" 2>/dev/null)
         echo "  port $PORT_NAME ($PORT_ID): $RESULT"
+        [[ "$RESULT" != "OK" ]] && PATCH_FAILED=1
     done <<< "$PORT_LIST"
+
+    if [[ "$PATCH_FAILED" -eq 1 ]]; then
+        echo "patch_vip_allowed_pairs: ERROR - one or more ports failed to patch. The install step will fail."
+        echo "patch_vip_allowed_pairs: Run manually: openstack --insecure port set --allowed-address ip-address=${VIP} <port-id>"
+        return 1
+    fi
+    echo "patch_vip_allowed_pairs: all control-plane ports patched successfully."
 }
 
 terraform_down() {
