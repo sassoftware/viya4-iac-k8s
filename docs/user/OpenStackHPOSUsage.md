@@ -50,7 +50,7 @@ ls -la ~/.ssh/oss/
 
 ### Step 2 — Upload the Public Key to OpenStack
 
-1. Log in to your OpenStack dashboard (e.g. `https://dashboard.hpos5.rnd.sas.com`)
+1. Log in to your OpenStack dashboard (e.g. `https://dashboard.<your-openstack-host>`)
 2. Navigate to **Project → Compute → Key Pairs**
 3. Click **Import Public Key**
 4. Fill in the form:
@@ -69,11 +69,18 @@ ls -la ~/.ssh/oss/
 Create `.openstack_creds.env` **outside the repo** with your tenant credentials.
 
 > ⚠️ Do **NOT** quote values. No trailing spaces.
+>
+> ⚠️ Do **NOT** add `export` to any line in this file.
+> - For your **shell** (Step 4), the `export $(...)` wrapper handles exporting.
+> - For **Docker** `--env-file`, the `export` keyword causes a fatal error:
+>   `docker: poorly formatted environment: variable 'export OS_AUTH_URL' contains whitespaces.`
 
 ```bash
 cat > ~/.openstack_creds.env << 'EOF'
 # OpenStack Keystone endpoint
-OS_AUTH_URL=https://dashboard.hpos5.rnd.sas.com:5000/v3/
+# Full v3 endpoint URL including port 5000 and /v3/ path
+# e.g. https://dashboard.<your-openstack-host>:5000/v3/
+OS_AUTH_URL=https://<your-openstack-auth-url>:5000/v3/
 
 # OpenStack credentials
 OS_USERNAME=<your_openstack_username>
@@ -82,15 +89,27 @@ OS_PASSWORD=<your_openstack_password>
 # OpenStack project / tenant
 OS_PROJECT_NAME=<your_project_name>
 
-# OpenStack domain
-OS_USER_DOMAIN_NAME=<your_domain>        # e.g. Default or sas-ldap
+# Identity domain for your USER account.
+# Use 'Default' for standard OpenStack, 'sas-ldap' for HPOS/SAS LDAP environments.
+OS_USER_DOMAIN_NAME=sas-ldap
+
+# Identity domain for your PROJECT (tenant).
+# Required for OpenStack Identity v3. Usually the same value as OS_USER_DOMAIN_NAME.
+# Omitting this causes: "Expecting to find domain in project" (HTTP 400).
+OS_PROJECT_DOMAIN_NAME=sas-ldap
 
 # OpenStack region (leave empty if single-region)
 OS_REGION_NAME=
 
-# Ansible SSH credentials for cluster nodes
-TF_VAR_ansible_user=<vm_os_user>         # e.g. admin or ubuntu
-TF_VAR_ansible_password=<vm_os_password>
+# OS-level SSH credentials Ansible uses to connect to provisioned VMs.
+# These are NOT your OpenStack API credentials.
+# TF_VAR_ansible_user     — VM OS username created by cloud-init.
+#                           Use 'admin' for HPOS, 'ubuntu' for Ubuntu images,
+#                           'rocky' for Rocky Linux images.
+# TF_VAR_ansible_password — VM OS password. Default 'admin' is for validation
+#                           only — replace with a secure value for production.
+TF_VAR_ansible_user=admin
+TF_VAR_ansible_password=admin
 EOF
 
 # Protect the file
@@ -102,9 +121,14 @@ chmod 600 ~/.openstack_creds.env
 ### Step 4 — Source the Credentials File
 
 ```bash
-source ~/.openstack_creds.env
+# Works in both bash and ksh
+export $(grep -v '^#' ~/.openstack_creds.env | grep -v '^$' | xargs)
 export SYSTEM=openstack
 ```
+
+> **Shell note:** `source ~/.openstack_creds.env` works in **bash** but may not
+> export variables correctly in **ksh**. The `export $(...)` form above works
+> reliably in both shells.
 
 > `oss-k8s.sh` will also auto-source `~/.openstack_creds.env` at runtime if
 > `$OS_AUTH_URL` is not already set, but sourcing it manually first is recommended
@@ -121,11 +145,36 @@ require the `openstack` CLI client.
 pip install python-openstackclient
 ```
 
-Verify:
+> **PATH note:** When installing with `pip` (without `sudo`), the `openstack` binary
+> is placed in `~/.local/bin/` which may **not** be in your `$PATH` by default.
+> If `openstack: command not found` after install, fix it with one of the following:
+>
+> **Option 1 — Add `~/.local/bin` to your PATH (recommended):**
+> ```bash
+> echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+> source ~/.bashrc
+> ```
+>
+> **Option 2 — Install system-wide (requires sudo):**
+> ```bash
+> sudo pip install python-openstackclient
+> ```
+>
+> **Option 3 — Copy binary manually (quick fix):**
+> ```bash
+> sudo cp ~/.local/bin/openstack /usr/local/bin/
+> ```
+
+Verify the CLI is working and can authenticate:
 
 ```bash
 openstack --insecure token issue
 ```
+
+> **Note:** If you get `Expecting to find domain in project (HTTP 400)`, ensure
+> `OS_PROJECT_DOMAIN_NAME` is set in `~/.openstack_creds.env` (see Step 4).
+> This is a required field for OpenStack Identity v3 and is often the same value
+> as `OS_USER_DOMAIN_NAME` (e.g. `sas-ldap` for HPOS environments).
 
 ---
 
@@ -160,21 +209,24 @@ Example output:
 
 **After running `allocate-vip.sh`, you must:**
 
-1. Register both IPs in DNS (`names.sas.com`, `unx.sas.com` domain):
+1. Register both IPs in your DNS zone (the value of `cluster_domain` in `terraform.tfvars`):
    ```
-   A    <prefix>-vip.unx.sas.com   →  <cluster_vip_ip>
-   PTR  <cluster_vip_ip>           →  <prefix>-vip.unx.sas.com
-   A    <prefix>-lb.unx.sas.com    →  <lb_vip>
-   PTR  <lb_vip>                   →  <prefix>-lb.unx.sas.com
+   A    <prefix>-vip.<your-dns-zone>   →  <cluster_vip_ip>
+   PTR  <cluster_vip_ip>              →  <prefix>-vip.<your-dns-zone>
+   A    <prefix>-lb.<your-dns-zone>    →  <lb_vip>
+   PTR  <lb_vip>                      →  <prefix>-lb.<your-dns-zone>
    ```
+   > `<your-dns-zone>` is the DNS domain for your OpenStack project/tenant
+   > (e.g. `myproject.openstack.example.com`). Contact your OpenStack
+   > or network administrator to register the records.
 2. Set `cluster_vip_fqdn` in `terraform.tfvars` to the registered FQDN:
    ```hcl
-   cluster_vip_fqdn = "<prefix>-vip.unx.sas.com"
+   cluster_vip_fqdn = "<prefix>-vip.<your-dns-zone>"
    ```
 3. Verify DNS is live before proceeding:
    ```bash
-   nslookup <prefix>-vip.unx.sas.com
-   nslookup <prefix>-lb.unx.sas.com
+   nslookup <prefix>-vip.<your-dns-zone>
+   nslookup <prefix>-lb.<your-dns-zone>
    ```
 
 ---
@@ -211,12 +263,12 @@ openstack_insecure          = true
 # Kubernetes
 cluster_version     = "1.34.6"   # Latest supported: 1.32.x – 1.35.x
 cluster_cri_version = "2.2.2"
-cluster_domain      = "example.sas.com"   # ← CHANGE
+cluster_domain      = "<your-dns-zone>"   # ← CHANGE: your tenant DNS domain, e.g. myproject.openstack.example.com
 
 # VIP — populated by allocate-vip.sh (Step 6)
 cluster_vip_version = "0.7.1"
-cluster_vip_ip      = "10.119.129.26"                    # ← from Step 6
-cluster_vip_fqdn    = "mycluster-vip.unx.sas.com"        # ← from Step 6 DNS registration
+cluster_vip_ip      = "10.119.129.26"                              # ← from Step 6
+cluster_vip_fqdn    = "<prefix>-vip.<your-dns-zone>"              # ← from Step 6 DNS registration
 
 # Load Balancer — populated by allocate-vip.sh (Step 6)
 cluster_lb_type      = "kube_vip"
@@ -311,6 +363,21 @@ docker build -t viya4-iac-k8s:latest .
 
 #### Option A — Native
 
+> **Prerequisites (native only):** `oss-k8s.sh` calls `ansible-galaxy` and installs
+> Python packages via `pip` automatically during `setup` and `install`. You need:
+> - `ansible-core` installed and on your `PATH`:
+>   ```bash
+>   sudo dnf install -y ansible-core   # Rocky / RHEL 9
+>   # OR
+>   sudo apt-get install -y ansible-core  # Ubuntu 22.04/24.04
+>   ```
+> - Python 3 + pip available (standard on Rocky 9 / Ubuntu 22.04+).
+>   The `oss-k8s.sh` script automatically runs
+>   `python3 -m pip install --user -r requirements.txt`
+>   before each Ansible playbook, which installs `kubernetes`, `openshift`,
+>   `dnspython`, and `jmespath` — the Python libraries required by `kubernetes.core`
+>   Ansible modules.
+
 ```bash
 cd /path/to/viya4-iac-k8s
 
@@ -327,6 +394,7 @@ export SYSTEM=openstack
 cd /path/to/viya4-iac-k8s
 
 docker run --rm -it \
+  --network host \
   --group-add root \
   --user $(id -u):$(id -g) \
   --env SYSTEM=openstack \
@@ -337,7 +405,12 @@ docker run --rm -it \
 ```
 
 > **Docker notes:**
+> - `--network host` is **required** for OpenStack environments on private/corporate networks.
+>   Without it, Docker uses bridge networking (NAT) and the container cannot reach internal
+>   OpenStack endpoints (Keystone, Neutron, Nova). The symptom is `patch_vip_allowed_pairs:
+>   could not obtain Keystone token or Neutron URL, skipping.` immediately after `apply`.
 > - `--env-file` injects all `OS_*` and `TF_VAR_*` credentials automatically.
+>   Do **not** include `export` in this file — see Step 3.
 > - `--volume $(pwd):/workspace` mounts your local directory so `terraform.tfvars`,
 >   `terraform.tfstate`, `inventory`, and `ansible-vars.yaml` are written back to your host.
 > - `--env IAC_TOOLING=docker` is set automatically by the image entrypoint but can
@@ -353,6 +426,16 @@ docker run --rm -it \
 > which uses the Neutron API to add `cluster_vip_ip` and `cluster_lb_addresses` to
 > `allowed_address_pairs` on all control-plane ports. This is required because most
 > OpenStack environments block setting `allowed_address_pairs` at port-creation time.
+>
+> ⚠️ **If you see `patch_vip_allowed_pairs: could not obtain Keystone token or Neutron URL, skipping.`**
+> this is **not harmless** — the VIP port patch is skipped and kube-vip will be unable to
+> bind the control-plane VIP (OpenStack port security will block the traffic). The `install`
+> step will fail with unreachable control-plane errors.
+>
+> **Root cause:** The function authenticates to Keystone using `OS_AUTH_URL`, `OS_USERNAME`,
+> `OS_PASSWORD`, `OS_USER_DOMAIN_NAME`, `OS_PROJECT_NAME`, and `OS_PROJECT_DOMAIN_NAME`.
+> All six must be set correctly in your environment. The most common cause of the skip is
+> a missing or wrong `OS_PROJECT_DOMAIN_NAME` — see Step 3.
 
 ---
 
@@ -395,6 +478,7 @@ export SYSTEM=openstack
 
 ```bash
 docker run --rm -it \
+  --network host \
   --group-add root \
   --user $(id -u):$(id -g) \
   --env SYSTEM=openstack \
