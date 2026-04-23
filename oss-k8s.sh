@@ -354,10 +354,37 @@ patch_vip_allowed_pairs() {
         return 0
     fi
 
-    local NEUTRON_URL TOKEN TOKEN_RESPONSE
+    local NEUTRON_URL TOKEN TOKEN_RESPONSE JSON_BODY
+    # Build the JSON body via Python to avoid shell quoting issues with special
+    # characters in passwords (e.g. quotes, backslashes, exclamation marks).
+    # Also handles OS_PROJECT_DOMAIN_NAME falling back to OS_USER_DOMAIN_NAME.
+    JSON_BODY=$(python3 -c "
+import json, os
+print(json.dumps({
+    'auth': {
+        'identity': {
+            'methods': ['password'],
+            'password': {
+                'user': {
+                    'name': os.environ.get('OS_USERNAME',''),
+                    'domain': {'name': os.environ.get('OS_USER_DOMAIN_NAME','')},
+                    'password': os.environ.get('OS_PASSWORD','')
+                }
+            }
+        },
+        'scope': {
+            'project': {
+                'name': os.environ.get('OS_PROJECT_NAME',''),
+                'domain': {'name': os.environ.get('OS_PROJECT_DOMAIN_NAME',
+                                   os.environ.get('OS_USER_DOMAIN_NAME',''))}
+            }
+        }
+    }
+}))
+" 2>/dev/null)
     TOKEN_RESPONSE=$(curl -sk -i -X POST "${OS_AUTH_URL}auth/tokens" \
       -H "Content-Type: application/json" \
-      -d "{\"auth\":{\"identity\":{\"methods\":[\"password\"],\"password\":{\"user\":{\"name\":\"${OS_USERNAME}\",\"domain\":{\"name\":\"${OS_USER_DOMAIN_NAME}\"},\"password\":\"${OS_PASSWORD}\"}}},\"scope\":{\"project\":{\"name\":\"${OS_PROJECT_NAME}\",\"domain\":{\"name\":\"${OS_USER_DOMAIN_NAME}\"}}}}}" 2>/dev/null)
+      -d "$JSON_BODY" 2>/dev/null)
 
     TOKEN=$(echo "$TOKEN_RESPONSE" | grep -i "x-subject-token" | awk '{print $2}' | tr -d '\r\n')
     NEUTRON_URL=$(echo "$TOKEN_RESPONSE" | python3 -c "
