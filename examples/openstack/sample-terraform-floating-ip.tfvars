@@ -48,7 +48,11 @@ cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface
 cluster_cri_version    = "1.7.24"       # CRI Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
 cluster_pod_subnet     = "10.42.0.0/16" # Kubernetes Pod Subnet
-cluster_domain         = ""             # Cluster domain suffix for DNS (e.g. cluster.local)
+cluster_domain         = ""             # Base DNS domain for this cluster's nodes.
+                                            # Nodes will be registered as <hostname>.<cluster_domain>.
+                                            # Use the domain that matches your OpenStack tenant's DNS zone.
+                                            # HPOS example: tenant_name.hpos4.rnd.sas.com
+                                            # Leave empty to default to cluster.local (not recommended for HPOS).
 
 # Kubernetes - Cluster VIP (kube-vip control-plane HA)
 cluster_vip_version = "0.7.1"
@@ -80,8 +84,13 @@ control_plane_ssh_key_name = "cp_ssh"
 #
 # - count      : number of instances (used when floating IPs are assigned by OpenStack)
 # - flavor     : (optional) override openstack_flavor_defaults for this pool
-# - os_disk    : root volume size in GiB
-# - misc_disks : list of additional data volume sizes in GiB
+# - os_disk    : root volume size in GiB for the boot/OS disk.
+#                This is a Cinder (block storage) volume — it is NOT limited to
+#                the flavor's ephemeral disk size. It is created independently
+#                and can be sized based on available Cinder quota.
+#                Recommended minimums: control_plane=100, system=100,
+#                                      node=350 (for Viya workloads), others=100
+# - misc_disks : list of additional Cinder data volume sizes in GiB (e.g. [100, 200])
 # =============================================================================
 node_pools = {
   # REQUIRED – DO NOT REMOVE or RENAME
