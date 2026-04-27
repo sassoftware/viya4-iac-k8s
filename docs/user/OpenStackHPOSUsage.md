@@ -26,24 +26,28 @@ HPOS (HPC/Private OpenStack) environment using `viya4-iac-k8s`.
 
 ### Step 1 — Generate an SSH Keypair
 
-This keypair is used by Ansible to push authorized keys to all cluster nodes.
+This keypair is injected by OpenStack into every VM at creation time and used by
+Ansible to SSH into all cluster nodes during `setup install`.
+
+Choose a keypair name (e.g. `my-keypair`) — you will use this **same name** in
+Step 2 (OpenStack upload) and in `openstack_ssh_keypair` in `terraform.tfvars`.
 
 ```bash
 # Create the directory
 mkdir -p ~/.ssh/oss
 
-# Generate the keypair
-ssh-keygen -t ed25519 -f ~/.ssh/oss/cluster_access -N "" -C "viya4-iac-k8s cluster"
+# Generate the keypair — replace 'my-keypair' with your chosen name
+ssh-keygen -t ed25519 -f ~/.ssh/oss/my-keypair -N "" -C "viya4-iac-k8s cluster"
 
 # Set correct permissions
 chmod 700 ~/.ssh/oss
-chmod 600 ~/.ssh/oss/cluster_access
-chmod 644 ~/.ssh/oss/cluster_access.pub
+chmod 600 ~/.ssh/oss/my-keypair
+chmod 644 ~/.ssh/oss/my-keypair.pub
 
 # Verify
 ls -la ~/.ssh/oss/
-# cluster_access      (private key)
-# cluster_access.pub  (public key)
+# my-keypair      (private key)  ← used by Ansible via ansible_ssh_private_key_file
+# my-keypair.pub  (public key)   ← uploaded to OpenStack in Step 2
 ```
 
 ---
@@ -54,11 +58,11 @@ ls -la ~/.ssh/oss/
 2. Navigate to **Project → Compute → Key Pairs**
 3. Click **Import Public Key**
 4. Fill in the form:
-   - **Key Pair Name**: `terraform-test-key` ← this must match `openstack_ssh_keypair` in your `terraform.tfvars`
+   - **Key Pair Name**: `my-keypair` ← must exactly match `openstack_ssh_keypair` in `terraform.tfvars` and the filename in `~/.ssh/oss/`
    - **Key Type**: `SSH Key`
-   - **Public Key**: paste the contents of `~/.ssh/oss/cluster_access.pub`
+   - **Public Key**: paste the contents of `~/.ssh/oss/my-keypair.pub`
      ```bash
-     cat ~/.ssh/oss/cluster_access.pub
+     cat ~/.ssh/oss/my-keypair.pub
      ```
 5. Click **Import Key Pair**
 
@@ -254,7 +258,8 @@ ansible_password = "admin"
 openstack_domain_name       = "sas-ldap"
 openstack_network_name      = "provider"
 openstack_image_name        = "rocky96"           # ← CHANGE: your Glance image name
-openstack_ssh_keypair       = "terraform-test-key" # ← must match Step 2
+openstack_ssh_keypair       = "my-keypair"          # ← must match Step 2 (keypair name uploaded to OpenStack)
+system_ssh_keys_dir         = "/root/.ssh/oss"      # ← absolute path; tilde (~) does not expand inside Docker
 openstack_availability_zone = "nova-11"            # ← CHANGE: your AZ
 openstack_flavor_defaults   = "np.8x16x250"        # ← CHANGE: your default flavor
 openstack_floating_ip_pool  = null                 # null = no floating IPs (static mode)
