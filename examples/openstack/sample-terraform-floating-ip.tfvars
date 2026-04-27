@@ -35,10 +35,10 @@ openstack_security_groups  = ["default", "k8s"]
 openstack_availability_zone = "nova"
 
 # Default Nova flavor – used when a node pool does not specify its own flavor
-openstack_flavor_defaults = "m1.large"
+openstack_flavor_defaults = "np.8x16x250"
 
 # Systems
-system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys for each system
+system_ssh_keys_dir = "/root/.ssh/oss" # Absolute path to directory holding SSH keys. Use absolute path (not ~) – tilde does not expand inside the Docker container
 
 # Kubernetes - Cluster
 cluster_version        = "1.32.7"       # Kubernetes Version
@@ -96,35 +96,35 @@ node_pools = {
   # REQUIRED – DO NOT REMOVE or RENAME
   control_plane = {
     count       = 3   # Odd number recommended for HA with kube-vip
-    flavor      = "m1.medium"
+    flavor      = "np.8x32x150"
     os_disk     = 100
     node_taints = []
     node_labels = {}
   },
   # REQUIRED – DO NOT REMOVE or RENAME
   system = {
-    count  = 1
-    flavor = "m1.xlarge"
-    os_disk = 100
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
     node_taints = []
     node_labels = {
       "kubernetes.azure.com/mode" = "system"
     }
   },
   cas = {
-    count  = 3
-    flavor = "m1.2xlarge"
-    os_disk = 350
-    misc_disks = [150, 150]
+    count       = 3
+    flavor      = "np.8x16x250"
+    os_disk     = 350
+    misc_disks  = [150, 150]
     node_taints = ["workload.sas.com/class=cas:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "cas"
     }
   },
   compute = {
-    count  = 1
-    flavor = "m1.2xlarge"
-    os_disk = 100
+    count       = 2
+    flavor      = "np.8x16x250"
+    os_disk     = 100
     node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
       "workload.sas.com/class"        = "compute"
@@ -132,20 +132,20 @@ node_pools = {
     }
   },
   stateful = {
-    count  = 2
-    flavor = "m1.large"
-    os_disk = 100
-    misc_disks = [150]
+    count       = 3
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    misc_disks  = [150]
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateful"
     }
   },
   stateless = {
-    count  = 4
-    flavor = "m1.large"
-    os_disk = 100
-    misc_disks = [150]
+    count       = 3
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    misc_disks  = [150]
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
       "workload.sas.com/class" = "stateless"

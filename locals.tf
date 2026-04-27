@@ -7,6 +7,9 @@ locals {
 
   # Kubernetes
   cluster_name = "${var.prefix}-oss"
+
+  # Derive Ansible OS type from image name (contains 'ubuntu' → ubuntu, else → rocky)
+  vm_os = can(regex("(?i)ubuntu", var.openstack_image_name)) ? "ubuntu" : "rocky"
   
   # Calculate DNS IP as the 10th IP in the service subnet
   cluster_dns_ip = cidrhost(var.cluster_service_subnet, 10)

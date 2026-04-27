@@ -368,6 +368,8 @@ resource "local_file" "ansible_vars" {
     jump_ip                    = local.resolved_jump_ip
     cr_ip                      = local.resolved_cr_ip
     system_ssh_keys_dir        = var.system_ssh_keys_dir
+    openstack_ssh_keypair      = var.openstack_ssh_keypair
+    vm_os                      = local.vm_os
     node_labels                = local.node_labels
     node_taints                = local.node_taints
     }
