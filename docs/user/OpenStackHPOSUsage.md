@@ -54,17 +54,23 @@ ls -la ~/.ssh/oss/
 
 ### Step 2 — Upload the Public Key to OpenStack
 
+Upload the public key you generated in Step 1 to OpenStack so it gets injected
+into every VM at creation time.
+
 1. Log in to your OpenStack dashboard (e.g. `https://dashboard.<your-openstack-host>`)
 2. Navigate to **Project → Compute → Key Pairs**
 3. Click **Import Public Key**
 4. Fill in the form:
-   - **Key Pair Name**: `my-keypair` ← must exactly match `openstack_ssh_keypair` in `terraform.tfvars` and the filename in `~/.ssh/oss/`
+   - **Key Pair Name**: `my-keypair` ← use the same name you chose in Step 1
    - **Key Type**: `SSH Key`
-   - **Public Key**: paste the contents of `~/.ssh/oss/my-keypair.pub`
+   - **Public Key**: paste the output of:
      ```bash
      cat ~/.ssh/oss/my-keypair.pub
      ```
 5. Click **Import Key Pair**
+
+> The keypair name you enter here must exactly match `openstack_ssh_keypair`
+> in `terraform.tfvars` (Step 7) and the private key filename in `~/.ssh/oss/`.
 
 ---
 
