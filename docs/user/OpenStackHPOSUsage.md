@@ -415,15 +415,31 @@ docker run --rm -it \
   --env IAC_TOOLING=docker \
   --env-file $HOME/.openstack_creds.env \
   --volume $(pwd):/workspace \
-  --volume /root/.ssh/oss:/root/.ssh/oss:ro \
+  --volume $HOME/.ssh/oss:/root/.ssh/oss:ro \
   viya4-iac-k8s:latest apply setup install
 ```
 
 > **Docker notes:**
-> - `--user root:root` is required so that `~/.ssh/oss` resolves correctly to
->   `/root/.ssh/oss` inside the container. Using `$(id -u):$(id -g)` will cause
->   SSH key path resolution to fail.
-> - `--volume /root/.ssh/oss:/root/.ssh/oss:ro` mounts your SSH keys into the
+>
+> ⚠️ **`--user root:root` is required.** Do NOT use `$(id -u):$(id -g)`.
+> Inside the container the home directory is `/root`. If you run as your host UID
+> then `~/` resolves to a non-existent directory, SSH key lookups fail, and you
+> will see `no such identity: /root/.ssh/oss/<keypair>: Permission denied`.
+>
+> ⚠️ **Use `$HOME/.ssh/oss`, not `$(pwd)/.ssh/oss`** for the SSH key volume mount.
+> `$(pwd)` is your repo directory — `$(pwd)/.ssh/oss` does not exist.
+> `$HOME/.ssh/oss` is your actual key directory. Mounting the wrong path means
+> the container sees an empty `/root/.ssh/oss/` and every SSH attempt fails.
+>
+> ⚠️ **Your `openstack_ssh_keypair` private key must be in `$HOME/.ssh/oss/`.**
+> The directory should contain at minimum:
+> ```
+> my-keypair       ← private key matching openstack_ssh_keypair in terraform.tfvars
+> my-keypair.pub   ← corresponding public key
+> ```
+> (`cluster_access` is only needed by DAC, not by `oss-k8s.sh`.)
+>
+> - `--volume $HOME/.ssh/oss:/root/.ssh/oss:ro` mounts your SSH keys into the
 >   container at the same absolute path used by `system_ssh_keys_dir` in `terraform.tfvars`.
 >   This is **required** — Ansible reads the private key from this path during `setup install`.
 > - `--network host` is **required** for OpenStack environments on private/corporate networks.
@@ -597,7 +613,7 @@ docker run --rm -it \
   --env IAC_TOOLING=docker \
   --env-file $HOME/.openstack_creds.env \
   --volume $(pwd):/workspace \
-  --volume /root/.ssh/oss:/root/.ssh/oss:ro \
+  --volume $HOME/.ssh/oss:/root/.ssh/oss:ro \
   viya4-iac-k8s:latest uninstall cleanup destroy
 ```
 
