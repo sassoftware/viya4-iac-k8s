@@ -567,7 +567,7 @@ docker run --rm \
   --volume ${DAC_DIR}/ansible-vars.yaml:/config/config \
   --volume ${IAC_DIR}/terraform.tfstate:/config/tfstate \
   --volume ${IAC_DIR}/${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig \
-  --volume /root/.ssh/oss/cluster_access:/config/jump_svr_private_key \
+  --volume $HOME/.ssh/oss/cluster_access:/config/jump_svr_private_key \
   viya4-deployment:latest \
   --tags "baseline,install"
 
@@ -579,7 +579,7 @@ docker run --rm \
   --volume ${DAC_DIR}/ansible-vars.yaml:/config/config \
   --volume ${IAC_DIR}/terraform.tfstate:/config/tfstate \
   --volume ${IAC_DIR}/${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig \
-  --volume /root/.ssh/oss/cluster_access:/config/jump_svr_private_key \
+  --volume $HOME/.ssh/oss/cluster_access:/config/jump_svr_private_key \
   viya4-deployment:latest \
   --tags "viya,install"
 ```
@@ -587,13 +587,13 @@ docker run --rm \
 > **Key mount notes:**
 > | Mount | Purpose |
 > |---|---|
-> | `${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig` | **Required** — DAC does not auto-discover OSS kubeconfig |
-> | `cluster_access:/config/jump_svr_private_key` | SSH key for DAC to tunnel through jump server — use `cluster_access`, NOT `my-keypair` |
-> | `terraform.tfstate:/config/tfstate` | Provides jump/NFS server IPs to DAC |
+> | `${IAC_DIR}/${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig` | **Required** — DAC does not auto-discover OSS kubeconfig |
+> | `$HOME/.ssh/oss/cluster_access:/config/jump_svr_private_key` | SSH key for DAC to tunnel through jump server — use `cluster_access`, NOT `my-keypair` |
+> | `${IAC_DIR}/terraform.tfstate:/config/tfstate` | Provides jump/NFS server IPs to DAC |
 
 > **Why `cluster_access` and not `my-keypair`?**
-> - `my-keypair` — injected by OpenStack into VMs at creation; used by Ansible (`oss-k8s.sh`) to SSH in during `setup install`
-> - `cluster_access` — a secondary key pushed to all VMs by Ansible during `setup`; used by DAC to SSH through the jump server
+> - `my-keypair` — generated in Step 1, injected by OpenStack into VMs at creation; used by Ansible (`oss-k8s.sh`) to SSH in during `setup install`
+> - `cluster_access` — a separate keypair generated automatically by Ansible during `setup` and written to `$HOME/.ssh/oss/`; used by DAC to SSH through the jump server
 
 ---
 
