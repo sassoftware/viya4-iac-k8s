@@ -6,7 +6,7 @@ output "cluster_name" {
 }
 
 output "jump_admin_username" {
-  value = "root"
+  value = var.ansible_user
 }
 
 output "jump_private_ip" {
@@ -31,7 +31,7 @@ output "nat_ip" {
 }
 
 output "nfs_admin_username" {
-  value = "root"
+  value = var.ansible_user
 }
 
 output "nfs_private_ip" {
@@ -40,6 +40,10 @@ output "nfs_private_ip" {
 
 output "nfs_public_ip" {
   value = local.resolved_nfs_ip
+}
+
+output "kube_config" {
+  value = "${local.cluster_name}-kubeconfig.conf"
 }
 
 output "prefix" {
