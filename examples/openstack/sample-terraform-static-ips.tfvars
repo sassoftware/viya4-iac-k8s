@@ -38,10 +38,10 @@ openstack_security_groups   = ["default", "k8s"]
 openstack_availability_zone = "nova"
 
 # Default Nova flavor
-openstack_flavor_defaults = "m1.large"
+openstack_flavor_defaults = "np.8x16x250"
 
 # Systems
-system_ssh_keys_dir = "~/.ssh/oss"
+system_ssh_keys_dir = "/root/.ssh/oss" # Absolute path – tilde (~) does not expand inside the Docker container
 
 # Kubernetes - Cluster
 cluster_version        = "1.32.7"
@@ -86,7 +86,7 @@ control_plane_ssh_key_name = "cp_ssh"
 node_pools = {
   # REQUIRED – DO NOT REMOVE or RENAME
   control_plane = {
-    flavor  = "m1.medium"
+    flavor  = "np.8x32x150"
     os_disk = 100
     ip_addresses = [
       "", # control-plane node 1
@@ -98,7 +98,7 @@ node_pools = {
   },
   # REQUIRED – DO NOT REMOVE or RENAME
   system = {
-    flavor  = "m1.xlarge"
+    flavor  = "np.8x16x250"
     os_disk = 100
     ip_addresses = [
       "", # system node 1
@@ -109,8 +109,8 @@ node_pools = {
     }
   },
   cas = {
-    flavor  = "m1.2xlarge"
-    os_disk = 350
+    flavor     = "np.8x16x250"
+    os_disk    = 350
     misc_disks = [150, 150]
     ip_addresses = [
       "", # cas node 1
@@ -123,10 +123,11 @@ node_pools = {
     }
   },
   compute = {
-    flavor  = "m1.2xlarge"
+    flavor  = "np.8x16x250"
     os_disk = 100
     ip_addresses = [
       "", # compute node 1
+      "", # compute node 2
     ]
     node_taints = ["workload.sas.com/class=compute:NoSchedule"]
     node_labels = {
@@ -135,12 +136,13 @@ node_pools = {
     }
   },
   stateful = {
-    flavor  = "m1.large"
-    os_disk = 100
+    flavor     = "np.8x16x250"
+    os_disk    = 100
     misc_disks = [150]
     ip_addresses = [
       "", # stateful node 1
       "", # stateful node 2
+      "", # stateful node 3
     ]
     node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
     node_labels = {
@@ -148,14 +150,13 @@ node_pools = {
     }
   },
   stateless = {
-    flavor  = "m1.large"
-    os_disk = 100
+    flavor     = "np.8x16x250"
+    os_disk    = 100
     misc_disks = [150]
     ip_addresses = [
       "", # stateless node 1
       "", # stateless node 2
       "", # stateless node 3
-      "", # stateless node 4
     ]
     node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
     node_labels = {
