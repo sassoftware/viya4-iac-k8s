@@ -40,3 +40,30 @@
   tags:
     - install
     - update
+
+# The ansible.posix.synchronize PKI copy task in kubernetes/control_plane/init/secondary
+# runs rsync delegated to the primary CP node, using ansible_ssh_private_key_file as the
+# SSH identity. That key must exist on the CP VM itself (not just in the Ansible controller).
+- name: Ensure SSH keys directory exists on control plane nodes
+  ansible.builtin.file:
+    path: "{{ ansible_ssh_private_key_file | dirname }}"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+  when: ansible_ssh_private_key_file is defined and ansible_ssh_private_key_file | length > 0
+  tags:
+    - install
+    - update
+
+- name: Copy Ansible SSH private key to control plane nodes
+  ansible.builtin.copy:
+    src: "{{ ansible_ssh_private_key_file }}"
+    dest: "{{ ansible_ssh_private_key_file }}"
+    mode: "0600"
+    owner: root
+    group: root
+  when: ansible_ssh_private_key_file is defined and ansible_ssh_private_key_file | length > 0
+  tags:
+    - install
+    - update
