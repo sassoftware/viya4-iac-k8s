@@ -15,7 +15,7 @@
 deployment_type = "openstack"
 
 # General items
-ansible_user     = ""          # OS user for Ansible SSH access (e.g. ubuntu)
+ansible_user     = ""          # OS user for Ansible SSH access (e.g. 'rocky' for Rocky Linux, 'ubuntu' for Ubuntu)
 ansible_password = ""          # Leave empty if using SSH key-based auth
 prefix           = "v4-k8s-os" # Infra prefix – lowercase alphanumeric + hyphens
 
