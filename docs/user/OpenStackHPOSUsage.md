@@ -114,11 +114,10 @@ OS_REGION_NAME=
 # OS-level SSH credentials Ansible uses to connect to provisioned VMs.
 # These are NOT your OpenStack API credentials.
 # TF_VAR_ansible_user     — VM OS username created by cloud-init.
-#                           Use 'admin' for HPOS, 'ubuntu' for Ubuntu images,
-#                           'rocky' for Rocky Linux images.
-# TF_VAR_ansible_password — VM OS password. Default 'admin' is for validation
-#                           only — replace with a secure value for production.
-TF_VAR_ansible_user=admin
+#                           Use 'rocky' for Rocky Linux images (e.g. rocky96),
+#                           'ubuntu' for Ubuntu images.
+# TF_VAR_ansible_password — VM OS sudo password set by cloud-init on the VM.
+TF_VAR_ansible_user=rocky
 TF_VAR_ansible_password=admin
 EOF
 
@@ -407,15 +406,22 @@ cd /path/to/viya4-iac-k8s
 docker run --rm -it \
   --network host \
   --group-add root \
-  --user $(id -u):$(id -g) \
+  --user root:root \
   --env SYSTEM=openstack \
   --env IAC_TOOLING=docker \
   --env-file $HOME/.openstack_creds.env \
   --volume $(pwd):/workspace \
+  --volume /root/.ssh/oss:/root/.ssh/oss:ro \
   viya4-iac-k8s:latest apply setup install
 ```
 
 > **Docker notes:**
+> - `--user root:root` is required so that `~/.ssh/oss` resolves correctly to
+>   `/root/.ssh/oss` inside the container. Using `$(id -u):$(id -g)` will cause
+>   SSH key path resolution to fail.
+> - `--volume /root/.ssh/oss:/root/.ssh/oss:ro` mounts your SSH keys into the
+>   container at the same absolute path used by `system_ssh_keys_dir` in `terraform.tfvars`.
+>   This is **required** — Ansible reads the private key from this path during `setup install`.
 > - `--network host` is **required** for OpenStack environments on private/corporate networks.
 >   Without it, Docker uses bridge networking (NAT) and the container cannot reach internal
 >   OpenStack endpoints (Keystone, Neutron, Nova). The symptom is `patch_vip_allowed_pairs:
@@ -424,8 +430,6 @@ docker run --rm -it \
 >   Do **not** include `export` in this file — see Step 3.
 > - `--volume $(pwd):/workspace` mounts your local directory so `terraform.tfvars`,
 >   `terraform.tfstate`, `inventory`, and `ansible-vars.yaml` are written back to your host.
-> - `--env IAC_TOOLING=docker` is set automatically by the image entrypoint but can
->   be set explicitly for clarity.
 
 | Sub-command | What it does |
 |---|---|
