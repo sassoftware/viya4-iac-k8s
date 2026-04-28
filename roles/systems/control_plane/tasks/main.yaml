@@ -53,7 +53,7 @@
     group: root
   when: ansible_ssh_private_key_file is defined and ansible_ssh_private_key_file | length > 0
   tags:
-    - install
+    - installn
     - update
 
 - name: Copy Ansible SSH private key to control plane nodes

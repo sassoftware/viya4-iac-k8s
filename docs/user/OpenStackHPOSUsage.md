@@ -260,8 +260,8 @@ Open `terraform.tfvars` and update the required values:
 ```hcl
 # General
 prefix           = "mycluster"   # ← CHANGE: cluster name becomes mycluster-oss
-ansible_user     = "admin"
-ansible_password = "admin"
+ansible_user     = "rocky"       # ← rocky for Rocky Linux images, ubuntu for Ubuntu
+ansible_password = ""            # Leave empty if using SSH key-based auth
 
 # OpenStack settings
 openstack_domain_name       = "sas-ldap"
