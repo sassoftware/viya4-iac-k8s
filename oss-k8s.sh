@@ -440,7 +440,22 @@ for svc in body.get('token',{}).get('catalog',[]):
     done
     local PATCH_BODY="{\"port\":{\"allowed_address_pairs\":[${PAIRS_JSON}]}}"
 
-    echo "patch_vip_allowed_pairs: patching control-plane ports for cluster '${CLUSTER_NAME}' with VIP ${VIP} + LB IPs [${LB_IPS[*]}]"
+    # Both kube_vip and metallb require ALL cluster node ports to have the LB IPs
+    # in allowed_address_pairs on OpenStack:
+    #
+    #   kube_vip:  static pod announces the HA VIP from control-plane;
+    #              the new DaemonSet announces LB IPs from ANY node where the
+    #              backing pod (e.g. Contour Envoy) runs.
+    #   metallb:   L2 speaker DaemonSet announces LB IPs from ANY node.
+    #
+    # Having the VIP in worker node ports is harmless — OpenStack just allows the
+    # IP to pass even if a worker never ARPs for it.
+    local LB_TYPE
+    LB_TYPE=$(grep -E '^\s*cluster_lb_type\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
+    # Default to kube_vip if not set in tfvars (matches variables.tf default)
+    LB_TYPE="${LB_TYPE:-kube_vip}"
+
+    echo "patch_vip_allowed_pairs: [${LB_TYPE}] patching ALL node ports for cluster '${CLUSTER_NAME}' with VIP ${VIP} + LB IPs [${LB_IPS[*]}]"
 
     # Look up ports by device_id (Nova server UUID) from Terraform state to avoid
     # matching stale orphaned ports from previous runs that share the same name prefix.
@@ -452,14 +467,14 @@ for svc in body.get('token',{}).get('catalog',[]):
 import sys, json
 with open('${TFSTATE}') as f:
     state = json.load(f)
-prefix = '${CLUSTER_NAME}-control-plane'
+cluster = '${CLUSTER_NAME}'
 for res in state.get('resources', []):
     if res.get('type') != 'openstack_compute_instance_v2':
         continue
     for inst in res.get('instances', []):
         attrs = inst.get('attributes', {})
         name = attrs.get('name', '')
-        if name.startswith(prefix):
+        if name.startswith(cluster + '-'):
             sid = attrs.get('id', '')
             if sid:
                 print(sid)
@@ -468,7 +483,7 @@ for res in state.get('resources', []):
 
     local PORT_LIST
     if [[ ${#SERVER_IDS[@]} -gt 0 ]]; then
-        # Filter ports by exact device_id match against known control-plane server UUIDs.
+        # Filter ports by exact device_id match against known cluster node UUIDs.
         local SERVER_IDS_STR
         SERVER_IDS_STR=$(IFS=,; echo "${SERVER_IDS[*]}")
         PORT_LIST=$(curl -sk -H "X-Auth-Token: $TOKEN" \
@@ -487,7 +502,7 @@ for p in json.load(sys.stdin).get('ports', []):
           "${NEUTRON_URL}/v2.0/ports" | \
           python3 -c "
 import sys, json
-prefix = '${CLUSTER_NAME}-control-plane'
+prefix = '${CLUSTER_NAME}-'
 for p in json.load(sys.stdin).get('ports', []):
     if p.get('name','').startswith(prefix):
         print(p['id'], p['name'])
@@ -495,7 +510,7 @@ for p in json.load(sys.stdin).get('ports', []):
     fi
 
     if [[ -z "$PORT_LIST" ]]; then
-        echo "patch_vip_allowed_pairs: no control-plane ports found, skipping."
+        echo "patch_vip_allowed_pairs: no ports found to patch, skipping."
         return 0
     fi
 
@@ -517,7 +532,7 @@ for p in json.load(sys.stdin).get('ports', []):
         echo "patch_vip_allowed_pairs: Run manually: openstack --insecure port set --allowed-address ip-address=${VIP} <port-id>"
         return 1
     fi
-    echo "patch_vip_allowed_pairs: all control-plane ports patched successfully."
+    echo "patch_vip_allowed_pairs: all node ports patched successfully."
 }
 
 terraform_down() {
