@@ -127,8 +127,11 @@ This command can take a few minutes to complete. When it has completed, Terrafor
      --env SYSTEM=openstack \
      --env-file $HOME/.openstack_creds.env \
      --volume $(pwd):/workspace \
+     --volume $HOME/.ssh/oss:/workspace/.ssh/oss \
      viya4-iac-k8s apply setup install
    ```
+
+   > **NOTE**: SSH keys must be mounted to `/workspace/.ssh/oss` (not `/root/.ssh/...`) because the container runs as a non-root user (`--user $(id -u):$(id -g)`). Using `--user root:root` is incorrect — it causes generated files (kubeconfig, tfstate, inventory) to be owned by root, which creates permission issues on the host. Ensure `system_ssh_keys_dir = "/workspace/.ssh/oss"` is set in your `terraform.tfvars`.
 
    - **`apply`** — runs `terraform apply`, creating all OpenStack VMs, Cinder volumes, and floating IPs. Writes `inventory` and `ansible-vars.yaml` to `/workspace`.
    - **`setup`** — runs the `systems-install.yaml` Ansible playbook to baseline the OS on every node.
