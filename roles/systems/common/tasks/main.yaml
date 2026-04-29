@@ -87,11 +87,23 @@
 
 # ---- OS Update ---------------------------------------------------------------
 
-- name: Update OS
-  ansible.builtin.package:
+- name: Update OS (Debian/Ubuntu)
+  ansible.builtin.apt:
     name: '*'
     state: latest
     update_cache: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Update OS (RHEL/Rocky)
+  ansible.builtin.dnf:
+    name: '*'
+    state: latest
+    update_cache: true
+    allowerasing: true  # resolves python3/python-unversioned-command depsolve conflicts on Rocky 9
+  when: ansible_os_family == "RedHat"
   tags:
     - install
     - update
