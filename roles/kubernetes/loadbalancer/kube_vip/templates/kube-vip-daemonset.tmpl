@@ -1,0 +1,92 @@
+# kube-vip DaemonSet — runs on all cluster nodes (not just control-plane).
+# The static pod on the control-plane handles the HA control-plane VIP.
+# This DaemonSet handles LoadBalancer service IP announcements via ARP (L2),
+# so that LB IPs are announced from whichever node the backing pod (e.g. Contour
+# Envoy) actually runs on — not just the control-plane node.
+#
+# Reference: https://kube-vip.io/docs/usage/kubernetes-services/#using-a-daemonset
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-vip-ds
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: kube-vip-ds
+    app.kubernetes.io/version: "v{{ kubernetes_vip_version }}"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-vip-ds
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-vip-ds
+        app.kubernetes.io/version: "v{{ kubernetes_vip_version }}"
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+      tolerations:
+        - key: workload.sas.com/class
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+          operator: Exists
+      serviceAccountName: kube-vip
+      hostNetwork: true
+      containers:
+        - name: kube-vip
+          image: "ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }}"
+          imagePullPolicy: IfNotPresent
+          args:
+            - manager
+          env:
+            - name: vip_arp
+              value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_interface
+              value: ""
+            - name: vip_cidr
+              value: "32"
+            - name: dns_mode
+              value: "first"
+            - name: cp_enable
+              value: "false"
+            - name: cp_namespace
+              value: kube-system
+            - name: svc_enable
+              value: "true"
+            - name: svc_leasename
+              value: plndr-svcs-lock
+            - name: svc_election
+              value: "true"
+            - name: vip_leaderelection
+              value: "false"
+            - name: lb_enable
+              value: "false"
+            - name: enableLoadBalancer
+              value: "true"
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+      volumes:
+        - name: kubeconfig
+          hostPath:
+            path: /etc/kubernetes/admin.conf
+            type: FileOrCreate

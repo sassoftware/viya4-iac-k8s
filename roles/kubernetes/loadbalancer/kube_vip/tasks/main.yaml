@@ -9,7 +9,8 @@
   block:
     - name: Install kube-vip Cloud Provider
       ansible.builtin.shell: |
-        kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/{{ kubernetes_kube_vip_cloud_provider_version }}/manifest/kube-vip-cloud-controller.yaml
+        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+          apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/{{ kubernetes_kube_vip_cloud_provider_version }}/manifest/kube-vip-cloud-controller.yaml
       tags:
         - install
         - update
@@ -27,7 +28,56 @@
 
     - name: Apply kube-vip Cloud Provider configMap
       ansible.builtin.shell: |
-        kubectl apply -f /tmp/kube-vip-cm.yaml
+        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+          apply -f /tmp/kube-vip-cm.yaml
       tags:
         - install
         - update
+
+    # Deploy kube-vip as a DaemonSet on all worker nodes so it can ARP-announce
+    # LoadBalancer service IPs from whichever node the backing pod runs on
+    # (e.g. Contour Envoy on a system/worker node).
+    # The control-plane static pod continues to handle the HA VIP only.
+    - name: Remove old kube-vip DaemonSet template file
+      ansible.builtin.file:
+        path: "/tmp/kube-vip-daemonset.yaml"
+        state: absent
+      tags:
+        - install
+        - update
+
+    - name: Create kube-vip DaemonSet manifest
+      ansible.builtin.template:
+        src: "templates/kube-vip-daemonset.tmpl"
+        dest: "/tmp/kube-vip-daemonset.yaml"
+        mode: '0600'
+      tags:
+        - install
+        - update
+
+    - name: Apply kube-vip DaemonSet
+      ansible.builtin.shell: |
+        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+          apply -f /tmp/kube-vip-daemonset.yaml
+      tags:
+        - install
+        - update
+
+    - name: Wait for kube-vip DaemonSet to be ready
+      ansible.builtin.shell: |
+        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+          rollout status daemonset/kube-vip-ds -n kube-system --timeout=120s
+      retries: 5
+      delay: 10
+      register: kube_vip_ds_ready
+      until: kube_vip_ds_ready.rc == 0
+      tags:
+        - install
+        - update
+
+- name: Remove kube-vip DaemonSet
+  ansible.builtin.shell: |
+    kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+      delete daemonset kube-vip-ds -n kube-system --ignore-not-found=true
+  tags:
+    - uninstall
