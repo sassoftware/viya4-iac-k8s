@@ -50,9 +50,26 @@
         - install
         - update
 
+    - name: Wait for MetalLB webhook to be ready
+      ansible.builtin.shell: |
+        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+          rollout status deployment/metallb-controller -n {{ kubernetes_METALLB_NAMESPACE }} --timeout=120s
+      retries: 5
+      delay: 10
+      register: metallb_webhook_ready
+      until: metallb_webhook_ready.rc == 0
+      tags:
+        - install
+        - update
+
     - name: Apply MetalLB IPAddressPool
       ansible.builtin.shell: |
-        kubectl apply -f /tmp/metallb-ip-ap.yaml
+        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+          apply -f /tmp/metallb-ip-ap.yaml
+      retries: 5
+      delay: 10
+      register: metallb_apply_result
+      until: metallb_apply_result.rc == 0
       tags:
         - install
         - update
