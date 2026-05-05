@@ -8,7 +8,11 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubernetes_version }}"
 clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
-controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
+# On OpenStack the VIP is in a different subnet than the cluster nodes.
+# Setting controlPlaneEndpoint to the direct CP IP ensures workers can reach
+# the API server via plain L3 routing during kubeadm join.
+# The kubeconfig is patched post-init to use the VIP FQDN for HA kubectl access.
+controlPlaneEndpoint: "{% if deployment_type == 'openstack' %}{{ ansible_default_ipv4.address }}{% else %}{{ kubernetes_vip_fqdn }}{% endif %}:6443"
 networking:
   podSubnet: "{{ kubernetes_pod_subnet }}"
   serviceSubnet: "{{ kubernetes_service_subnet | default('10.96.0.0/12') }}"
