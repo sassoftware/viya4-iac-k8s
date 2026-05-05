@@ -11,14 +11,42 @@
 
 - name: Generate compute node join command
   ansible.builtin.command: kubeadm token create --print-join-command
-  register: kubeadm_join_cmd
+  register: kubeadm_join_cmd_raw
   delegate_to: "{{ groups['k8s_control_plane'][0] }}"
   when: not kubelet_conf.stat.exists
   tags:
     - install
 
+# On OpenStack the VIP is in a different subnet than the nodes (cross-subnet ARP
+# does not propagate reliably through the OpenStack gateway). Workers must join
+# via the control plane's direct IP so the TCP connection is L3-routable without
+# depending on gratuitous ARP reaching the gateway. The kubeconfig already uses
+# the VIP FQDN for ongoing cluster operations — only the join endpoint is changed.
+- name: Rewrite join endpoint to use control plane direct IP (OpenStack only)
+  ansible.builtin.set_fact:
+    kubeadm_join_cmd: >-
+      {{ kubeadm_join_cmd_raw.stdout
+         | regex_replace(kubernetes_vip_fqdn | default(kubernetes_vip_ip),
+                         groups['k8s_control_plane'][0])
+         | regex_replace(kubernetes_vip_ip | default('__no_vip__'),
+                         groups['k8s_control_plane'][0]) }}
+  when:
+    - not kubelet_conf.stat.exists
+    - deployment_type == "openstack"
+  tags:
+    - install
+
+- name: Use join command as-is (non-OpenStack)
+  ansible.builtin.set_fact:
+    kubeadm_join_cmd: "{{ kubeadm_join_cmd_raw.stdout }}"
+  when:
+    - not kubelet_conf.stat.exists
+    - deployment_type != "openstack"
+  tags:
+    - install
+
 - name: Join compute nodes to the cluster
-  ansible.builtin.command: "{{ kubeadm_join_cmd.stdout }}"
+  ansible.builtin.command: "{{ kubeadm_join_cmd }}"
   when: not kubelet_conf.stat.exists
   tags:
     - install

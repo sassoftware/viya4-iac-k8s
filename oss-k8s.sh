@@ -350,9 +350,19 @@ patch_vip_allowed_pairs() {
     local VIP
     VIP=$(grep -E '^\s*cluster_vip_ip\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*//' | tr -d ' "')
     if [[ -z "$VIP" || "$VIP" == "null" ]]; then
-        echo "patch_vip_allowed_pairs: cluster_vip_ip not set in $TFVARS, skipping."
-        return 0
+        # Fallback: resolve VIP from cluster_vip_fqdn via DNS
+        local VIP_FQDN
+        VIP_FQDN=$(grep -E '^\s*cluster_vip_fqdn\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*//' | tr -d ' "')
+        if [[ -n "$VIP_FQDN" ]]; then
+            VIP=$(getent hosts "$VIP_FQDN" 2>/dev/null | awk '{print $1}' | head -1)
+            [[ -n "$VIP" ]] && echo "patch_vip_allowed_pairs: cluster_vip_ip empty, resolved ${VIP_FQDN} -> ${VIP}"
+        fi
+        if [[ -z "$VIP" ]]; then
+            echo "patch_vip_allowed_pairs: cluster_vip_ip not set and cluster_vip_fqdn could not be resolved, skipping."
+            return 0
+        fi
     fi
+    local PATCH_FAILED=0
 
     local NEUTRON_URL TOKEN TOKEN_RESPONSE JSON_BODY
     # Build the JSON body via Python to avoid shell quoting issues with special
@@ -778,6 +788,12 @@ for item in "${arguments[@]}"; do
   fi
   # install - Install kubernetes
   if [[ "$item" == "install" ]]; then
+    # On OpenStack, ensure allowed_address_pairs are set on all node ports before
+    # kubeadm join attempts. Required even on re-runs of install-only (patch_vip_allowed_pairs
+    # is idempotent — safe to call multiple times).
+    if [[ "$SYSTEM" == "openstack" ]]; then
+        patch_vip_allowed_pairs || { echo "ERROR: patch_vip_allowed_pairs failed — aborting install to prevent kubeadm join timeout."; exit 1; }
+    fi
     ansible_prep
     ansible-playbook -i $ANSIBLE_INVENTORY --extra-vars "deployment_type=$SYSTEM" --extra-vars "iac_tooling=$IAC_TOOLING" --extra-vars "iac_inventory_dir=$WORKDIR" --extra-vars "k8s_tool_base"=$K8S_TOOL_BASE --extra-vars $ANSIBLE_VARS $BASEDIR/playbooks/kubernetes-install.yaml --flush-cache --tags install
   fi
