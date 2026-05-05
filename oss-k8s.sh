@@ -576,10 +576,13 @@ gather_ans_creds() {
     fi
     echo
 
-    if [[ -z "$ANSIBLE_PASSWORD" ]]; then 
+    # Only prompt for ansible_password if it was never set at all (not in env file,
+    # not in TF_VAR_ansible_password, not already exported). An explicitly empty
+    # value means SSH key auth is being used — do not prompt in that case.
+    if [[ -z "$ANSIBLE_PASSWORD" && -z "$TF_VAR_ansible_password" ]]; then
         read -sp 'ansible_password: ' ANSIBLE_PASSWORD
+        echo
     fi
-    echo
 }
 
 trap restore_main_config EXIT
