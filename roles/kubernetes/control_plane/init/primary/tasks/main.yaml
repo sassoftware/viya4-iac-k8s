@@ -102,3 +102,28 @@
     flat: true
   tags:
     - install
+
+# On OpenStack, kubeadm init used the direct CP IP as controlPlaneEndpoint so
+# workers could join via L3 routing. Patch admin.conf and the fetched kubeconfig
+# to use the VIP FQDN so kubectl and all post-join operations use the HA VIP.
+- name: Patch kubeconfig to use VIP FQDN (OpenStack only)
+  ansible.builtin.replace:
+    path: "{{ item }}"
+    regexp: "https://{{ ansible_default_ipv4.address }}:6443"
+    replace: "https://{{ kubernetes_vip_fqdn }}:6443"
+  with_items:
+    - /etc/kubernetes/admin.conf
+    - ~/.kube/config
+  when: deployment_type == "openstack"
+  tags:
+    - install
+
+- name: Patch fetched kubeconfig to use VIP FQDN (OpenStack only)
+  ansible.builtin.replace:
+    path: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    regexp: "https://{{ ansible_default_ipv4.address }}:6443"
+    replace: "https://{{ kubernetes_vip_fqdn }}:6443"
+  delegate_to: localhost
+  when: deployment_type == "openstack"
+  tags:
+    - install
