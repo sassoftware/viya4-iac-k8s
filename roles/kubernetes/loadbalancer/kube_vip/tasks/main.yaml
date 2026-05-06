@@ -9,7 +9,7 @@
   block:
     - name: Install kube-vip Cloud Provider
       ansible.builtin.shell: |
-        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+        kubectl --kubeconfig /etc/kubernetes/admin.conf \
           apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/{{ kubernetes_kube_vip_cloud_provider_version }}/manifest/kube-vip-cloud-controller.yaml
       tags:
         - install
@@ -28,7 +28,7 @@
 
     - name: Apply kube-vip Cloud Provider configMap
       ansible.builtin.shell: |
-        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+        kubectl --kubeconfig /etc/kubernetes/admin.conf \
           apply -f /tmp/kube-vip-cm.yaml
       tags:
         - install
@@ -38,6 +38,44 @@
     # LoadBalancer service IPs from whichever node the backing pod runs on
     # (e.g. Contour Envoy on a system/worker node).
     # The control-plane static pod continues to handle the HA VIP only.
+    - name: Create kube-vip ServiceAccount and RBAC
+      ansible.builtin.shell: |
+        kubectl --kubeconfig /etc/kubernetes/admin.conf apply -f - <<EOF
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: kube-vip
+          namespace: kube-system
+        ---
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        metadata:
+          name: kube-vip-role
+        rules:
+          - apiGroups: [""]
+            resources: ["services", "services/status", "nodes", "endpoints"]
+            verbs: ["list", "get", "watch", "update"]
+          - apiGroups: ["coordination.k8s.io"]
+            resources: ["leases"]
+            verbs: ["list", "get", "watch", "update", "create"]
+        ---
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: kube-vip-binding
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: kube-vip-role
+        subjects:
+          - kind: ServiceAccount
+            name: kube-vip
+            namespace: kube-system
+        EOF
+      tags:
+        - install
+        - update
+
     - name: Remove old kube-vip DaemonSet template file
       ansible.builtin.file:
         path: "/tmp/kube-vip-daemonset.yaml"
@@ -57,7 +95,7 @@
 
     - name: Apply kube-vip DaemonSet
       ansible.builtin.shell: |
-        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+        kubectl --kubeconfig /etc/kubernetes/admin.conf \
           apply -f /tmp/kube-vip-daemonset.yaml
       tags:
         - install
@@ -65,7 +103,7 @@
 
     - name: Wait for kube-vip DaemonSet to be ready
       ansible.builtin.shell: |
-        kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+        kubectl --kubeconfig /etc/kubernetes/admin.conf \
           rollout status daemonset/kube-vip-ds -n kube-system --timeout=120s
       retries: 5
       delay: 10
@@ -77,7 +115,7 @@
 
 - name: Remove kube-vip DaemonSet
   ansible.builtin.shell: |
-    kubectl --kubeconfig {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf \
+    kubectl --kubeconfig /etc/kubernetes/admin.conf \
       delete daemonset kube-vip-ds -n kube-system --ignore-not-found=true
   tags:
     - uninstall
