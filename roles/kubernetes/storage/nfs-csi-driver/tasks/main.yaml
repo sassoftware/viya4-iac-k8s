@@ -2,66 +2,116 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-# NOTE: The usage and setting of the iac_inventory_dir variable
-#       is only needed given this task is run on localhost
-#       an implied localhost and this keeps the magic inventory_file
-#       and inventory_dir from having values.
-#
-#       Reference URL : https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html
+- name: Get control plane IP from inventory
+  ansible.builtin.shell: |
+    grep -A1 '\[k8s_control_plane\]' {{ iac_inventory_dir }}/inventory | tail -1 | awk '{print $1}'
+  register: cp_ip_output
+  tags:
+    - install
+    - update
+    - uninstall
 
-# Remove deprecated nfs-subdir-external-provisioner Helm release if present
+- name: Set control plane host fact
+  ansible.builtin.set_fact:
+    cp_host: "{{ cp_ip_output.stdout }}"
+  tags:
+    - install
+    - update
+    - uninstall
+
 - name: Remove deprecated nfs-subdir-external-provisioner
-  kubernetes.core.helm:
-    name: nfs-subdir-external-provisioner-default
-    namespace: kube-system
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    wait: true
-    state: absent
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm uninstall
+    nfs-subdir-external-provisioner-default
+    --namespace kube-system --wait 2>/dev/null || true"
   ignore_errors: true
   tags:
     - install
     - update
 
+- name: Write NFS CSI driver helm values to temp file
+  ansible.builtin.copy:
+    content: "{{ kubernetes_CSI_DRIVER_NFS_CONFIG | to_nice_yaml }}"
+    dest: "/tmp/nfs-csi-values.yaml"
+  tags:
+    - install
+    - update
+
+- name: Copy helm values to control plane
+  ansible.builtin.shell: >
+    scp -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    /tmp/nfs-csi-values.yaml
+    {{ ansible_user }}@{{ cp_host }}:/tmp/nfs-csi-values.yaml
+  tags:
+    - install
+    - update
+
 - name: Setting up default storage for the cluster using csi-driver-nfs
-  kubernetes.core.helm:
-    name: "{{ kubernetes_CSI_DRIVER_NFS_NAME }}"
-    namespace: "{{ kubernetes_CSI_DRIVER_NFS_NAMESPACE }}"
-    chart_repo_url: "{{ kubernetes_CSI_DRIVER_NFS_CHART_URL }}"
-    chart_ref: "{{ kubernetes_CSI_DRIVER_NFS_CHART_NAME }}"
-    chart_version: "{{ kubernetes_CSI_DRIVER_NFS_CHART_VERSION }}"
-    values: "{{ kubernetes_CSI_DRIVER_NFS_CONFIG }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    create_namespace: true
-    wait: true
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm upgrade --install
+    {{ kubernetes_CSI_DRIVER_NFS_NAME }}
+    {{ kubernetes_CSI_DRIVER_NFS_CHART_NAME }}
+    --repo {{ kubernetes_CSI_DRIVER_NFS_CHART_URL }}
+    --version {{ kubernetes_CSI_DRIVER_NFS_CHART_VERSION }}
+    --namespace {{ kubernetes_CSI_DRIVER_NFS_NAMESPACE }}
+    --create-namespace
+    -f /tmp/nfs-csi-values.yaml
+    --wait"
+  tags:
+    - install
+    - update
+
+- name: Write NFS CSI default StorageClass to temp file
+  ansible.builtin.copy:
+    content: "{{ kubernetes_CSI_DRIVER_NFS_DEFAULT_SC | to_nice_yaml }}"
+    dest: "/tmp/nfs-csi-default-sc.yaml"
+  tags:
+    - install
+    - update
+
+- name: Copy StorageClass manifest to control plane
+  ansible.builtin.shell: >
+    scp -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    /tmp/nfs-csi-default-sc.yaml
+    {{ ansible_user }}@{{ cp_host }}:/tmp/nfs-csi-default-sc.yaml
   tags:
     - install
     - update
 
 - name: Create default StorageClass for NFS CSI driver
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ kubernetes_CSI_DRIVER_NFS_DEFAULT_SC }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/bin/kubectl apply -f /tmp/nfs-csi-default-sc.yaml"
   tags:
     - install
     - update
 
 - name: Remove default StorageClass
-  kubernetes.core.k8s:
-    state: absent
-    api_version: storage.k8s.io/v1
-    kind: StorageClass
-    name: default
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/bin/kubectl delete storageclass default --ignore-not-found=true"
   tags:
     - uninstall
 
 - name: Remove csi-driver-nfs
-  kubernetes.core.helm:
-    name: "{{ kubernetes_CSI_DRIVER_NFS_NAME }}"
-    namespace: "{{ kubernetes_CSI_DRIVER_NFS_NAMESPACE }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    wait: true
-    state: absent
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm uninstall
+    {{ kubernetes_CSI_DRIVER_NFS_NAME }}
+    --namespace {{ kubernetes_CSI_DRIVER_NFS_NAMESPACE }} --wait || true"
   tags:
     - uninstall
