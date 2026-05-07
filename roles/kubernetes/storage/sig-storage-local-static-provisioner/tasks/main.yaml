@@ -26,26 +26,59 @@
     - install
     - update
 
-- name: Setting up local storage for the cluster using sig-storage-local-static-provisioner
-  kubernetes.core.helm:
-    name: "{{ kubernetes_LOCAL_VOLUME_NAME }}"
-    namespace: "{{ kubernetes_LOCAL_VOLUME_NAMESPACE }}"
-    chart_ref: "{{ kubernetes_LOCAL_VOLUME_REPO_LOCATION }}/helm/provisioner"
-    chart_version: "{{ kubernetes_LOCAL_VOLUME_CHART_VERSION }}"
-    values: "{{ kubernetes_LOCAL_VOLUME_CONFIG }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    create_namespace: true
-    wait: true
+- name: Get control plane IP from inventory
+  ansible.builtin.shell: |
+    grep -A1 '\[k8s_control_plane\]' {{ iac_inventory_dir }}/inventory | tail -1 | awk '{print $1}'
+  register: cp_ip_output
+  tags:
+    - install
+    - update
+    - uninstall
+
+- name: Set control plane host fact
+  ansible.builtin.set_fact:
+    cp_host: "{{ cp_ip_output.stdout }}"
+  tags:
+    - install
+    - update
+    - uninstall
+
+- name: Clean up old repo on control plane and copy fresh
+  ansible.builtin.shell: |
+    ssh -o StrictHostKeyChecking=no -i {{ ansible_ssh_private_key_file }} {{ ansible_user }}@{{ cp_host }} \
+      "sudo rm -rf /tmp/{{ kubernetes_LOCAL_VOLUME_NAME }}"
+    scp -r -o StrictHostKeyChecking=no -i {{ ansible_ssh_private_key_file }} \
+      /tmp/{{ kubernetes_LOCAL_VOLUME_NAME }} \
+      {{ ansible_user }}@{{ cp_host }}:/tmp/
+  tags:
+    - install
+    - update
+
+- name: Install sig-storage via helm on control plane
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm upgrade --install
+    {{ kubernetes_LOCAL_VOLUME_NAME }}
+    /tmp/{{ kubernetes_LOCAL_VOLUME_NAME }}/helm/provisioner
+    --version {{ kubernetes_LOCAL_VOLUME_CHART_VERSION }}
+    --namespace {{ kubernetes_LOCAL_VOLUME_NAMESPACE }}
+    --create-namespace
+    --set daemonset.image.tag=v3.2.0
+    --set storageClass.isDefaultClass=true
+    --wait"
   tags:
     - install
     - update
 
 - name: Remove sig-storage-local-static-provisioner
-  kubernetes.core.helm:
-    name: "{{ kubernetes_LOCAL_VOLUME_NAME }}"
-    namespace: "{{ kubernetes_LOCAL_VOLUME_NAMESPACE }}"
-    kubeconfig: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
-    wait: true
-    state: absent
+  ansible.builtin.shell: >
+    ssh -o StrictHostKeyChecking=no
+    -i {{ ansible_ssh_private_key_file }}
+    {{ ansible_user }}@{{ cp_host }}
+    "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm uninstall
+    {{ kubernetes_LOCAL_VOLUME_NAME }}
+    --namespace {{ kubernetes_LOCAL_VOLUME_NAMESPACE }} --wait || true"
   tags:
     - uninstall
