@@ -4,10 +4,11 @@
 ---
 - name: Installing the PostgreSQL gpg key
 # Ubuntu 22.04/24.04/26.04 all use the same Debian keyring location.
-  ansible.builtin.apt_key:
+  ansible.builtin.get_url:
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
-    keyring: /usr/share/keyrings/postgres-archive-keyring.gpg
-    state: present
+    dest: /usr/share/keyrings/postgres-archive-keyring.gpg
+    mode: '0644'
+    force: true
   tags:
     - install
     - update
