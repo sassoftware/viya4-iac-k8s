@@ -9,7 +9,7 @@ prefix          : "" # Prefix for the deployment e.g. prod.
 #
 # Consult SAS Viya Documentation for supported kubernetes versions for the release that is being deployed.
 kubernetes_version         : "" # Supported versions "1.31.x" - "1.33.x
-kubernetes_cri_version     : "" # Choices : [Ubuntu 22.04: "1.7.24", Ubuntu 24.04: "1.7.28"]
+kubernetes_cri_version     : "" # Choices : [Ubuntu 22.04: "1.7.24", Ubuntu 24.04/26.04: "1.7.28"]
 kubernetes_cluster_dns     : "" # DNS IP for kubelet (should be service_subnet first IP + .10)
 
 # Kubernetes - VIP : https://kube-vip.io
@@ -128,7 +128,7 @@ nfs_ip  : ""
 # It is uncommon to need to amend these in most deployments.
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04/24.04 LTS
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04/24.04/26.04 LTS
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items

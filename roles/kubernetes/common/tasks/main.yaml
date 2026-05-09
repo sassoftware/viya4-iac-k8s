@@ -6,8 +6,8 @@
   ansible.builtin.assert:
     that:
       - ansible_distribution == "Ubuntu"
-      - ansible_distribution_version in ["22.04", "24.04"]
-    fail_msg: "Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}. Only Ubuntu 22.04 and 24.04 are supported."
+      - ansible_distribution_version in ["22.04", "24.04", "26.04"]
+    fail_msg: "Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}. Only Ubuntu 22.04, 24.04, and 26.04 are supported."
     success_msg: "OS version check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
   tags:
     - install
@@ -43,7 +43,7 @@
     state: latest
     update_cache: true # Proxied command for apt : apt-get update
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04" or ansible_distribution_version == "26.04")
     - deployment_type == "bare_metal"
   tags:
     - install

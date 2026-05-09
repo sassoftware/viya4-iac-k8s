@@ -1,5 +1,5 @@
 # Base layer
-FROM ubuntu:22.04 AS baseline
+FROM ubuntu:26.04 AS baseline
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y \

@@ -43,6 +43,7 @@
     - update
 
 # Installing the Docker gpg key
+# Ubuntu 22.04/24.04/26.04 all use the same Debian keyring location.
 - name: Installing the Docker gpg key
   ansible.builtin.apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg

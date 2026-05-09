@@ -6,7 +6,7 @@
 # Installing Kubernetes tooling
 #
 
-# Only applicable for releases older than Ubuntu 22.04
+# Applicable for Ubuntu 24.04 and 26.04 releases
 - name: Create /etc/apt/keyrings directory
   ansible.builtin.file:
     path: /etc/apt/keyrings
@@ -14,7 +14,7 @@
     mode: "0755"
     owner: root
     group: root
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04")
+  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "26.04")
   tags:
     - install
     - update
