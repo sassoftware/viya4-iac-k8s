@@ -25,6 +25,29 @@
     - install
     - update
 
+# Clean up any stale IPVS state before kubeadm init.
+# kube-proxy reads node networking on start and may inherit stale interfaces/rules.
+- name: Remove stale kube-ipvs0 interface
+  ansible.builtin.shell: |
+    ip link show kube-ipvs0 && ip link delete kube-ipvs0 || true
+  ignore_errors: true
+  tags:
+    - install
+
+- name: Clear stale IPVS rules
+  ansible.builtin.shell: |
+    command -v ipvsadm >/dev/null 2>&1 && ipvsadm -C || true
+  ignore_errors: true
+  tags:
+    - install
+
+- name: Unload stale IPVS kernel modules
+  ansible.builtin.shell: |
+    modprobe -r ip_vs_rr ip_vs_wrr ip_vs_sh ip_vs 2>/dev/null || true
+  ignore_errors: true
+  tags:
+    - install
+
 # Initialize Kubernetes Control Plane
 - name: Check if kubeadm already initialized
   ansible.builtin.stat:

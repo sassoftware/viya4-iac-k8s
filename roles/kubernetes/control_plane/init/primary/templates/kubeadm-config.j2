@@ -80,8 +80,12 @@ readOnlyPort: 0
 # KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-mode: "ipvs"
+mode: "iptables"
 ipvs:
+  # strictARP is only enforced when mode=ipvs, but pre-setting it here ensures
+  # correct ARP behaviour if the cluster is ever migrated to IPVS mode and is
+  # required to prevent kube-proxy from absorbing ARP replies for VIPs that
+  # kube-vip/MetalLB must own exclusively.
   strictARP: true
 metricsBindAddress: "0.0.0.0:10249"
 enableProfiling: true

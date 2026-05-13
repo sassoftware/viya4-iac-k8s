@@ -56,7 +56,7 @@ spec:
             - name: port
               value: "6443"
             - name: vip_interface
-              value: ""
+              value: "eth0"
             - name: vip_cidr
               value: "32"
             - name: dns_mode
@@ -67,6 +67,8 @@ spec:
               value: kube-system
             - name: svc_enable
               value: "true"
+            - name: vip_services
+              value: "true"
             - name: svc_leasename
               value: plndr-svcs-lock
             - name: svc_election
@@ -74,7 +76,7 @@ spec:
             - name: vip_leaderelection
               value: "false"
             - name: lb_enable
-              value: "false"
+              value: "true"
             - name: enableLoadBalancer
               value: "true"
           securityContext:

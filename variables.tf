@@ -481,6 +481,12 @@ variable "cluster_lb_addresses" {
   default = null
 }
 
+variable "cluster_enable_validation" {
+  description = "Run post-deployment validation checks (kube-proxy mode, IPVS cleanup, VIP binding, kube-vip DaemonSet rollout). Set to false to skip in air-gapped environments or when re-running specific playbook tags."
+  type        = bool
+  default     = false
+}
+
 variable "iac_tooling" {
   description = "Value used to identify the tooling used to generate this provider's infrastructure"
   type        = string
