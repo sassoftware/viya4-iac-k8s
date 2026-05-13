@@ -664,6 +664,7 @@ INGRESS_NGINX_CONFIG:
       # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
       loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
       annotations:
+```
 
 ### NFS CSI Driver - Default Storage Class
 

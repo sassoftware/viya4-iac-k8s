@@ -157,38 +157,7 @@
     - install
     - update
 
-- name: Install ipvsadm for IPVS load balancing support
-  ansible.builtin.package:
-    name: ipvsadm
-    state: present
-  tags:
-    - install
-    - update
-
-- name: Add IPVS kernel module load file
-  ansible.builtin.copy:
-    dest: /etc/modules-load.d/ipvs.conf
-    mode: "0644"
-    content: |
-      ip_vs
-      ip_vs_rr
-      ip_vs_wrr
-      ip_vs_sh
-      nf_conntrack
-  tags:
-    - install
-    - update
-
-- name: Load IPVS kernel modules
-  ansible.builtin.shell: |
-    modprobe ip_vs
-    modprobe ip_vs_rr
-    modprobe ip_vs_wrr
-    modprobe ip_vs_sh
-    modprobe nf_conntrack
-  tags:
-    - install
-    - update
+# IPVS tasks removed - kube-proxy runs in iptables mode
 
 - name: Download helm installation script
   ansible.builtin.get_url:
