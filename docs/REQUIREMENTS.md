@@ -657,13 +657,41 @@ You must adjust the `externalTrafficPolicy` value based on the load balancer sel
 ## 3rd Party
 
 ### Ingress Controller
-INGRESS_NGINX_CONFIG:
-  controller:
+# This cluster uses Contour as the ingress controller (V4_CFG_INGRESS_TYPE: contour).
+# Contour exposes traffic via its Envoy proxy, which gets a LoadBalancer-type Service.
+# The externalTrafficPolicy must be set for the Envoy service:
+CONTOUR_CONFIG:
+  envoy:
     service:
-      externalTrafficPolicy: Cluster or Local # Refer to Load Balancer type table above
-      # loadBalancerIP: <your static ip> # Assigns a specific IP for your loadBalancer
-      loadBalancerSourceRanges: [] # Not supported on open source kubernetes - https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
-      annotations:
+      externalTrafficPolicy: Cluster  # kube_vip requires Cluster; metallb requires Local
+      # loadBalancerIP: <first-lb-pool-ip>  # Optional: pin Envoy to a specific IP from the pool
+
+
+### LoadBalancer IP Pool Size for viya4-deployment
+
+`cluster_lb_addresses` defines the pool of IPs that kube-vip's cloud provider (or MetalLB)
+assigns to each Kubernetes `LoadBalancer`-type Service. **Each service consumes exactly one IP.**
+
+When using viya4-deployment, the following options each create an additional `LoadBalancer`
+Service that requires an IP from the pool:
+
+| DAC ansible-vars.yaml option | LoadBalancer Service created |
+| :--- | :--- |
+| *(always)* | `Envoy` (Contour proxy) — main Viya HTTPS endpoint |
+| `V4_CFG_CAS_ENABLE_LOADBALANCER: true` | CAS binary-port external LoadBalancer |
+| CAS Connect LoadBalancer (if enabled) | CAS/CONNECT external access |
+| Consul LoadBalancer (if enabled) | Consul external access |
+
+> **If the pool runs out of IPs**, any additional `LoadBalancer` Service will remain in
+> `Pending` state indefinitely. Pods that depend on that service — such as CAS when
+> `V4_CFG_CAS_ENABLE_LOADBALANCER: true` — will fail to start.
+>
+> **Recommendation**: allocate at least **5 IPs** in `cluster_lb_addresses` to cover
+> a full Viya + CAS LB deployment with headroom to spare. On OpenStack, `allocate-vip.sh`
+> defaults to `LB_COUNT=5`; increase it before running the script if you need more:
+> ```bash
+> LB_COUNT=8 ./allocate-vip.sh
+> ```
 ```
 
 ### NFS CSI Driver - Default Storage Class

@@ -265,83 +265,6 @@ terraform_up() {
     fi
 }
 
-# allocate_vip_floating_ip - Allocate two OpenStack floating IPs:
-#   1. cluster_vip_ip      — kube-vip control-plane HA VIP
-#   2. cluster_lb_addresses — kube-vip cloud-provider LoadBalancer service VIP
-# Each IP is only allocated if not already set in terraform.tfvars.
-# The floating IPs are created unassociated (no server) — they exist solely to
-# reserve clean IPs that OpenStack tracks, which can then be registered in
-# names.sas.com under the unx.sas.com domain.
-allocate_vip_floating_ip() {
-    local NETWORK
-    NETWORK=$(grep -E '^\s*openstack_network_name\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
-    if [[ -z "$NETWORK" ]]; then
-        echo "allocate_vip_floating_ip: openstack_network_name not set in $TFVARS, skipping."
-        return 0
-    fi
-
-    # ------------------------------------------------------------------
-    # [1] cluster_vip_ip — control-plane HA VIP
-    # ------------------------------------------------------------------
-    local CURRENT_VIP
-    CURRENT_VIP=$(grep -E '^\s*cluster_vip_ip\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*//' | tr -d ' "')
-    local VIP
-    if [[ -n "$CURRENT_VIP" && "$CURRENT_VIP" != "null" ]]; then
-        echo "allocate_vip_floating_ip: [cluster_vip_ip]      already set to $CURRENT_VIP — skipping allocation."
-        VIP="$CURRENT_VIP"
-    else
-        echo "allocate_vip_floating_ip: allocating floating IP for cluster_vip_ip (control-plane HA VIP)..."
-        local FIP_JSON1
-        FIP_JSON1=$(openstack floating ip create "$NETWORK" -f json 2>/dev/null)
-        VIP=$(echo "$FIP_JSON1" | python3 -c "import sys,json; print(json.load(sys.stdin).get('floating_ip_address',''))" 2>/dev/null)
-        if [[ -z "$VIP" ]]; then
-            echo "allocate_vip_floating_ip: failed to allocate cluster_vip_ip, skipping."
-            return 0
-        fi
-        if grep -qE '^\s*#?\s*cluster_vip_ip\s*=' "$TFVARS"; then
-            sed -i "s|^\s*#\?\s*cluster_vip_ip\s*=.*|cluster_vip_ip      = \"${VIP}\"|" "$TFVARS"
-        else
-            sed -i "/cluster_vip_version/a cluster_vip_ip      = \"${VIP}\"" "$TFVARS"
-        fi
-        echo "allocate_vip_floating_ip: [cluster_vip_ip]      allocated $VIP — written to $TFVARS"
-    fi
-
-    # ------------------------------------------------------------------
-    # [2] cluster_lb_addresses — LoadBalancer service VIP
-    # ------------------------------------------------------------------
-    local CURRENT_LB
-    CURRENT_LB=$(grep -E '^\s*cluster_lb_addresses\s*=' "$TFVARS" 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-    local LB_VIP
-    if [[ -n "$CURRENT_LB" ]]; then
-        echo "allocate_vip_floating_ip: [cluster_lb_addresses] already set to $CURRENT_LB — skipping allocation."
-        LB_VIP="$CURRENT_LB"
-    else
-        echo "allocate_vip_floating_ip: allocating floating IP for cluster_lb_addresses (LoadBalancer service VIP)..."
-        local FIP_JSON2
-        FIP_JSON2=$(openstack floating ip create "$NETWORK" -f json 2>/dev/null)
-        LB_VIP=$(echo "$FIP_JSON2" | python3 -c "import sys,json; print(json.load(sys.stdin).get('floating_ip_address',''))" 2>/dev/null)
-        if [[ -z "$LB_VIP" ]]; then
-            echo "allocate_vip_floating_ip: failed to allocate cluster_lb_addresses IP, skipping."
-            return 0
-        fi
-        if grep -qE '^\s*cluster_lb_addresses\s*=' "$TFVARS"; then
-            sed -i "s|^\s*cluster_lb_addresses\s*=.*|cluster_lb_addresses = [\"range-global: ${LB_VIP}-${LB_VIP}\"]|" "$TFVARS"
-        else
-            sed -i "/cluster_lb_type/a cluster_lb_addresses = [\"range-global: ${LB_VIP}-${LB_VIP}\"]" "$TFVARS"
-        fi
-        echo "allocate_vip_floating_ip: [cluster_lb_addresses] allocated $LB_VIP — written to $TFVARS"
-    fi
-
-    echo ""
-    echo "  *** ACTION REQUIRED ***"
-    echo "  Register both VIPs in names.sas.com (unx.sas.com domain):"
-    echo "    [1] cluster_vip_ip      $VIP  ->  <prefix>-vip.unx.sas.com"
-    echo "    [2] cluster_lb_addresses $LB_VIP  ->  <prefix>-lb.unx.sas.com"
-    echo "  Then set cluster_vip_fqdn in $TFVARS to match."
-    echo "  *** ******************** ***"
-    echo ""
-}
-
 # patch_vip_allowed_pairs - Add the kube-vip VIP to allowed_address_pairs on all
 # control plane Neutron ports.  The Neutron policy in most environments disallows
 # setting allowed_address_pairs at port-creation time, but allows PUTting them on
@@ -423,13 +346,14 @@ for svc in body.get('token',{}).get('catalog',[]):
     # We extract the first IP of each range as representative (kube-vip ARPs from worker nodes,
     # but the control-plane port must also allow the IPs so OpenStack passes the traffic).
     local LB_IPS=()
+    local _lb_raw
+    _lb_raw=$(grep -E '^\s*cluster_lb_addresses' "$TFVARS" 2>/dev/null)
+
+    # Process range-global entries: expand start-end within the same /24
     while IFS= read -r lb_line; do
-        # Extract first IP from range (e.g. "range-global: 10.119.130.154-10.119.130.154" -> "10.119.130.154")
-        local first_ip
+        local first_ip last_ip
         first_ip=$(echo "$lb_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-        local last_ip
         last_ip=$(echo "$lb_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
-        # Expand simple single-octet ranges (e.g. 154-156) up to 16 IPs
         if [[ -n "$first_ip" && -n "$last_ip" && "$first_ip" != "$last_ip" ]]; then
             local base="${first_ip%.*}"
             local start_oct="${first_ip##*.}"
@@ -440,7 +364,13 @@ for svc in body.get('token',{}).get('catalog',[]):
         elif [[ -n "$first_ip" ]]; then
             LB_IPS+=("$first_ip")
         fi
-    done < <(grep -E '^\s*cluster_lb_addresses' "$TFVARS" 2>/dev/null | grep -oE '"[^"]*range[^"]*"' | tr -d '"')
+    done < <(echo "$_lb_raw" | grep -oE '"[^"]*range[^"]*"' | tr -d '"')
+
+    # Process cidr-global entries: extract individual IPs (handles /32 CIDR notation
+    # written by allocate-vip.sh when OpenStack IPs are non-contiguous)
+    while IFS= read -r cidr_ip; do
+        [[ -n "$cidr_ip" ]] && LB_IPS+=("$cidr_ip")
+    done < <(echo "$_lb_raw" | grep -oE '"[^"]*cidr[^"]*"' | tr -d '"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
 
     # Build JSON array: VIP first, then LB IPs (deduplicated)
     local PAIRS_JSON="{\"ip_address\":\"${VIP}\"}"

@@ -20,6 +20,27 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TFVARS="${SCRIPT_DIR}/terraform.tfvars"
 
 # ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+# Number of floating IPs to allocate for the LoadBalancer address pool.
+#
+# Each Kubernetes LoadBalancer-type Service consumes one IP from this pool.
+# When deploying SAS Viya with viya4-deployment the following options each
+# require an additional IP:
+#
+#   - 1 IP  (always required)                        Envoy (Contour) — main Viya HTTPS endpoint
+#   - 1 IP  (V4_CFG_CAS_ENABLE_LOADBALANCER: true)   CAS binary-port LoadBalancer
+#   - 1 IP  (CAS Connect LoadBalancer, if enabled)
+#   - 1 IP  (Consul LoadBalancer, if enabled)
+#
+# If the pool runs out of IPs a LoadBalancer Service will remain in Pending
+# state and related pods (e.g. CAS) will fail to start.
+# The default of 5 provides headroom for a full Viya + CAS LB deployment.
+# Override before running the script:  LB_COUNT=8 ./allocate-vip.sh
+#
+: "${LB_COUNT:=5}"
+
+# ---------------------------------------------------------------------------
 # Validate environment
 # ---------------------------------------------------------------------------
 # If creds were sourced via 'source ~/.openstack_creds.env' in ksh the
@@ -72,6 +93,38 @@ allocate_fip() {
 }
 
 # ---------------------------------------------------------------------------
+# Helper: build the cluster_lb_addresses HCL value from a list of sorted IPs
+# ---------------------------------------------------------------------------
+# - Contiguous block within the same /24 subnet → "range-global: first-last"
+# - Otherwise (non-contiguous or cross-/24)     → "cidr-global: IP1/32,IP2/32,..."
+# Both formats are valid kube-vip cloud-provider ConfigMap entries.
+build_lb_addresses_value() {
+    local -a ips=("$@")
+    local n=${#ips[@]}
+    local contiguous=true
+    local prev_a prev_b prev_c prev_d this_a this_b this_c this_d
+
+    IFS='.' read -r prev_a prev_b prev_c prev_d <<< "${ips[0]}"
+    for (( i=1; i<n; i++ )); do
+        IFS='.' read -r this_a this_b this_c this_d <<< "${ips[$i]}"
+        if [[ "$this_a" != "$prev_a" || "$this_b" != "$prev_b" || "$this_c" != "$prev_c" \
+              || $this_d -ne $((prev_d + 1)) ]]; then
+            contiguous=false
+            break
+        fi
+        prev_d=$this_d
+    done
+
+    if [[ "$contiguous" == "true" ]]; then
+        echo "[\"range-global: ${ips[0]}-${ips[$((n-1))]}\"]" 
+    else
+        local cidr_list
+        cidr_list=$(printf '%s/32,' "${ips[@]}" | sed 's/,$//')
+        echo "[\"cidr-global: ${cidr_list}\"]"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Check cluster_vip_ip — skip allocation if already set
 # ---------------------------------------------------------------------------
 CURRENT_VIP=$(grep -E '^\s*cluster_vip_ip\s*=' "$TFVARS" 2>/dev/null \
@@ -87,17 +140,25 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Check cluster_lb_addresses — skip allocation if already set to a real IP
+# Check cluster_lb_addresses — skip allocation if already contains any IP
 # ---------------------------------------------------------------------------
 CURRENT_LB=$(grep -E '^\s*cluster_lb_addresses\s*=' "$TFVARS" 2>/dev/null \
     | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
 if [[ -n "$CURRENT_LB" ]]; then
-    echo "[cluster_lb_addresses] already set to: $CURRENT_LB  (skipping allocation)"
-    LB_VIP="$CURRENT_LB"
+    echo "[cluster_lb_addresses] already contains IPs (skipping allocation)"
     LB_SKIPPED=true
 else
-    LB_VIP=$(allocate_fip "cluster_lb_addresses (LoadBalancer service VIP)")
+    LB_IPS=()
+    echo "Allocating ${LB_COUNT} floating IP(s) for the LoadBalancer pool..."
+    for i in $(seq 1 "$LB_COUNT"); do
+        ip=$(allocate_fip "cluster_lb_addresses pool IP ${i}/${LB_COUNT}")
+        LB_IPS+=("$ip")
+    done
+    # Sort IPs numerically so contiguous detection works correctly
+    IFS=$'\n' SORTED_LB_IPS=($(printf '%s\n' "${LB_IPS[@]}" | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n))
+    unset IFS
+    LB_ADDRESSES_VALUE=$(build_lb_addresses_value "${SORTED_LB_IPS[@]}")
     LB_SKIPPED=false
 fi
 
@@ -129,7 +190,7 @@ fi
 # Write cluster_lb_addresses into terraform.tfvars (if newly allocated)
 # ---------------------------------------------------------------------------
 if [[ "$LB_SKIPPED" == "false" ]]; then
-    LB_LINE="cluster_lb_addresses = [\"range-global: ${LB_VIP}-${LB_VIP}\"]"
+    LB_LINE="cluster_lb_addresses = ${LB_ADDRESSES_VALUE}"
     if grep -qE '^\s*cluster_lb_addresses\s*=' "$TFVARS"; then
         python3 -c "
 import re, sys
@@ -152,31 +213,59 @@ fi
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
+
+# Determine display values for the summary
+if [[ "$LB_SKIPPED" == "false" ]]; then
+    LB_FIRST_IP="${SORTED_LB_IPS[0]}"
+    LB_DISPLAY="${LB_ADDRESSES_VALUE}"
+else
+    LB_FIRST_IP="$CURRENT_LB"
+    LB_DISPLAY="(already set — see terraform.tfvars)"
+fi
+
 echo ""
 echo "============================================================"
-echo "  Two VIPs allocated and written to terraform.tfvars:"
+echo "  VIPs allocated/verified for terraform.tfvars:"
 echo ""
 echo "  [1] cluster_vip_ip      = \"$VIP\""
 echo "        Purpose : kube-vip control-plane HA endpoint"
-echo "        This IP is used by kubeadm as the API server VIP."
 echo "        kube-vip binds this IP on the primary control-plane"
 echo "        node and fails it over on node failure."
 echo ""
-echo "  [2] cluster_lb_addresses = \"range-global: ${LB_VIP}-${LB_VIP}\""
-echo "        Purpose : kube-vip cloud-provider LoadBalancer service VIP"
-echo "        This IP is assigned to Kubernetes LoadBalancer-type"
-echo "        services (e.g. the Viya SAS/HTTP ingress controller)."
+echo "  [2] cluster_lb_addresses = ${LB_DISPLAY}"
+echo "        Purpose : kube-vip cloud-provider LoadBalancer IP pool"
+if [[ "$LB_SKIPPED" == "false" ]]; then
+    echo "        ${#SORTED_LB_IPS[@]} IP(s) allocated for LoadBalancer-type Services:"
+    for _ip in "${SORTED_LB_IPS[@]}"; do
+        echo "          $_ip"
+    done
+fi
+echo ""
+echo "  IMPORTANT — LoadBalancer IP pool size:"
+echo "    Each Kubernetes LoadBalancer-type Service consumes one IP."
+echo "    viya4-deployment options that each require an additional IP:"
+echo "      - 1 IP always: Envoy (Contour) — main Viya HTTPS endpoint"
+echo "      - V4_CFG_CAS_ENABLE_LOADBALANCER: true  (CAS binary-port LB)"
+echo "      - CAS Connect LoadBalancer (if enabled)"
+echo "      - Consul LoadBalancer (if enabled)"
+echo "    If the pool runs out of IPs those Services remain Pending and"
+echo "    related pods (e.g. CAS) will fail to start."
+echo "    Increase LB_COUNT and re-run if needed:  LB_COUNT=8 ./allocate-vip.sh"
 echo ""
 echo "  NEXT STEPS:"
 echo ""
-echo "  1. Register both IPs in your DNS zone:"
-echo "       A    <prefix>-vip.<your-dns-zone>        ->  $VIP"
-echo "       PTR  $VIP                               ->  <prefix>-vip.<your-dns-zone>"
-echo "       A    <prefix>-lb.<your-dns-zone>         ->  $LB_VIP"
-echo "       PTR  $LB_VIP                            ->  <prefix>-lb.<your-dns-zone>"
-echo ""
-echo "     where <your-dns-zone> is your OpenStack tenant's DNS domain,"
-echo "     e.g. the value of cluster_domain in terraform.tfvars."
+echo "  1. Register IPs in your DNS zone (value of cluster_domain in terraform.tfvars):"
+echo "       A    <prefix>-vip.<your-dns-zone>   ->  $VIP"
+echo "       PTR  $VIP                          ->  <prefix>-vip.<your-dns-zone>"
+echo "       A    <prefix>-lb.<your-dns-zone>    ->  ${LB_FIRST_IP}  (ingress-nginx)"
+echo "       PTR  ${LB_FIRST_IP}                ->  <prefix>-lb.<your-dns-zone>"
+if [[ "$LB_SKIPPED" == "false" && ${#SORTED_LB_IPS[@]} -gt 1 ]]; then
+    echo ""
+    echo "       Additional LB pool IPs (for CAS LB and similar services):"
+    for _ip in "${SORTED_LB_IPS[@]:1}"; do
+        echo "         $_ip — register if enabling V4_CFG_CAS_ENABLE_LOADBALANCER or similar"
+    done
+fi
 echo ""
 echo "  2. Update cluster_vip_fqdn in terraform.tfvars:"
 echo "       cluster_vip_fqdn = \"<prefix>-vip.<your-dns-zone>\""
