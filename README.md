@@ -33,7 +33,7 @@ backing store has been addressed with [this issue](https://github.com/sassoftwar
 
 ## Overview
 
-This project helps you to automate the cluster-provisioning phase of SAS Viya platform deployment. It contains Terraform scripts to provision cloud infrastructure resources for VMware, and it contains Ansible files to apply the elements of a Kubernetes cluster that are required to deploy SAS Viya 4 product offerings. Here is a list of resources that this project can create:
+This project is an **optional** tool to automate cluster provisioning for **VMware vSphere/vCenter and bare-metal** environments. It contains Terraform scripts to provision cloud infrastructure resources for VMware, and it contains Ansible files to apply the elements of a Kubernetes cluster that are required to deploy SAS Viya 4 product offerings. Here is a list of resources that this project can create:
 
 >- An open source [Kubernetes](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) cluster with the following components:
   >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd)
@@ -44,6 +44,14 @@ This project helps you to automate the cluster-provisioning phase of SAS Viya pl
 >- Infrastructure to deploy the SAS Viya CAS server in SMP or MPP mode
 
 [<img src="./docs/images/viya4-iac-k8s-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-k8s-diag.png?raw=true)
+
+### Scope and Limitations
+
+> **Important**: This project provisions upstream open-source Kubernetes clusters for **VMware vSphere/vCenter** and **bare-metal (physical/VM)** environments only. It is **not** required to obtain SAS support for CNCF-conformant Kubernetes distributions.
+>
+> As of SAS Viya platform 2026.05, SAS provides standard support for any [CNCF-conformant Kubernetes distribution](https://www.cncf.io/certification/software-conformance/). Customers using other CNCF-certified distributions (e.g., managed Kubernetes services, other on-premises distributions) do **not** need to use this IaC tooling — they can provision clusters using their preferred methods and still receive standard SAS support.
+>
+> This project is one optional tool for a specific subset of deployment scenarios, not an enabler or prerequisite for broader CNCF Kubernetes support.
 
 To learn about all phases and options of the SAS Viya platform deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopscon&docsetTarget=p1qungdpndaksyn156ng6duptma0.htm) in _SAS&reg; Viya&reg; Platform Operations_.
 
