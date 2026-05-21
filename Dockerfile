@@ -1,5 +1,5 @@
 # Base layer
-FROM ubuntu:22.04 AS baseline
+FROM ubuntu:26.04 AS baseline
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y \
@@ -14,8 +14,8 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 # Tool building layer
 FROM baseline AS tool_builder
 
-ARG HELM_VERSION=3.17.1
-ARG KUBECTL_VERSION=1.32.7
+ARG HELM_VERSION=4.1.4
+ARG KUBECTL_VERSION=1.34.7
 
 ARG TERRAFORM_VERSION=1.10.5
 

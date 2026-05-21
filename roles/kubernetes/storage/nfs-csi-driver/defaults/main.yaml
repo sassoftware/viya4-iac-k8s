@@ -9,7 +9,7 @@ kubernetes_CSI_DRIVER_NFS_NAME: csi-driver-nfs-sas
 kubernetes_CSI_DRIVER_NFS_NAMESPACE: kube-system
 kubernetes_CSI_DRIVER_NFS_CHART_NAME: csi-driver-nfs
 kubernetes_CSI_DRIVER_NFS_CHART_URL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
-kubernetes_CSI_DRIVER_NFS_CHART_VERSION: 4.11.0
+kubernetes_CSI_DRIVER_NFS_CHART_VERSION: 4.13.2
 kubernetes_CSI_DRIVER_NFS_CONFIG:
   driver:
     mountPermissions: "0777"

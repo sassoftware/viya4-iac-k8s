@@ -8,8 +8,10 @@
 # To determine which versions of containerd are available in the Docker APT repository
 # select one of the following links based on your Ubuntu dist:
 # Jammy 22 https://download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/
+# Noble 24 https://download.docker.com/linux/ubuntu/dists/noble/stable/binary-amd64/
+# Oracular 26 https://download.docker.com/linux/ubuntu/dists/oracular/stable/binary-amd64/
 # Focal 20 https://download.docker.com/linux/ubuntu/dists/focal/stable/binary-amd64/
 # On that page select "Packages" and the text file that is downloaded will contain all the versions of
 # containerd available in the repository.
-kubernetes_cri_version: "1.7.24"
+kubernetes_cri_version: "1.7.28"
 kubernetes_cri_deb_rev: ""

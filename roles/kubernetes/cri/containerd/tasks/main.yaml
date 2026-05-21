@@ -85,11 +85,13 @@
     - install
     - update
 
+# Ubuntu 22.04/24.04/26.04 all use the same Debian keyring location.
 - name: Installing the Docker gpg key for containerd.io
-  ansible.builtin.apt_key:
+  ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
-    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
-    state: present
+    dest: /usr/share/keyrings/docker-archive-keyring.gpg
+    mode: '0644'
+    force: true
   tags:
     - install
     - update
@@ -106,7 +108,7 @@
   set_fact:
     kubernetes_cri_deb_rev: "-*"
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04" or ansible_distribution_version == "26.04")
     - kubernetes_cri_version | regex_search("^(\d+\.)(\d+\.)(\d+)$")
   tags:
     - install
@@ -125,7 +127,7 @@
     - update
 
 # TODO: Verify this needs an OS guard for package. Currently
-#       only tested with Ubuntu 22.04 LTS
+#       only tested with Ubuntu 22.04, 24.04, and 26.04 LTS
 #
 # Installing containerd
 # - name: Installing containerd

@@ -33,7 +33,9 @@ An Ubuntu Linux operating system is required for the machine that uses the tools
 
 | Operating System | Description |
 | --- | --- |
-| [Ubuntu 22.04 LTS](https://releases.ubuntu.com/22.04/) | You must have a user account and password with privileges that enable unprompted `sudo`. You must also have a shared "private/public" SSH key pair to use with each system. These are required for the Ansible tools that are described below. |
+| [Ubuntu 22.04 LTS](https://releases.ubuntu.com/22.04/), [Ubuntu 24.04 LTS](https://releases.ubuntu.com/24.04/), or [Ubuntu 26.04 LTS](https://releases.ubuntu.com/26.04/) | You must have a user account and password with privileges that enable unprompted `sudo`. You must also have a shared "private/public" SSH key pair to use with each system. These are required for the Ansible tools that are described below. |
+
+> Note: Ubuntu 26.04 uses the same APT keyring conventions as Ubuntu 24.04 and 22.04, so the repository keyring paths in these Ansible roles are compatible across supported Ubuntu versions.
 
 ## Machines
 
@@ -501,7 +503,7 @@ ansible_user     : ""
 ansible_password : ""
 
 # VM items
-vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04/24.04/26.04 LTS
 vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS / ???
 
 # System items
