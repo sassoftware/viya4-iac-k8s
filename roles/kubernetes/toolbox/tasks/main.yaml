@@ -24,7 +24,7 @@
 
 # ===== Debian/Ubuntu: APT-based Kubernetes install =========================
 
-- name: Create /etc/apt/keyrings directory (Ubuntu 24.04)
+- name: Create /etc/apt/keyrings directory (Ubuntu 24.04/26.04)
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory

@@ -7,7 +7,7 @@ kubernetes_METALLB_NAME: metallb
 kubernetes_METALLB_NAMESPACE: kube-system
 kubernetes_METALLB_CHART_NAME: metallb
 kubernetes_METALLB_CHART_URL: https://metallb.github.io/metallb
-kubernetes_METALLB_CHART_VERSION: 0.14.3
+kubernetes_METALLB_CHART_VERSION: 0.15.3
 kubernetes_METALLB_KUBE_CONFIG: "{{ ansible_env.HOME }}/.kube/config"
 kubernetes_METALLB_CONFIG:
   controller:
