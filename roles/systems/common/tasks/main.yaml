@@ -3,7 +3,7 @@
 
 ---
 # Supported operating systems:
-#   - Ubuntu 22.04 LTS / 24.04 LTS
+#   - Ubuntu 22.04 LTS / 24.04 LTS / 26.04 LTS
 #   - Rocky Linux 9 / RHEL 9
 
 # SSH keys assign to the 'root' user on your systems
