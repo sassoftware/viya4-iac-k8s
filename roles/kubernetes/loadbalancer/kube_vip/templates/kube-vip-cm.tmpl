@@ -5,6 +5,10 @@ metadata:
   name: kubevip
   namespace: kube-system
 data:
+  {
 {% for address in kubernetes_loadbalancer_addresses %}
-  {{ address }}
+{% for key, value in address.items() %}
+   '{{ key }}': '{{ value }}',
 {% endfor %}
+{% endfor %}
+  }
