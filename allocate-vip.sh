@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# allocate-vip.sh - Allocate two OpenStack floating IPs:
+# allocate-vip.sh - Allocate OpenStack floating IPs for the cluster:
 #   1. cluster_vip_ip      — kube-vip control-plane HA VIP
-#   2. cluster_lb_addresses — kube-vip cloud-provider LoadBalancer service VIP
+#   2. cluster_lb_addresses — one or more kube-vip LoadBalancer service IPs
 #
-# Both IPs are written into terraform.tfvars automatically.
+# Both are written into terraform.tfvars automatically.
 #
 # Usage:
 #   source ~/.openstack_creds.env
 #   ./allocate-vip.sh
 #
+# To allocate extra LoadBalancer IPs (e.g. for V4_CFG_CAS_ENABLE_LOADBALANCER,
+# consul LB, connect LB, etc.), set LB_IP_COUNT before running:
+#   LB_IP_COUNT=3 ./allocate-vip.sh
+#
 # After running:
-#   1. Register both IPs in your DNS zone (e.g. your-domain.example.com)
+#   1. Register IPs in your DNS zone (see NEXT STEPS printed by the script)
 #   2. Update cluster_vip_fqdn in terraform.tfvars
 #   3. Run: export SYSTEM=openstack && ./oss-k8s.sh apply setup install
 
@@ -86,6 +90,14 @@ else
     VIP_SKIPPED=false
 fi
 
+# Number of LoadBalancer IPs to allocate. Default 1 (sufficient for ingress-only
+# Viya deployments). Increase when enabling features that create additional
+# LoadBalancer-type services, for example:
+#   V4_CFG_CAS_ENABLE_LOADBALANCER: true  (+1 IP)
+#   consul or connect LoadBalancers       (+1 IP each)
+# Example: LB_IP_COUNT=3 ./allocate-vip.sh
+LB_IP_COUNT="${LB_IP_COUNT:-1}"
+
 # ---------------------------------------------------------------------------
 # Check cluster_lb_addresses — skip allocation if already set to a real IP
 # ---------------------------------------------------------------------------
@@ -93,11 +105,16 @@ CURRENT_LB=$(grep -E '^\s*cluster_lb_addresses\s*=' "$TFVARS" 2>/dev/null \
     | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
 if [[ -n "$CURRENT_LB" ]]; then
-    echo "[cluster_lb_addresses] already set to: $CURRENT_LB  (skipping allocation)"
+    echo "[cluster_lb_addresses] already contains IPs (first: $CURRENT_LB)  (skipping allocation)"
     LB_VIP="$CURRENT_LB"
     LB_SKIPPED=true
 else
-    LB_VIP=$(allocate_fip "cluster_lb_addresses (LoadBalancer service VIP)")
+    LB_VIPS=()
+    for i in $(seq 1 "$LB_IP_COUNT"); do
+        _IP=$(allocate_fip "cluster_lb_addresses[${i}] (LoadBalancer VIP)")
+        LB_VIPS+=("$_IP")
+    done
+    LB_VIP="${LB_VIPS[0]}"   # primary (first) LB IP
     LB_SKIPPED=false
 fi
 
@@ -129,7 +146,16 @@ fi
 # Write cluster_lb_addresses into terraform.tfvars (if newly allocated)
 # ---------------------------------------------------------------------------
 if [[ "$LB_SKIPPED" == "false" ]]; then
-    LB_LINE="cluster_lb_addresses = [\"range-global: ${LB_VIP}-${LB_VIP}\"]"
+    # Build a single-line array: ["range-global: IP1-IP1", "range-global: IP2-IP2", ...]
+    # Each floating IP is represented as a single-IP range because OpenStack floating
+    # IPs are not guaranteed to be consecutive.
+    LB_ENTRIES=""
+    for _ip in "${LB_VIPS[@]}"; do
+        [[ -n "$LB_ENTRIES" ]] && LB_ENTRIES+=", "
+        LB_ENTRIES+="\"range-global: ${_ip}-${_ip}\""
+    done
+    LB_LINE="cluster_lb_addresses = [${LB_ENTRIES}]"
+
     if grep -qE '^\s*cluster_lb_addresses\s*=' "$TFVARS"; then
         python3 -c "
 import re, sys
@@ -150,11 +176,19 @@ open(sys.argv[2], 'w').write(content)
 fi
 
 # ---------------------------------------------------------------------------
+# Derive prefix from tfvars for concrete DNS examples
+# ---------------------------------------------------------------------------
+PREFIX=$(grep -E '^\s*prefix\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
+DNS_ZONE=$(grep -E '^\s*cluster_domain\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
+[[ -z "$PREFIX" ]]   && PREFIX="<prefix>"
+[[ -z "$DNS_ZONE" ]] && DNS_ZONE="<your-dns-zone>"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 echo ""
 echo "============================================================"
-echo "  Two VIPs allocated and written to terraform.tfvars:"
+echo "  IPs allocated and written to terraform.tfvars:"
 echo ""
 echo "  [1] cluster_vip_ip      = \"$VIP\""
 echo "        Purpose : kube-vip control-plane HA endpoint"
@@ -162,31 +196,55 @@ echo "        This IP is used by kubeadm as the API server VIP."
 echo "        kube-vip binds this IP on the primary control-plane"
 echo "        node and fails it over on node failure."
 echo ""
-echo "  [2] cluster_lb_addresses = \"range-global: ${LB_VIP}-${LB_VIP}\""
-echo "        Purpose : kube-vip cloud-provider LoadBalancer service VIP"
-echo "        This IP is assigned to Kubernetes LoadBalancer-type"
-echo "        services (e.g. the Viya SAS/HTTP ingress controller)."
+if [[ "$LB_SKIPPED" == "false" ]]; then
+    echo "  [2] cluster_lb_addresses = [ ${LB_ENTRIES} ]"
+else
+    echo "  [2] cluster_lb_addresses = (already set — $LB_VIP ...)"
+fi
+echo "        Purpose : kube-vip cloud-provider LoadBalancer service IPs"
+echo "        These IPs are assigned to Kubernetes LoadBalancer-type services"
+echo "        (ingress-nginx, CAS external LB, consul LB, connect LB, etc.)."
 echo ""
 echo "  NEXT STEPS:"
 echo ""
-echo "  1. Register both IPs in your DNS zone:"
-echo "       A    <prefix>-vip.<your-dns-zone>        ->  $VIP"
-echo "       PTR  $VIP                               ->  <prefix>-vip.<your-dns-zone>"
-echo "       A    <prefix>-lb.<your-dns-zone>         ->  $LB_VIP"
-echo "       PTR  $LB_VIP                            ->  <prefix>-lb.<your-dns-zone>"
+echo "  1. Register IPs in your DNS zone (cluster_domain = ${DNS_ZONE}):"
 echo ""
-echo "     where <your-dns-zone> is your OpenStack tenant's DNS domain,"
-echo "     e.g. the value of cluster_domain in terraform.tfvars."
+echo "     a) Control-plane VIP — used as the Kubernetes API server endpoint:"
+echo "          A    ${PREFIX}-vip.${DNS_ZONE}     ->  $VIP"
+echo "          PTR  $VIP  ->  ${PREFIX}-vip.${DNS_ZONE}"
+echo "          Then set in terraform.tfvars:"
+echo "            cluster_vip_fqdn = \"${PREFIX}-vip.${DNS_ZONE}\""
 echo ""
-echo "  2. Update cluster_vip_fqdn in terraform.tfvars:"
-echo "       cluster_vip_fqdn = \"<prefix>-vip.<your-dns-zone>\""
+echo "     b) LoadBalancer wildcard — resolves ALL SAS Viya app hostnames:"
+echo "          A (or ALIAS/CNAME)  *.${PREFIX}.${DNS_ZONE}  ->  $LB_VIP"
 echo ""
-echo "  3. Verify DNS is live:"
-echo "       nslookup <prefix>-vip.<your-dns-zone>"
-echo "       nslookup <prefix>-lb.<your-dns-zone>"
+echo "        SAS Viya apps are served via ingress using the pattern:"
+echo "          <app>.${PREFIX}.${DNS_ZONE}"
+echo "        A wildcard record routes all of them to the LB IP without"
+echo "        needing a separate A record per app."
 echo ""
-echo "  4. Then run:"
+if [[ "$LB_SKIPPED" == "false" && ${#LB_VIPS[@]} -gt 1 ]]; then
+    echo "        Additional LB IPs (for CAS / consul / connect LBs, etc.):"
+    for _idx in "${!LB_VIPS[@]}"; do
+        [[ $_idx -eq 0 ]] && continue   # already shown above
+        echo "          A  <service-hostname>.${DNS_ZONE}  ->  ${LB_VIPS[$_idx]}"
+    done
+    echo "        Register these once the LoadBalancer services are created"
+    echo "        and their hostnames are known (set in DAC ansible-vars.yaml)."
+    echo ""
+fi
+echo "  2. Verify DNS is live before proceeding:"
+echo "       nslookup ${PREFIX}-vip.${DNS_ZONE}"
+echo "       nslookup test.${PREFIX}.${DNS_ZONE}   # should resolve to $LB_VIP"
+echo ""
+echo "  3. Then run:"
 echo "       export SYSTEM=openstack"
 echo "       ./oss-k8s.sh apply setup install"
+echo ""
+echo "  NOTE: If you plan to use V4_CFG_CAS_ENABLE_LOADBALANCER, consul LB,"
+echo "        or connect LB in viya4-deployment (DAC), you need one additional"
+echo "        floating IP per such feature. Re-run with e.g.:"
+echo "          LB_IP_COUNT=3 ./allocate-vip.sh"
+echo "        (skip if cluster_lb_addresses already contains enough IPs)"
 echo "============================================================"
 echo ""

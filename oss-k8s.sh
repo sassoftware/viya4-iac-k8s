@@ -271,7 +271,7 @@ terraform_up() {
 # Each IP is only allocated if not already set in terraform.tfvars.
 # The floating IPs are created unassociated (no server) — they exist solely to
 # reserve clean IPs that OpenStack tracks, which can then be registered in
-# names.sas.com under the unx.sas.com domain.
+# your DNS zone (the value of cluster_domain in terraform.tfvars).
 allocate_vip_floating_ip() {
     local NETWORK
     NETWORK=$(grep -E '^\s*openstack_network_name\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
@@ -332,13 +332,29 @@ allocate_vip_floating_ip() {
         echo "allocate_vip_floating_ip: [cluster_lb_addresses] allocated $LB_VIP — written to $TFVARS"
     fi
 
+    local _PREFIX _DNS_ZONE
+    _PREFIX=$(grep -E '^\s*prefix\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
+    _DNS_ZONE=$(grep -E '^\s*cluster_domain\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
+    [[ -z "$_PREFIX" ]]   && _PREFIX="<prefix>"
+    [[ -z "$_DNS_ZONE" ]] && _DNS_ZONE="<your-dns-zone>"
+
     echo ""
-    echo "  *** ACTION REQUIRED ***"
-    echo "  Register both VIPs in names.sas.com (unx.sas.com domain):"
-    echo "    [1] cluster_vip_ip      $VIP  ->  <prefix>-vip.unx.sas.com"
-    echo "    [2] cluster_lb_addresses $LB_VIP  ->  <prefix>-lb.unx.sas.com"
-    echo "  Then set cluster_vip_fqdn in $TFVARS to match."
-    echo "  *** ******************** ***"
+    echo "  *** ACTION REQUIRED — DNS Registration ***"
+    echo ""
+    echo "  a) Control-plane VIP (Kubernetes API endpoint):"
+    echo "       A    ${_PREFIX}-vip.${_DNS_ZONE}  ->  $VIP"
+    echo "       PTR  $VIP  ->  ${_PREFIX}-vip.${_DNS_ZONE}"
+    echo "       Then set in $TFVARS:"
+    echo "         cluster_vip_fqdn = \"${_PREFIX}-vip.${_DNS_ZONE}\""
+    echo ""
+    echo "  b) LoadBalancer wildcard (all SAS Viya app hostnames):"
+    echo "       A (or ALIAS/CNAME)  *.${_PREFIX}.${_DNS_ZONE}  ->  $LB_VIP"
+    echo "       SAS Viya apps use <app>.${_PREFIX}.${_DNS_ZONE} — the wildcard"
+    echo "       routes all of them to the ingress LB IP."
+    echo ""
+    echo "  NOTE: For extra LB IPs (V4_CFG_CAS_ENABLE_LOADBALANCER, consul LB,"
+    echo "        etc.), run allocate-vip.sh with LB_IP_COUNT=<n> instead."
+    echo "  *** *************************************** ***"
     echo ""
 }
 

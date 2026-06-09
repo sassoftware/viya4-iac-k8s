@@ -210,7 +210,7 @@ cd /path/to/viya4-iac-k8s
 ```
 
 The script will:
-- Allocate two floating IPs from your tenant network
+- Allocate two floating IPs from your tenant network (one VIP + one LB IP by default)
 - Automatically write `cluster_vip_ip` and `cluster_lb_addresses` into `terraform.tfvars`
 - Print the next-step instructions
 
@@ -220,26 +220,49 @@ Example output:
 [cluster_lb_addresses] = "range-global: 10.119.129.63-10.119.129.63"
 ```
 
-**After running `allocate-vip.sh`, you must:**
+> **Extra LB IPs for CAS, consul, or connect LoadBalancers:**
+> If your SAS Viya deployment will use `V4_CFG_CAS_ENABLE_LOADBALANCER: true` or other
+> features that create additional LoadBalancer-type services, you need one extra floating
+> IP per such feature. Allocate them upfront by setting `LB_IP_COUNT`:
+> ```bash
+> LB_IP_COUNT=3 ./allocate-vip.sh   # 1 ingress + 1 CAS + 1 consul, for example
+> ```
+> All allocated IPs are written into `cluster_lb_addresses` as separate range entries.
 
-1. Register both IPs in your DNS zone (the value of `cluster_domain` in `terraform.tfvars`):
-   ```
-   A    <prefix>-vip.<your-dns-zone>   →  <cluster_vip_ip>
-   PTR  <cluster_vip_ip>              →  <prefix>-vip.<your-dns-zone>
-   A    <prefix>-lb.<your-dns-zone>    →  <lb_vip>
-   PTR  <lb_vip>                      →  <prefix>-lb.<your-dns-zone>
-   ```
-   > `<your-dns-zone>` is the DNS domain for your OpenStack project/tenant
-   > (e.g. `myproject.openstack.example.com`). Contact your OpenStack
-   > or network administrator to register the records.
-2. Set `cluster_vip_fqdn` in `terraform.tfvars` to the registered FQDN:
-   ```hcl
-   cluster_vip_fqdn = "<prefix>-vip.<your-dns-zone>"
-   ```
+**After running `allocate-vip.sh`, you must register the IPs in DNS:**
+
+**a) Control-plane VIP** — resolves the Kubernetes API server hostname used by `cluster_vip_fqdn`:
+
+```
+A    <prefix>-vip.<your-dns-zone>   →  <cluster_vip_ip>
+PTR  <cluster_vip_ip>              →  <prefix>-vip.<your-dns-zone>
+```
+
+Then set in `terraform.tfvars`:
+```hcl
+cluster_vip_fqdn = "<prefix>-vip.<your-dns-zone>"
+```
+
+**b) LoadBalancer wildcard** — routes all SAS Viya app hostnames to the ingress LB:
+
+```
+A (or ALIAS/CNAME)  *.<prefix>.<your-dns-zone>  →  <lb_vip>
+```
+
+> SAS Viya apps are served via ingress-nginx using the hostname pattern
+> `<app>.<prefix>.<your-dns-zone>`. A wildcard DNS record routes all of them to the
+> LB IP automatically, so you do not need a separate A record for every app.
+> The `<prefix>.<your-dns-zone>` suffix is what you will set as `V4_CFG_INGRESS_FQDN`
+> in your viya4-deployment `ansible-vars.yaml` (Step 12).
+
+> `<your-dns-zone>` is the DNS domain for your OpenStack project/tenant
+> (e.g. `myproject.openstack.example.com`). Contact your OpenStack
+> or network administrator to register the records.
+
 3. Verify DNS is live before proceeding:
    ```bash
    nslookup <prefix>-vip.<your-dns-zone>
-   nslookup <prefix>-lb.<your-dns-zone>
+   nslookup test.<prefix>.<your-dns-zone>    # should resolve to <lb_vip>
    ```
 
 ---
@@ -287,6 +310,8 @@ cluster_vip_fqdn    = "<prefix>-vip.<your-dns-zone>"              # ← from Ste
 # Load Balancer — populated by allocate-vip.sh (Step 6)
 cluster_lb_type      = "kube_vip"
 cluster_lb_addresses = ["range-global: 10.119.129.63-10.119.129.63"]  # ← from Step 6
+# Add more entries if you allocated extra LB IPs (LB_IP_COUNT > 1):
+# cluster_lb_addresses = ["range-global: 10.119.129.63-10.119.129.63", "range-global: 10.119.129.64-10.119.129.64"]
 
 # Node pools
 # REQUIRED: control_plane and system keys must always be present.
@@ -542,10 +567,24 @@ JUMP_SVR_PRIVATE_KEY: "/config/jump_svr_private_key"  # fixed container path —
 
 # Kubeconfig — DAC uses this to talk to the cluster
 KUBECONFIG: "/config/kubeconfig"                # fixed container path — do not change
+
+# Ingress FQDN — the base domain for all SAS Viya app hostnames.
+# This must match the wildcard DNS record you created in Step 6:
+#   *.${prefix}.${cluster_domain}  →  <lb_vip>
+# Set this to:  <prefix>.<your-dns-zone>
+# Example:      mycluster.myproject.openstack.example.com
+V4_CFG_INGRESS_FQDN: "<prefix>.<your-dns-zone>"
 ```
 
 > ⚠️ `JUMP_SVR_PRIVATE_KEY` and `KUBECONFIG` are **container-internal paths** — these
 > are the mount targets used in the `docker run` command below. Do not change these values.
+
+> **CAS / consul / connect LoadBalancers:**
+> If you set `V4_CFG_CAS_ENABLE_LOADBALANCER: true` or enable consul/connect external
+> LoadBalancers in DAC, each creates an additional LoadBalancer-type service that
+> requires its own IP from `cluster_lb_addresses`. Ensure you allocated enough IPs
+> in Step 6 (`LB_IP_COUNT=<n>`). After deployment, register each service's assigned
+> IP in DNS as needed (the assigned IP appears in `kubectl get svc -n <namespace>`).
 
 ### Step 13 — Run DAC
 
