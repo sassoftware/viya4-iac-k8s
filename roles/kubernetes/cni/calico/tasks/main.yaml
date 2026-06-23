@@ -1,47 +1,110 @@
 # Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+# LTS
+#
+# Manifest-based Calico installation (simplified approach)
+# This installs only calico-kube-controllers and calico-node pods in kube-system namespace
+# Matches the approach documented in Medium blog and Calico's quickstart guide
+#
 
----
-#
-# TODO: Add user variables to the calico manifest to
-#       adjust items needed when working on bare metal
-#       vm type systems.
-#
-- name: Install Operator
+# Bootstrap fix: On CP nodes, kube-proxy may not have synced iptables rules for the
+# kubernetes ClusterIP (10.43.0.1) yet. Calico's install-cni container needs to reach
+# the API via ClusterIP to create a token. Without this, install-cni times out and
+# the node stays NotReady forever (chicken-and-egg).
+- name: Get kubernetes service ClusterIP
   ansible.builtin.shell: |
-    kubectl apply --server-side -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/operator-crds.yaml" && \
-    kubectl apply --server-side -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/tigera-operator.yaml"
+    kubectl get svc kubernetes -n default -o jsonpath='{.spec.clusterIP}'
+  register: _k8s_cluster_ip
+  changed_when: false
+  tags:
+    - install
+    - update
+
+- name: Ensure kubernetes ClusterIP is reachable (pre-CNI bootstrap)
+  ansible.builtin.shell: |
+    set -e
+    K8S_SVC_IP="{{ _k8s_cluster_ip.stdout }}"
+    # Wait up to 30s for kube-proxy to program the NAT rule
+    for i in $(seq 1 6); do
+      if iptables -t nat -S 2>/dev/null | grep -q "${K8S_SVC_IP}"; then
+        echo "kube-proxy iptables rule for ${K8S_SVC_IP} already present"
+        exit 0
+      fi
+      sleep 5
+    done
+    # Fallback: add a temporary DNAT rule so calico install-cni can reach the API
+    echo "kube-proxy has not programmed ${K8S_SVC_IP} NAT rules yet - adding temporary DNAT"
+    iptables -t nat -I OUTPUT -d "${K8S_SVC_IP}/32" -p tcp --dport 443 -j DNAT --to-destination 127.0.0.1:6443
+  register: _clusterip_bootstrap
+  changed_when: "'adding temporary DNAT' in _clusterip_bootstrap.stdout"
+  tags:
+    - install
+    - update
+
+- name: Install Calico CNI
+  ansible.builtin.shell: |
+    kubectl apply -f "https://raw.githubusercontent.com/projectcalico/calico/v{{ kubernetes_cni_version }}/manifests/calico.yaml"
   tags:
     - install
     - update
   retries: 10
   delay: 10
 
-# Wait for Tigera CRDs to be available
-# - name: Wait for Tigera CRDs to be registered
-#   ansible.builtin.shell: |
-#     until kubectl get crds | grep installations.operator.tigera.io; do sleep 5; done
-#   retries: 12
-#   delay: 5
-#   register: crd_check
-#   until: crd_check.rc == 0
-#  tags:
-#    - install
-#    - update
-
-- name: Create custom-resources for our cluster
-  ansible.builtin.template:
-    src: "templates/{{ item }}.tmpl"
-    dest: "/tmp/{{ item }}.yaml"
-  with_items:
-    - custom-resources
+- name: Wait for default-ipv4-ippool to be created by Calico
+  ansible.builtin.shell: |
+    kubectl get ippool default-ipv4-ippool
+  register: ippool_check
+  until: ippool_check.rc == 0
+  retries: 30
+  delay: 10
   tags:
     - install
     - update
 
-- name: Apply custom-resources
+- name: Enforce Azure-compatible Calico encapsulation (disable IPIP, enable VXLAN)
   ansible.builtin.shell: |
-    kubectl apply -f /tmp/custom-resources.yaml
+    kubectl patch ippool default-ipv4-ippool --type merge \
+      -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
+  tags:
+    - install
+    - update
+
+- name: Restart calico-node daemonset after encapsulation change
+  ansible.builtin.shell: |
+    kubectl -n kube-system rollout restart daemonset/calico-node
+  tags:
+    - install
+    - update
+
+- name: Wait for calico-node rollout after encapsulation change
+  ansible.builtin.shell: |
+    kubectl -n kube-system rollout status daemonset/calico-node --timeout=300s
+  tags:
+    - install
+    - update
+  retries: 5
+  delay: 10
+
+- name: Wait for Calico pods to be ready
+  ansible.builtin.shell: |
+    kubectl wait --for=condition=ready pod -l k8s-app=calico-kube-controllers -n kube-system --timeout=300s && \
+    kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=300s
+  tags:
+    - install
+    - update
+  retries: 5
+  delay: 10
+  register: calico_ready
+  until: calico_ready.rc == 0
+
+# Clean up the temporary DNAT rule if we added one during bootstrap.
+# By now kube-proxy should have proper rules in place.
+- name: Remove temporary kubernetes ClusterIP DNAT rule (post-CNI cleanup)
+  ansible.builtin.shell: |
+    K8S_SVC_IP="{{ _k8s_cluster_ip.stdout }}"
+    iptables -t nat -D OUTPUT -d "${K8S_SVC_IP}/32" -p tcp --dport 443 -j DNAT --to-destination 127.0.0.1:6443 2>/dev/null || true
+  changed_when: false
+  when: _clusterip_bootstrap.changed | default(false)
   tags:
     - install
     - update

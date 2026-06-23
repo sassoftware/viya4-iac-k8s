@@ -1,0 +1,8 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+---
+# Azure VMs are provisioned via the azurerm provider with cloud-init.
+# No additional hardware-level init tasks are required.
+- name: Azure init - no-op
+  ansible.builtin.debug:
+    msg: "Azure topology: system init complete (no baremetal/hypervisor steps required)"

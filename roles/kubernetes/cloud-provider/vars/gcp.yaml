@@ -1,0 +1,27 @@
+---
+# GCP cloud provider variables (placeholder for future implementation)
+
+# GCP project settings
+gcp_project_id: "{{ gcp_project_id | default('') }}"
+gcp_zone: "{{ gcp_zone | default('us-central1-a') }}"
+gcp_region: "{{ gcp_region | default('us-central1') }}"
+
+# GCP service account
+gcp_service_account: "{{ gcp_service_account | default('') }}"
+gcp_service_account_json: "{{ gcp_service_account_json | default('') }}"
+
+# GCP CCM versions
+gcp_ccm_version: "{{ kubernetes_version }}"
+
+# GCP Load Balancer configuration
+gcp_lb_type: "tcp"
+gcp_load_balancer_session_affinity: "NONE"
+gcp_load_balancer_health_check_port: "10250"
+
+# GCP network settings
+gcp_network_name: "{{ prefix }}-network"
+gcp_subnet_name: "{{ prefix }}-subnet"
+gcp_firewall_rule_name: "{{ prefix }}-allow-k8s"
+
+# GCP IAM settings
+gcp_service_account_role: "compute.instances.get,compute.instances.list"

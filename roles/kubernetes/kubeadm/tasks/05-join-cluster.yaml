@@ -1,0 +1,105 @@
+---
+# Join worker nodes and secondary control plane nodes to cluster
+
+- name: Wait for control plane to be ready
+  wait_for:
+    host: "{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}"
+    port: 6443
+    delay: 5
+    timeout: 300
+  tags:
+    - cluster-join
+    - wait-cp
+
+- name: Check if node is already joined to cluster
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: node_joined
+  tags:
+    - cluster-join
+    - check
+
+- name: Render join configuration on node
+  template:
+    src: kubeadm-join-config.yaml.j2
+    dest: /tmp/kubeadm-join-config.yaml
+    owner: root
+    group: root
+    mode: '0600'
+  vars:
+    join_token: "{{ hostvars[groups['k8s_control_plane'][0]].kubeadm_join_token }}"
+    token_ca_cert_hash: "{{ hostvars[groups['k8s_control_plane'][0]].kubeadm_ca_cert_hash }}"
+  tags:
+    - cluster-join
+    - render-config
+
+- name: Join node to cluster
+  command: kubeadm join --config=/tmp/kubeadm-join-config.yaml
+  when: not node_joined.stat.exists
+  register: kubeadm_join_result
+  changed_when: true
+  tags:
+    - cluster-join
+    - join
+
+- name: Create .kube directory for kubelet
+  file:
+    path: /root/.kube
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  when: node_joined.stat.exists or kubeadm_join_result is changed
+  tags:
+    - cluster-join
+    - kube-config
+
+- name: Copy kubelet kubeconfig to root user
+  copy:
+    src: /etc/kubernetes/kubelet.conf
+    dest: /root/.kube/config
+    owner: root
+    group: root
+    mode: '0600'
+    remote_src: true
+  when: node_joined.stat.exists or kubeadm_join_result is changed
+  tags:
+    - cluster-join
+    - kube-config
+
+- name: Wait for kubelet to start
+  shell: "systemctl is-active kubelet"
+  register: kubelet_status
+  changed_when: false
+  retries: 30
+  delay: 5
+  until: kubelet_status.stdout == "active"
+  tags:
+    - cluster-join
+    - wait-kubelet
+
+- name: Verify node registered in cluster
+  shell: "kubectl get node {{ ansible_hostname }} --no-headers 2>/dev/null | wc -l"
+  delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+  become: true
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin-local.conf
+  register: node_registered
+  changed_when: false
+  retries: 18
+  delay: 10
+  until: node_registered.stdout | int >= 1
+  tags:
+    - cluster-join
+    - node-status
+
+- name: Display cluster join summary
+  debug:
+    msg:
+      - "Node joined to cluster successfully:"
+      - "  Node name: {{ ansible_hostname }}"
+      - "  Node registered: {{ node_registered.stdout | int >= 1 }}"
+      - "  Node role: {% if inventory_hostname in groups['k8s_node'] %}Worker{% else %}Control Plane{% endif %}"
+  tags:
+    - cluster-join
+    - debug

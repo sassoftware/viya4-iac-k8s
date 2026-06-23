@@ -1,0 +1,95 @@
+# versions.yaml — Centralized version governance manifest
+# =========================================================
+# This is the single source of truth for every pinned tool and component
+# version in the platform.  CI should validate that:
+#   - Dockerfile ARG values match tooling.*
+#   - Each topology's versions.tf provider constraints match providers.*
+#   - requirements.txt ansible-core pin matches tooling.ansible_core
+#
+# To upgrade a component:
+#   1. Update the version here.
+#   2. Run: scripts/validate-versions.sh
+#   3. Bump Dockerfile ARGs, requirements.txt, and topology versions.tf to match.
+#   4. Open a single "version bump" PR — never change versions.yaml
+#      and the consuming files in separate PRs.
+
+# ---------------------------------------------------------------------------
+# Infrastructure tooling  (baked into the Docker image via Dockerfile ARGs)
+# ---------------------------------------------------------------------------
+tooling:
+  terraform:    "1.10.5"
+  kubectl:      "1.32.7"
+  helm:         "3.17.1"
+  ansible_core: "2.15"          # must match requirements.txt across all topologies
+
+# ---------------------------------------------------------------------------
+# Terraform provider versions
+# Constraints here must be reflected in each topology's versions.tf.
+# The root versions.tf only pins the local provider.
+# ---------------------------------------------------------------------------
+providers:
+  local:     "~> 2.4"           # root dispatcher + bare_metal
+  azurerm:   "~> 4.48"          # topologies/azure/versions.tf
+  openstack: "~> 3.0"           # topologies/openstack/versions.tf
+  vsphere:   "~> 2.6"           # topologies/vsphere/versions.tf
+
+# ---------------------------------------------------------------------------
+# Kubernetes version catalogue
+#
+# status:
+#   preview       — under evaluation, not production-supported
+#   recommended   — current default for new deployments
+#   maintenance   — supported but no new features; plan to migrate
+#   eol           — unsupported; block in CI
+#
+# kubeadm_api_version:
+#   v1beta3 — kubeadm API for Kubernetes <= 1.30
+#   v1beta4 — kubeadm API for Kubernetes >= 1.31  (breaking kubeadm-config schema change)
+#
+# components: tested & validated pairings for this Kubernetes minor version.
+#   These are minimum "known-good" versions; later patch releases are typically fine.
+# ---------------------------------------------------------------------------
+kubernetes:
+  - version: "1.29"
+    status:              "maintenance"
+    eol:                 "2025-12-28"
+    kubeadm_api_version: "v1beta3"
+    components:
+      containerd: "1.7"
+      calico:     "3.27"
+      cilium:     "1.14"
+      kube_vip:   "0.7"
+      metallb:    "0.14"
+
+  - version: "1.31"
+    status:              "recommended"
+    eol:                 "2026-10-28"
+    kubeadm_api_version: "v1beta4"        # kubeadm-config MUST use v1beta4 for >=1.31
+    components:
+      containerd: "1.7"
+      calico:     "3.28"
+      cilium:     "1.15"
+      kube_vip:   "0.8"
+      metallb:    "0.14"
+
+  - version: "1.33"
+    status:              "preview"
+    eol:                 "2027-06-28"
+    kubeadm_api_version: "v1beta4"
+    components:
+      containerd: "2.0"                   # containerd 2.x config schema change
+      calico:     "3.29"
+      cilium:     "1.16"
+      kube_vip:   "0.8"
+      metallb:    "0.15"
+
+# ---------------------------------------------------------------------------
+# SAS Viya compatibility matrix
+# Declares which Kubernetes minor versions are tested with each Viya LTS.
+# Deployments that combine an unsupported pairing SHOULD warn at ansible_prep.
+# ---------------------------------------------------------------------------
+viya_compatibility:
+  "2024.12":
+    kubernetes: ["1.29", "1.30", "1.31"]
+  "2025.06":
+    kubernetes: ["1.31", "1.32", "1.33"]

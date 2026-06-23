@@ -1,0 +1,25 @@
+---
+# Fixed variables for kubeadm role (derived from defaults)
+
+# Container runtime socket paths
+cri_socket_paths:
+  docker: "unix:///var/run/docker.sock"
+  containerd: "unix:///run/containerd/containerd.sock"
+  crio: "unix:///var/run/crio/crio.sock"
+
+cri_socket: "{{ cri_socket_paths[kubernetes_cri] }}"
+
+# DNS settings
+kubeadm_dns_ip: "10.43.0.10"
+
+# Certificate paths
+kubeadm_cert_dir: "/etc/kubernetes/pki"
+kubeadm_cert_validity_period: 8760h
+
+# Configuration directories
+kubeadm_etc_dir: "/etc/kubernetes"
+kubeadm_manifest_dir: "/etc/kubernetes/manifests"
+
+# Kubelet config
+kubelet_config_dir: "/etc/kubernetes"
+kubelet_data_dir: "/var/lib/kubelet"

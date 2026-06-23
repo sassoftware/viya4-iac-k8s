@@ -1,0 +1,148 @@
+#!/bin/bash
+# NFS Server Setup Script
+# Converted from viya4-iac-azure cloud-config for Ansible use
+# Variables: aks_cidr_block, misc_cidr_block
+# Note: Intentionally NOT using set -e because some systemctl commands
+# may return non-zero even when successful (e.g., "unit has no installation config")
+
+echo "=== NFS Server Setup Script ==="
+
+#
+# Create /export directory with the correct owner/permissions
+#
+mkdir -p /export
+chown nobody:nogroup /export -R
+chmod -R 0777 /export
+
+#
+# Update systemctl services
+# Note: Some systems may not support systemctl enable for certain services
+# Continue even if enable fails, as long as the service is running
+#
+systemctl enable nfs-kernel-server 2>/dev/null || true
+systemctl start nfs-kernel-server || systemctl restart nfs-kernel-server
+systemctl enable rpc-statd 2>/dev/null || true
+systemctl start rpc-statd || systemctl restart rpc-statd
+
+#
+# Create LVM array (RAID5 for 3+ disks, linear for 1-2 disks)
+#
+if ! vgdisplay data-vg01 &>/dev/null; then
+    echo "Creating LVM array..."
+    
+    # Count available Azure disks
+    disk_count=$(find /dev/disk/azure/scsi1/ -type l 2>/dev/null | wc -l)
+    disks=$(find /dev/disk/azure/scsi1/ -type l | xargs)
+    
+    echo "Found $disk_count disk(s) for LVM"
+    
+    # Create physical volumes
+    pvcreate $disks
+    
+    # Create volume group
+    vgcreate data-vg01 $disks
+    
+    # Create logical volume based on disk count
+    if [ $disk_count -ge 3 ]; then
+        # RAID5: use disk_count - 1 as stripe count
+        stripes=$((disk_count - 1))
+        echo "Creating RAID5 LV with $stripes stripes (from $disk_count disks)..."
+        lvcreate --type raid5 --extents 100%FREE --stripes $stripes --name data-lv01 data-vg01
+    elif [ $disk_count -eq 2 ]; then
+        # RAID1: mirror two disks
+        echo "Creating RAID1 LV (mirrored, from $disk_count disks)..."
+        lvcreate --type raid1 --extents 100%FREE --mirrors 1 --name data-lv01 data-vg01
+    else
+        # Linear: single disk, no RAID
+        echo "Creating linear LV (single disk, no RAID)..."
+        lvcreate --type linear --extents 100%FREE --name data-lv01 data-vg01
+    fi
+    
+    # Format the logical volume
+    mkfs -t ext4 /dev/data-vg01/data-lv01
+    
+    echo "LVM array created successfully"
+else
+    echo "LVM array already exists, skipping..."
+fi
+
+#
+# Update /etc/fstab (if not already done)
+#
+if ! grep -q "data-lv01" /etc/fstab; then
+    echo "Adding /export to /etc/fstab..."
+    
+    # Wait for the logical volume to be available
+    sleep 2
+    
+    # Get the device path
+    device=$(lsblk -r 2>/dev/null | grep lvm | grep data-lv01 | awk '{print $1}' | head -1)
+    
+    if [ -z "$device" ]; then
+        # Fallback to standard device path
+        device="/dev/data-vg01/data-lv01"
+    fi
+    
+    # Get the UUID
+    deviceUUID=$(blkid -s UUID -o value "$device" 2>/dev/null || echo "")
+    
+    if [ -n "$deviceUUID" ]; then
+        echo "UUID=$deviceUUID /export auto defaults,acl,nofail 0 2" >> /etc/fstab
+        echo "Added to fstab with UUID=$deviceUUID"
+    else
+        echo "Using device path fallback: $device"
+        echo "$device /export ext4 defaults,acl,nofail 0 2" >> /etc/fstab
+    fi
+else
+    echo "/export already in /etc/fstab, skipping..."
+fi
+
+mount -a 2>/dev/null || echo "Mount attempt completed (some mounts may already be active)"
+
+#
+# Create /export/pvs and bind-mount to /pvs so Viya PVCs can use /pvs path
+#
+mkdir -p /export/pvs
+chown nobody:nogroup /export/pvs
+chmod 0777 /export/pvs
+
+mkdir -p /pvs
+
+if ! grep -q '/export/pvs.*/pvs' /etc/fstab; then
+    echo "/export/pvs /pvs none bind 0 0" >> /etc/fstab
+fi
+
+if ! mountpoint -q /pvs; then
+    mount --bind /export/pvs /pvs
+fi
+
+#
+# Update /etc/exports - NOTE: The CIDR provided works for the whole VPC
+#
+echo "Configuring /etc/exports..."
+
+# Backup existing exports
+cp /etc/exports /etc/exports.backup 2>/dev/null || true
+
+# Clear and rebuild exports
+> /etc/exports
+
+if [ "{{ aks_cidr_block }}" != "{{ misc_cidr_block }}" ]; then
+    echo "/export   {{ aks_cidr_block }}(rw,no_root_squash,async,insecure,no_subtree_check)" >> /etc/exports
+    echo "/export   {{ misc_cidr_block }}(rw,no_root_squash,async,insecure,no_subtree_check)" >> /etc/exports
+    echo "/pvs      {{ aks_cidr_block }}(rw,no_root_squash,async,insecure,no_subtree_check)" >> /etc/exports
+    echo "/pvs      {{ misc_cidr_block }}(rw,no_root_squash,async,insecure,no_subtree_check)" >> /etc/exports
+else
+    echo "/export   {{ aks_cidr_block }}(rw,no_root_squash,async,insecure,no_subtree_check)" >> /etc/exports
+    echo "/pvs      {{ aks_cidr_block }}(rw,no_root_squash,async,insecure,no_subtree_check)" >> /etc/exports
+fi
+
+#
+# Restart nfs-server service
+#
+exportfs -a
+systemctl restart nfs-kernel-server
+
+echo "=== NFS Server Setup Complete ==="
+echo "Exports configured:"
+cat /etc/exports

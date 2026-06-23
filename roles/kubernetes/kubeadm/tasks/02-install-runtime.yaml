@@ -1,0 +1,203 @@
+---
+# Install container runtime (Docker, containerd, or CRI-O)
+# Selection based on kubernetes_cri variable
+
+- name: Install Docker
+  block:
+    - name: Create /etc/apt/keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      when: ansible_os_family == "Debian"
+
+    - name: Download Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /tmp/docker.asc
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker GPG key to keyring
+      ansible.builtin.shell: |
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg < /tmp/docker.asc
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker repository (Debian)
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker (Debian)
+      ansible.builtin.package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+      when: ansible_os_family == "Debian"
+
+    # RedHat support disabled - Ubuntu-only deployment
+    # - name: Install Docker (RedHat)
+    #   ansible.builtin.package:
+    #     name:
+    #       - docker
+    #     state: present
+    #   when: ansible_os_family == "RedHat"
+
+    - name: Start and enable Docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    - name: Create /etc/docker directory
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+
+    - name: Configure Docker daemon
+      ansible.builtin.copy:
+        content: |
+          {
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "3"
+            },
+            "storage-driver": "overlay2"
+          }
+        dest: /etc/docker/daemon.json
+      notify: Restart docker
+
+  when: kubernetes_cri == "docker"
+  tags:
+    - runtime
+    - docker
+
+- name: Install containerd
+  block:
+    - name: Create /etc/apt/keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      when: ansible_os_family == "Debian"
+
+    - name: Download Docker GPG key for containerd
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /tmp/docker-containerd.asc
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker GPG key to keyring for containerd
+      ansible.builtin.shell: |
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg < /tmp/docker-containerd.asc
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+      when: ansible_os_family == "Debian"
+
+    - name: Add containerd repository (Debian)
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install containerd (Debian)
+      ansible.builtin.package:
+        name: containerd.io
+        state: present
+      when: ansible_os_family == "Debian"
+
+    # RedHat support disabled - Ubuntu-only deployment
+    # - name: Install containerd (RedHat)
+    #   ansible.builtin.package:
+    #     name: containerd
+    #     state: present
+    #   when: ansible_os_family == "RedHat"
+
+    - name: Create containerd config directory
+      ansible.builtin.file:
+        path: /etc/containerd
+        state: directory
+        mode: '0755'
+
+    - name: Generate containerd default config
+      shell: containerd config default | tee /etc/containerd/config.toml > /dev/null
+      changed_when: true
+
+    - name: Enable SystemdCgroup in containerd config
+      ansible.builtin.replace:
+        path: /etc/containerd/config.toml
+        regexp: '^(\s*)SystemdCgroup\s*=\s*false'
+        replace: '\1SystemdCgroup = true'
+
+    - name: Restart and enable containerd service
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
+        enabled: true
+        daemon_reload: true
+
+  when: kubernetes_cri == "containerd"
+  tags:
+    - runtime
+    - containerd
+
+- name: Install CRI-O
+  block:
+    - name: Add CRI-O repository (Debian)
+      block:
+        - name: Add CRI-O GPG key
+          ansible.builtin.apt_key:
+            url: https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/{{ crio_os }}/Release.key
+            state: present
+
+        - name: Add CRI-O repository
+          ansible.builtin.apt_repository:
+            repo: "deb [arch=amd64] https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/{{ crio_os }}/ /"
+            state: present
+
+      when: ansible_os_family == "Debian"
+
+    # RedHat support disabled - Ubuntu-only deployment
+    # - name: Add CRI-O repository (RedHat)
+    #   community.general.yum_repository:
+    #     name: CRI-O
+    #     baseurl: "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/{{ crio_os }}/{{ crio_version }}"
+    #     enabled: true
+    #     gpgcheck: true
+    #     gpgkey: "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/{{ crio_os }}/Release.key"
+    #   when: ansible_os_family == "RedHat"
+
+    - name: Install CRI-O
+      ansible.builtin.package:
+        name:
+          - cri-o
+          - cri-o-runc
+        state: present
+
+    - name: Start and enable CRI-O service
+      ansible.builtin.systemd:
+        name: crio
+        state: started
+        enabled: true
+        daemon_reload: true
+
+  when: kubernetes_cri == "crio"
+  tags:
+    - runtime
+    - crio
+
+- name: Display installed container runtime
+  debug:
+    msg: "Container runtime {{ kubernetes_cri }} has been installed and started"
+  tags:
+    - runtime
+    - debug

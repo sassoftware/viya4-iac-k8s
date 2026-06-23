@@ -1,0 +1,24 @@
+# GCP cloud provider configuration template
+# Placeholder for future GCP implementation
+#
+# To implement, configure:
+# - GCP project ID and service account
+# - GCP zone and region
+# - Compute engine credentials
+# - IAM roles and permissions
+
+# Example structure (not yet implemented):
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: gcp-cloud-provider
+#   namespace: kube-system
+# type: Opaque
+# stringData:
+#   cloud-config: |
+#     [Global]
+#     project-id={{ gcp_project_id }}
+#     network-name={{ gcp_network_name }}
+#     node-tags={{ prefix }}-k8s
+#     node-instance-prefix={{ prefix }}
+#     network-project-id={{ gcp_project_id }}

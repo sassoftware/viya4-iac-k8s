@@ -1,0 +1,104 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# NFS Server Role - Mirrors viya4-iac-azure cloud-config behavior
+# Required variables: aks_cidr_block, misc_cidr_block
+# Optional variables: expected_disk_count (default: 4)
+
+- name: Wait for Azure managed disks to be attached
+  ansible.builtin.shell: |
+    expected_disks={{ expected_disk_count | default(4) }}
+    max_attempts=120
+    attempt=0
+    while [ $attempt -lt $max_attempts ]; do
+      disk_count=$(find /dev/disk/azure/scsi1/ -type l 2>/dev/null | wc -l)
+      if [ $disk_count -ge $expected_disks ]; then
+        echo "Found $disk_count Azure disks (expected: $expected_disks)"
+        exit 0
+      fi
+      attempt=$((attempt + 1))
+      sleep 5
+    done
+    echo "WARNING: Only found $disk_count disks after 10 minutes (expected: $expected_disks)"
+  register: wait_disks
+  changed_when: false
+  tags:
+    - install
+    - storage
+
+- name: Display attached disk info
+  ansible.builtin.debug:
+    msg: "{{ wait_disks.stdout }}"
+  tags:
+    - install
+    - storage
+
+- name: Install nfs server software and dependencies
+  ansible.builtin.package:
+    name:
+      - nfs-kernel-server
+      - rpcbind
+      - lvm2
+    state: present
+  tags:
+    - install
+    - update
+
+- name: Copy NFS setup script
+  ansible.builtin.template:
+    src: nfs-setup.sh.j2
+    dest: /tmp/nfs-setup.sh
+    mode: '0755'
+  tags:
+    - install
+    - update
+
+- name: Run NFS setup script
+  ansible.builtin.shell: /tmp/nfs-setup.sh
+  register: nfs_setup_result
+  changed_when: "'Creating RAID5' in nfs_setup_result.stdout or 'Adding /export' in nfs_setup_result.stdout"
+  tags:
+    - install
+    - update
+
+- name: Display NFS setup output
+  ansible.builtin.debug:
+    msg: "{{ nfs_setup_result.stdout_lines }}"
+  tags:
+    - install
+    - update
+
+- name: Clean up setup script
+  ansible.builtin.file:
+    path: /tmp/nfs-setup.sh
+    state: absent
+  tags:
+    - install
+    - update
+
+- name: Setting up /srv/nfs/kubernetes/sc/default nfs mount point
+  tags:
+    - install
+    - update
+  block:
+    - name: Create nfs mount point
+      ansible.builtin.file:
+        path: /srv/nfs/kubernetes/sc/default
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: "0777"
+
+    - name: Ensure exported mount point in /etc/exports
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        regexp: '^/srv/nfs/kubernetes/sc/default\s'
+        line: "/srv/nfs/kubernetes/sc/default    *(rw,no_root_squash,async,insecure,no_subtree_check,fsid=100)"
+
+- name: Export file system
+  ansible.builtin.command: exportfs -a
+  changed_when: false
+  tags:
+    - install
+    - update

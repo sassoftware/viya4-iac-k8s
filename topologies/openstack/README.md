@@ -1,0 +1,711 @@
+# OpenStack HPOS Environment — Cluster Creation Guide
+
+This guide walks through creating a SAS Viya 4 Kubernetes cluster on an
+OpenStack HPOS (HPC/Private OpenStack) environment using `viya4-iac-k8s`.
+
+## Table of Contents
+
+- [Directory Structure](#directory-structure)
+- [Prerequisites](#prerequisites)
+  - [Step 1 — Generate an SSH Keypair](#step-1--generate-an-ssh-keypair)
+  - [Step 2 — Upload the Public Key to OpenStack](#step-2--upload-the-public-key-to-openstack)
+  - [Step 3 — Create the OpenStack Credentials File](#step-3--create-the-openstack-credentials-file)
+  - [Step 4 — Source the Credentials File](#step-4--source-the-credentials-file)
+  - [Step 5 — Install the OpenStack CLI](#step-5--install-the-openstack-cli)
+  - [Step 6 — Allocate Floating IPs for the Cluster VIP and Load Balancer](#step-6--allocate-floating-ips-for-the-cluster-vip-and-load-balancer)
+- [Cluster Configuration](#cluster-configuration)
+  - [Step 7 — Create terraform.tfvars](#step-7--create-terraformtfvars)
+- [Execution](#execution)
+  - [Step 8 — Build the Docker Image (optional)](#step-8--build-the-docker-image-optional)
+  - [Step 9 — Provision and Install](#step-9--provision-and-install)
+  - [Step 10 — Verify the Cluster](#step-10--verify-the-cluster)
+- [Install SAS Viya (DAC)](#install-sas-viya-dac)
+  - [Step 11 — Clone DAC and Build the Image](#step-11--clone-dac-and-build-the-image)
+  - [Step 12 — Prepare the DAC ansible-vars.yaml](#step-12--prepare-the-dac-ansible-varsyaml)
+  - [Step 13 — Run DAC](#step-13--run-dac)
+- [Tear Down](#tear-down)
+- [Variables Reference](#variables-reference)
+
+---
+
+## Directory Structure
+
+```
+topologies/openstack/
+├── main.tf                         # Nova VM + floating IP + file provisioning
+├── variables.tf                    # All input variables
+├── locals.tf                       # Derived locals (cluster_name, node maps)
+├── outputs.tf                      # Cluster outputs (IPs, kubeconfig path)
+├── versions.tf                     # Provider pins: openstack ~>3.0, local ~>2.4
+├── provider.tf.example             # Copy → provider.tf for standalone use
+├── ansible.cfg                     # roles_path = ./roles:../../roles
+├── requirements.txt                # Python dependencies
+├── requirements.yml                # Ansible Galaxy collections
+├── sample-input-openstack.tfvars   # Annotated example terraform.tfvars
+│
+├── modules/
+│   └── openstack-vm/               # Nova instance + optional floating IP
+│       ├── main.tf                 # openstack_compute_instance_v2 resource
+│       ├── variables.tf
+│       └── outputs.tf
+│
+├── playbooks/
+│   ├── kubernetes-install.yaml     # Full K8s install: VIP pre-flight + kubeadm
+│   ├── kubernetes-uninstall.yaml   # kubeadm reset on all nodes
+│   └── systems-install.yaml       # OS baseline: packages, sysctl, SSH keys
+│
+├── roles/
+│   └── systems/                    # OS-level Ansible roles (OpenStack-specific)
+│       ├── common/                 # Package install, sysctl, swap off
+│       ├── containerd/             # Container runtime install + config
+│       ├── helm/                   # Helm install
+│       └── ssh_keys/               # Distribute authorized_keys to all nodes
+│
+└── templates/
+    ├── ansible-vars.yaml.tmpl      # Rendered → ansible-vars.yaml by Terraform
+    └── inventory.tmpl              # Rendered → inventory by Terraform
+```
+
+The Kubernetes roles (kubeadm, kube-vip, CNI, node join, storage) live in the
+shared `roles/kubernetes/` directory at the **repo root** and are resolved via
+`roles_path = ./roles:../../roles` in `ansible.cfg`.
+
+---
+
+## Prerequisites
+
+### Step 1 — Generate an SSH Keypair
+
+This keypair is injected by OpenStack into every VM at creation time and used by
+Ansible to SSH into all cluster nodes during `setup install`.
+
+Choose a keypair name (e.g. `my-keypair`) — you will use this same name in
+Step 2 (OpenStack upload) and in `openstack_ssh_keypair` in `terraform.tfvars`.
+
+```bash
+# Create the directory
+mkdir -p ~/.ssh/oss
+
+# Generate the keypair — replace 'my-keypair' with your chosen name
+ssh-keygen -t ed25519 -f ~/.ssh/oss/my-keypair -N "" -C "viya4-iac-k8s cluster"
+
+# Set correct permissions
+chmod 700 ~/.ssh/oss
+chmod 600 ~/.ssh/oss/my-keypair
+chmod 644 ~/.ssh/oss/my-keypair.pub
+
+# Verify
+ls -la ~/.ssh/oss/
+# my-keypair      (private key)  ← used by Ansible via ansible_ssh_private_key_file
+# my-keypair.pub  (public key)   ← uploaded to OpenStack in Step 2
+```
+
+---
+
+### Step 2 — Upload the Public Key to OpenStack
+
+Upload the public key you generated in Step 1 so it gets injected into every VM
+at creation time.
+
+1. Log in to your OpenStack dashboard (e.g. `https://dashboard.<your-openstack-host>`)
+2. Navigate to **Project → Compute → Key Pairs**
+3. Click **Import Public Key**
+4. Fill in the form:
+   - **Key Pair Name:** `my-keypair` ← use the same name you chose in Step 1
+   - **Key Type:** `SSH Key`
+   - **Public Key:** paste the output of `cat ~/.ssh/oss/my-keypair.pub`
+5. Click **Import Key Pair**
+
+> The keypair name you enter here must exactly match `openstack_ssh_keypair` in
+> `terraform.tfvars` (Step 7) and the private key filename in `~/.ssh/oss/`.
+
+---
+
+### Step 3 — Create the OpenStack Credentials File
+
+Create `.openstack_creds.env` **outside** the repo with your tenant credentials.
+
+> ⚠️ **Do NOT quote values.** No trailing spaces.
+>
+> ⚠️ **Do NOT add `export` to any line in this file.**
+> - For your shell (Step 4), the `export $(...)` wrapper handles exporting.
+> - For Docker `--env-file`, the `export` keyword causes a fatal error:
+>   `docker: poorly formatted environment: variable 'export OS_AUTH_URL' contains whitespaces.`
+
+```bash
+cat > ~/.openstack_creds.env << 'EOF'
+# OpenStack Keystone endpoint
+# Full v3 endpoint URL including port 5000 and /v3/ path
+OS_AUTH_URL=https://<your-openstack-auth-url>:5000/v3/
+
+# OpenStack credentials
+OS_USERNAME=<your_openstack_username>
+OS_PASSWORD=<your_openstack_password>
+
+# OpenStack project / tenant
+OS_PROJECT_NAME=<your_project_name>
+
+# Identity domain for your USER account.
+# Use 'Default' for standard OpenStack, 'sas-ldap' for HPOS/SAS LDAP environments.
+OS_USER_DOMAIN_NAME=sas-ldap
+
+# Identity domain for your PROJECT (tenant).
+# Required for OpenStack Identity v3. Usually the same value as OS_USER_DOMAIN_NAME.
+# Omitting this causes: "Expecting to find domain in project" (HTTP 400).
+OS_PROJECT_DOMAIN_NAME=sas-ldap
+
+# OpenStack region (leave empty if single-region)
+OS_REGION_NAME=
+
+# OS-level SSH credentials Ansible uses to connect to provisioned VMs.
+# These are NOT your OpenStack API credentials.
+# TF_VAR_ansible_user     — VM OS username created by cloud-init.
+#                           Use 'rocky' for Rocky Linux images (e.g. rocky96),
+#                           'ubuntu' for Ubuntu images.
+# TF_VAR_ansible_password — VM OS sudo password set by cloud-init on the VM.
+TF_VAR_ansible_user=rocky
+TF_VAR_ansible_password=admin
+EOF
+
+# Protect the file
+chmod 600 ~/.openstack_creds.env
+```
+
+---
+
+### Step 4 — Source the Credentials File
+
+```bash
+# Works in both bash and ksh
+export $(grep -v '^#' ~/.openstack_creds.env | grep -v '^$' | xargs)
+export SYSTEM=openstack
+```
+
+> **Shell note:** `source ~/.openstack_creds.env` works in bash but may not export
+> variables correctly in ksh. The `export $(...)` form above works reliably in
+> both shells.
+>
+> `oss-k8s.sh` will also auto-source `~/.openstack_creds.env` at runtime if
+> `$OS_AUTH_URL` is not already set, but sourcing it manually first is recommended
+> so that the OpenStack CLI commands in the next steps work correctly.
+
+---
+
+### Step 5 — Install the OpenStack CLI
+
+The `allocate_vip_floating_ip` and `patch_vip_allowed_pairs` functions in
+`oss-k8s.sh` require the `openstack` CLI client.
+
+```bash
+pip install python-openstackclient
+```
+
+> **PATH note:** When installing with `pip` (without `sudo`), the `openstack`
+> binary is placed in `~/.local/bin/` which may not be in your `$PATH` by default.
+> If `openstack: command not found` after install:
+>
+> ```bash
+> # Option 1 — Add ~/.local/bin to your PATH (recommended)
+> echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+> source ~/.bashrc
+>
+> # Option 2 — Install system-wide (requires sudo)
+> sudo pip install python-openstackclient
+> ```
+
+Verify the CLI is working and can authenticate:
+
+```bash
+openstack --insecure token issue
+```
+
+> **Note:** If you get `Expecting to find domain in project (HTTP 400)`, ensure
+> `OS_PROJECT_DOMAIN_NAME` is set in `~/.openstack_creds.env` (see Step 3). This
+> is a required field for OpenStack Identity v3 and is often the same value as
+> `OS_USER_DOMAIN_NAME` (e.g. `sas-ldap` for HPOS environments).
+
+---
+
+### Step 6 — Allocate Floating IPs for the Cluster VIP and Load Balancer
+
+Before configuring `terraform.tfvars`, you need two floating IPs reserved on
+your tenant network:
+
+1. **`cluster_vip_ip`** — the kube-vip control-plane HA endpoint (API server VIP)
+2. **`cluster_lb_addresses`** — the kube-vip cloud-provider LoadBalancer service
+   VIP (used by Viya ingress / Contour)
+
+
+Run the helper script from the repo root:
+
+```bash
+cd /path/to/viya4-iac-k8s
+
+# Ensure openstack_network_name is already set in terraform.tfvars (see Step 7),
+# or set it temporarily before running:
+
+./allocate-vip.sh
+``
+
+Example output from automatic VIP allocation:
+
+```
+[cluster_vip_ip]       = "10.119.129.26"
+[cluster_lb_addresses] = "range-global: 10.119.129.63-10.119.129.63"
+```
+
+**After VIPs are allocated, register both IPs in your DNS zone** (the value of
+`cluster_domain` in `terraform.tfvars`) before running `install`:
+
+```
+A    <prefix>-vip.<your-dns-zone>  →  <cluster_vip_ip>
+PTR  <cluster_vip_ip>             →  <prefix>-vip.<your-dns-zone>
+A    <prefix>-lb.<your-dns-zone>   →  <lb_vip>
+PTR  <lb_vip>                     →  <prefix>-lb.<your-dns-zone>
+```
+
+> Contact your OpenStack or network administrator to register the DNS records.
+> `<your-dns-zone>` is the DNS domain for your OpenStack project (e.g.
+> `myproject.openstack.example.com`).
+
+Then set `cluster_vip_fqdn` in `terraform.tfvars` and verify DNS is live:
+
+```bash
+nslookup <prefix>-vip.<your-dns-zone>
+nslookup <prefix>-lb.<your-dns-zone>
+```
+
+---
+
+## Cluster Configuration
+
+### Step 7 — Create terraform.tfvars
+
+Copy the example file into the **repo root**:
+
+```bash
+cd /path/to/viya4-iac-k8s
+cp topologies/openstack/sample-input-openstack.tfvars.examples ../../terraform.tfvars
+```
+
+Open `terraform.tfvars` and update the required values:
+
+```hcl
+# General
+prefix           = "mycluster"     # ← CHANGE: cluster name becomes mycluster-oss
+ansible_user     = "rocky"         # ← rocky for Rocky Linux images, ubuntu for Ubuntu
+ansible_password = ""              # Leave empty if using SSH key-based auth
+
+# OpenStack settings
+openstack_domain_name       = "sas-ldap"
+openstack_network_name      = "provider"
+openstack_image_name        = "rocky96"          # ← CHANGE: your Glance image name
+openstack_ssh_keypair       = "my-keypair"       # ← must match Step 2 keypair name
+system_ssh_keys_dir         = "/root/.ssh/oss"   # ← absolute path; ~ does not expand inside Docker
+openstack_availability_zone = "nova-11"          # ← CHANGE: your AZ
+openstack_flavor_defaults   = "np.8x16x250"      # ← CHANGE: your default flavor
+openstack_floating_ip_pool  = null               # null = no per-node floating IPs (static mode)
+openstack_insecure          = true
+
+# Kubernetes
+cluster_version     = "1.35.3"   # Latest supported: 1.32.x – 1.35.x
+cluster_cri_version = "2.2.2"
+cluster_domain      = "<your-dns-zone>"   # ← CHANGE: e.g. myproject.openstack.example.com
+
+# VIP — populated by oss-k8s.sh apply (Step 6 / Step 9)
+cluster_vip_version = "0.8.7"
+cluster_vip_ip      = "10.119.129.26"                         # ← from Step 6
+cluster_vip_fqdn    = "<prefix>-vip.<your-dns-zone>"          # ← from Step 6 DNS registration
+
+# Load Balancer — populated by oss-k8s.sh apply (Step 6 / Step 9)
+cluster_lb_type      = "kube_vip"
+cluster_lb_addresses = ["range-global: 10.119.129.63-10.119.129.63"]  # ← from Step 6
+
+# Node pools
+# REQUIRED: control_plane and system keys must always be present.
+# Add additional pools for workload classes as needed.
+node_pools = {
+  control_plane = {          # REQUIRED — DO NOT RENAME
+    count       = 3          # Always odd for HA (3 recommended minimum)
+    flavor      = "np.8x32x150"
+    os_disk     = 100
+    node_taints = []
+    node_labels = {}
+  },
+  system = {                 # REQUIRED — DO NOT RENAME
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    node_taints = []
+    node_labels = { "kubernetes.azure.com/mode" = "system" }
+  },
+  cas = {
+    count      = 3
+    flavor     = "np.8x16x250"
+    os_disk    = 350
+    misc_disks = [150, 150]  # Extra data volumes for CAS
+    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    node_labels = { "workload.sas.com/class" = "cas" }
+  },
+  compute = {
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    node_taints = ["workload.sas.com/class=compute:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class"        = "compute"
+      "launcher.sas.com/prepullImage" = "sas-programming-environment"
+    }
+  },
+  stateful = {
+    count      = 2
+    flavor     = "np.8x16x250"
+    os_disk    = 100
+    misc_disks = [150]
+    node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
+    node_labels = { "workload.sas.com/class" = "stateful" }
+  },
+  stateless = {
+    count       = 4
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
+    node_labels = { "workload.sas.com/class" = "stateless" }
+  }
+}
+
+# Optional auxiliary servers
+create_jump = true
+jump_ip     = null   # null = DHCP-assigned; actual IP visible in Terraform output
+
+create_nfs = true
+nfs_ip     = null
+
+# Optional: external PostgreSQL (omit to use internal)
+# postgres_servers = { default = { server_disk_size = 128, server_version = 15, server_ssl = "off" } }
+```
+
+> **Note on `deployment_type`:** Do **not** set `deployment_type` in
+> `terraform.tfvars`. It is injected automatically by `oss-k8s.sh` via
+> `export SYSTEM=openstack`.
+
+---
+
+## Execution
+
+### Step 8 — Build the Docker Image (optional)
+
+If you prefer to run `oss-k8s.sh` inside Docker (recommended for
+reproducibility), build the image first from the repo root:
+
+```bash
+cd /path/to/viya4-iac-k8s
+docker build -t viya4-iac-k8s:latest .
+```
+
+> Skip this step if running `oss-k8s.sh` natively on the host.
+
+---
+
+### Step 9 — Provision and Install
+
+#### Option A — Native
+
+> **Prerequisites (native only):** `oss-k8s.sh` calls `ansible-galaxy` and
+> installs Python packages via `pip` automatically during `setup` and `install`.
+> You need:
+>
+> ```bash
+> sudo dnf install -y ansible-core   # Rocky / RHEL 9
+> # OR
+> sudo apt-get install -y ansible-core  # Ubuntu 22.04/24.04
+> ```
+>
+> Python 3 + pip are standard on Rocky 9 / Ubuntu 22.04+. The script
+> automatically runs `python3 -m pip install --user -r requirements.txt`
+> before each Ansible playbook, which installs `kubernetes`, `openshift`,
+> `dnspython`, and `jmespath` — the Python libraries required by
+> `kubernetes.core` Ansible modules.
+
+```bash
+cd /path/to/viya4-iac-k8s
+
+export $(grep -v '^#' ~/.openstack_creds.env | grep -v '^$' | xargs)
+export SYSTEM=openstack
+
+# Full cluster provisioning in one command:
+./scripts/oss-k8s.sh apply setup install
+```
+
+#### Option B — Docker
+
+```bash
+cd /path/to/viya4-iac-k8s
+
+docker run --rm -it \
+  --network host \
+  --group-add root \
+  --user root:root \
+  --env SYSTEM=openstack \
+  --env IAC_TOOLING=docker \
+  --env-file $HOME/.openstack_creds.env \
+  --volume $(pwd):/workspace \
+  --volume $HOME/.ssh/oss:/root/.ssh/oss \
+  viya4-iac-k8s:latest apply setup install
+```
+
+> ⚠️ **`--user root:root` is required.** Do NOT use `$(id -u):$(id -g)`. Inside
+> the container the home directory is `/root`. If you run as your host UID then
+> `~/` resolves to a non-existent directory, SSH key lookups fail, and you will
+> see `no such identity: /root/.ssh/oss/<keypair>: Permission denied`.
+>
+> ⚠️ **Use `$HOME/.ssh/oss`, not `$(pwd)/.ssh/oss`** for the SSH key volume
+> mount. `$(pwd)` is your repo directory — `$(pwd)/.ssh/oss` does not exist.
+> `$HOME/.ssh/oss` is your actual key directory.
+>
+> ⚠️ **Do NOT add `:ro`** to the SSH key volume mount. During `setup`, Ansible
+> generates a `cluster_access` keypair and writes it to `system_ssh_keys_dir`
+> (`/root/.ssh/oss/`). If the mount is read-only, the key cannot be written back
+> to your host. The subsequent `install` step requires `cluster_access` and will
+> fail with `Identity file /root/.ssh/oss/cluster_access not accessible`.
+>
+> ⚠️ **`--network host` is required** for OpenStack environments on
+> private/corporate networks. Without it, Docker uses bridge networking (NAT) and
+> the container cannot reach internal OpenStack endpoints (Keystone, Neutron,
+> Nova). The symptom is `patch_vip_allowed_pairs: could not obtain Keystone token
+> or Neutron URL, skipping.` immediately after `apply`.
+>
+> ⚠️ **`--env-file` — do NOT include `export`** in `~/.openstack_creds.env`.
+> See Step 3.
+
+**What each stage does:**
+
+| Stage | Duration | What Runs |
+|---|---|---|
+| `apply` | ~10 min | VIP allocation (if not set) → `terraform apply` (VMs, inventory, ansible-vars) → 60s sleep → Neutron port patch (`allowed_address_pairs`) |
+| `setup` | ~15 min | `systems-install.yaml` — OS packages, sysctl, containerd, SSH key distribution |
+| `install` | ~20 min | Neutron VIP re-patch (idempotent) → `kubernetes-install.yaml` — kubeadm init, kube-vip, Calico CNI, worker joins, kubeconfig fetch |
+
+You can run stages individually for re-runs:
+
+```bash
+./scripts/oss-k8s.sh apply          # Terraform only
+./scripts/oss-k8s.sh setup          # OS baseline only
+./scripts/oss-k8s.sh install        # Kubernetes only (idempotent)
+```
+
+> ⚠️ **If you see** `patch_vip_allowed_pairs: could not obtain Keystone token or
+> Neutron URL, skipping.` — this is **not** harmless. The VIP port patch is
+> skipped and kube-vip will be unable to bind the control-plane VIP (OpenStack
+> port security blocks ARP for IPs not in `allowed_address_pairs`). The `install`
+> step will fail with unreachable control-plane errors.
+>
+> The function authenticates using `OS_AUTH_URL`, `OS_USERNAME`, `OS_PASSWORD`,
+> `OS_USER_DOMAIN_NAME`, `OS_PROJECT_NAME`, and `OS_PROJECT_DOMAIN_NAME`. All six
+> must be set correctly. The most common cause is a missing or wrong
+> `OS_PROJECT_DOMAIN_NAME` — see Step 3.
+
+---
+
+### Step 10 — Verify the Cluster
+
+After a successful run, a kubeconfig file is generated in the repo root
+(or `/workspace` if using Docker):
+
+```bash
+# Native
+export KUBECONFIG=$(ls *-oss-kubeconfig.conf | head -1)
+
+# Docker (file is in the mounted workspace directory)
+export KUBECONFIG=$(pwd)/$(ls *-oss-kubeconfig.conf | head -1)
+
+kubectl get nodes -o wide
+```
+
+All nodes should show `Ready` status. Example:
+
+```
+NAME                          STATUS   ROLES           AGE   VERSION
+mycluster-oss-control-plane   Ready    control-plane   10m   v1.35.3
+mycluster-oss-system-01       Ready    <none>          8m    v1.35.3
+mycluster-oss-cas-01          Ready    <none>          8m    v1.35.3
+```
+
+```bash
+kubectl get pods -n kube-system
+```
+
+---
+
+## Install SAS Viya (DAC)
+
+After the cluster is up and verified, use `viya4-deployment` (DAC) to install
+SAS Viya.
+
+### Step 11 — Clone DAC and Build the Image
+
+```bash
+# Clone the viya4-deployment repository
+git clone https://github.com/sassoftware/viya4-deployment.git /path/to/viya4-deployment
+cd /path/to/viya4-deployment
+
+# Build the DAC Docker image
+docker build -t viya4-deployment:latest .
+```
+
+Verify the image was built:
+
+```bash
+docker images | grep viya4-deployment
+```
+
+---
+
+### Step 12 — Prepare the DAC ansible-vars.yaml
+
+Create or edit `ansible-vars.yaml` in your `viya4-deployment` directory. The
+following fields are critical for HPOS/OpenStack:
+
+```yaml
+# Jump server — DAC tunnels through this to reach internal cluster nodes
+JUMP_SVR_USER: "rocky"                               # must match ansible_user in terraform.tfvars
+JUMP_SVR_PRIVATE_KEY: "/config/jump_svr_private_key" # fixed container path — do not change
+
+# Kubeconfig — DAC uses this to talk to the cluster
+KUBECONFIG: "/config/kubeconfig"                     # fixed container path — do not change
+```
+
+> ⚠️ `JUMP_SVR_PRIVATE_KEY` and `KUBECONFIG` are container-internal paths —
+> these are the mount targets used in the `docker run` command below. Do not
+> change these values.
+
+---
+
+### Step 13 — Run DAC
+
+The kubeconfig is generated by `setup install` as `<prefix>-oss-kubeconfig.conf`
+in your `viya4-iac-k8s` workspace directory. It must be explicitly mounted into
+the DAC container — DAC does not auto-discover it for OSS clusters.
+
+```bash
+# Replace paths and prefix with your actual values
+IAC_DIR=/path/to/viya4-iac-k8s
+DAC_DIR=/path/to/viya4-deployment
+PREFIX=mycluster    # must match 'prefix' in terraform.tfvars
+
+# Step 1 — baseline install (storage classes, ingress, etc.)
+docker run --rm \
+  --group-add root \
+  --user root:root \
+  --volume ${DAC_DIR}:/data \
+  --volume ${DAC_DIR}/ansible-vars.yaml:/config/config \
+  --volume ${IAC_DIR}/terraform.tfstate:/config/tfstate \
+  --volume ${IAC_DIR}/${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig \
+  --volume $HOME/.ssh/oss/cluster_access:/config/jump_svr_private_key \
+  viya4-deployment:latest \
+  --tags "baseline,install"
+
+# Step 2 — viya install
+docker run --rm \
+  --group-add root \
+  --user root:root \
+  --volume ${DAC_DIR}:/data \
+  --volume ${DAC_DIR}/ansible-vars.yaml:/config/config \
+  --volume ${IAC_DIR}/terraform.tfstate:/config/tfstate \
+  --volume ${IAC_DIR}/${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig \
+  --volume $HOME/.ssh/oss/cluster_access:/config/jump_svr_private_key \
+  viya4-deployment:latest \
+  --tags "viya,install"
+```
+
+**Key mount notes:**
+
+| Mount | Purpose |
+|---|---|
+| `${IAC_DIR}/${PREFIX}-oss-kubeconfig.conf:/config/kubeconfig` | Required — DAC does not auto-discover OSS kubeconfig |
+| `$HOME/.ssh/oss/cluster_access:/config/jump_svr_private_key` | SSH key for DAC to tunnel through jump server — use `cluster_access`, NOT `my-keypair` |
+| `${IAC_DIR}/terraform.tfstate:/config/tfstate` | Provides jump/NFS server IPs to DAC |
+
+> **Why `cluster_access` and not `my-keypair`?**
+>
+> - `my-keypair` — generated in Step 1, injected by OpenStack into VMs at
+>   creation time; used by Ansible (`oss-k8s.sh`) to SSH in during `setup install`
+> - `cluster_access` — a separate keypair generated automatically by Ansible
+>   during `setup` and written to `$HOME/.ssh/oss/`; used by DAC to SSH through
+>   the jump server
+
+---
+
+## Tear Down
+
+When you are done, tear down the cluster in reverse order — uninstall Kubernetes
+first, then destroy the OpenStack infrastructure.
+
+#### Option A — Native
+
+```bash
+cd /path/to/viya4-iac-k8s
+export SYSTEM=openstack
+./scripts/oss-k8s.sh uninstall destroy
+```
+
+#### Option B — Docker
+
+```bash
+docker run --rm -it \
+  --network host \
+  --group-add root \
+  --user root:root \
+  --env SYSTEM=openstack \
+  --env IAC_TOOLING=docker \
+  --env-file $HOME/.openstack_creds.env \
+  --volume $(pwd):/workspace \
+  --volume $HOME/.ssh/oss:/root/.ssh/oss \
+  viya4-iac-k8s:latest uninstall destroy
+```
+
+| Stage | What It Does |
+|---|---|
+| `uninstall` | `kubernetes-uninstall.yaml` — `kubeadm reset -f` on all nodes, removes `/etc/kubernetes`, `/var/lib/kubelet`, `/var/lib/etcd`, cleans CNI interfaces |
+| `destroy` | `terraform destroy` — deletes all OpenStack VMs, volumes, and ports; removes `terraform.tfstate` |
+
+> You will be prompted to confirm (`yes`) before `destroy` proceeds when running
+> natively outside Docker.
+
+---
+
+## Variables Reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `prefix` | ✅ | Cluster name prefix; cluster = `<prefix>-oss` |
+| `ansible_user` | ✅ | OS SSH username on provisioned VMs (`rocky` or `ubuntu`) |
+| `ansible_password` | — | VM sudo password; leave empty for SSH key auth |
+| `openstack_image_name` | ✅ | Glance image (e.g. `rocky96`) |
+| `openstack_ssh_keypair` | ✅ | Nova keypair name matching the key uploaded in Step 2 |
+| `openstack_network_name` | ✅ | Neutron network name for VM attachment and floating IP allocation |
+| `openstack_availability_zone` | ✅ | Nova AZ (e.g. `nova-11`) |
+| `openstack_flavor_defaults` | ✅ | Default Nova flavor for nodes without an explicit `flavor` |
+| `system_ssh_keys_dir` | ✅ | Absolute path to SSH keys dir; `~` does not expand inside Docker |
+| `cluster_domain` | ✅ | DNS zone for VIP FQDNs (e.g. `myproject.openstack.example.com`) |
+| `cluster_version` | ✅ | Kubernetes version (e.g. `"1.35.3"`) |
+| `cluster_vip_ip` | ✅ | Control-plane HA VIP — floating IP from Step 6 |
+| `cluster_vip_fqdn` | ✅ | DNS FQDN for `cluster_vip_ip` — registered in Step 6 |
+| `cluster_vip_version` | — | kube-vip version (default `"0.8.7"`) |
+| `cluster_lb_type` | — | `kube_vip` or `metallb` for LoadBalancer services (default `"kube_vip"`) |
+| `cluster_lb_addresses` | ✅ | kube-vip LB IP range — floating IP from Step 6 (`"range-global: x.x.x.x-x.x.x.x"`) |
+| `node_pools` | ✅ | Map of node groups — `control_plane` and `system` are required |
+| `openstack_insecure` | — | Skip TLS verification for self-signed certs (default `true` for HPOS) |
+| `openstack_floating_ip_pool` | — | Network for per-node floating IPs (`null` = static / private mode) |
+| `openstack_domain_name` | — | OpenStack identity domain (default `"sas-ldap"` for HPOS) |
+| `create_jump` | — | Create a jump / bastion host (default `false`) |
+| `create_nfs` | — | Create an NFS server (default `false`) |
+| `postgres_servers` | — | Map of internal PostgreSQL instances |
+| `control_plane_ssh_key_name` | — | Name for the Ansible-generated control-plane SSH keypair |
+
+See [`sample-input-openstack.tfvars`](sample-input-openstack.tfvars.examples) for a fully
+annotated example.
+
+
+---
+

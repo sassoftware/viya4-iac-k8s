@@ -1,0 +1,7 @@
+---
+# SSH configuration for Kubernetes nodes
+# All K8s nodes (control plane, cas, general, system) are in private subnet
+# Accessed via jump server as SSH bastion with azureuser
+
+ansible_user: "azureuser"
+ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q jumpuser@{{ groups["jump_server"][0] }} -o StrictHostKeyChecking=no"'

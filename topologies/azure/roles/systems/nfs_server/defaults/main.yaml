@@ -1,0 +1,36 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# NFS Server Role Variables
+# These values are DYNAMICALLY set from Terraform via ansible-vars.yaml
+# (generated from Azure VNet subnet address_prefixes)
+
+# Number of Azure managed disks expected to be attached
+# Default: 4 (matches cloud-config)
+# Can be overridden for different storage configurations
+expected_disk_count: 4
+
+# K8s nodes subnet - where Kubernetes nodes live (they need to mount NFS)
+# Terraform source: module.azure_network.subnet_details["k8s"].address_prefixes[0]
+# Example: my-k8s-k8s-subnet = 192.168.0.0/22
+# aks_cidr_block: "{{ aks_cidr_block }}"  # Set via ansible-vars.yaml
+
+# Misc subnet - where NFS server and Jump VM live
+# Terraform source: module.azure_network.subnet_details["misc"].address_prefixes[0]
+# Example: my-k8s-misc-subnet = 192.168.4.0/24
+# misc_cidr_block: "{{ misc_cidr_block }}"  # Set via ansible-vars.yaml
+
+# Fallback defaults (only used if Terraform vars not provided)
+# These should match your test environment
+aks_cidr_block: "192.168.0.0/22"
+misc_cidr_block: "192.168.4.0/24"
+
+# When aks_cidr_block != misc_cidr_block:
+#   /etc/exports gets entries for BOTH CIDRs (just like cloud-config)
+#
+# Result in /etc/exports (dynamically generated):
+#   /         <aks_cidr_block>(ro,fsid=0)
+#   /         <misc_cidr_block>(ro,fsid=0)
+#   /export   <aks_cidr_block>(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)
+#   /export   <misc_cidr_block>(rw,no_root_squash,async,insecure,crossmnt,no_subtree_check)

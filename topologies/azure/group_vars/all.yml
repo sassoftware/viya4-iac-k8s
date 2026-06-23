@@ -1,0 +1,12 @@
+---
+# Azure credentials — resolved at Ansible runtime from environment variables.
+# Set these before running ansible-playbook:
+#   export ARM_CLIENT_ID="..."
+#   export ARM_CLIENT_SECRET="..."
+#   export ARM_TENANT_ID="..."
+#   export ARM_SUBSCRIPTION_ID="..."
+# Falls back to TF_VAR_azure_* if ARM_* not set.
+azure_client_id:       "{{ lookup('env', 'ARM_CLIENT_ID') or lookup('env', 'TF_VAR_azure_client_id') }}"
+azure_client_secret:   "{{ lookup('env', 'ARM_CLIENT_SECRET') or lookup('env', 'TF_VAR_azure_client_secret') }}"
+azure_tenant_id:       "{{ lookup('env', 'ARM_TENANT_ID') or lookup('env', 'TF_VAR_azure_tenant_id') }}"
+azure_subscription_id: "{{ lookup('env', 'ARM_SUBSCRIPTION_ID') or lookup('env', 'TF_VAR_azure_subscription_id') }}"

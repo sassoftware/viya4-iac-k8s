@@ -3,24 +3,21 @@
 
 ---
 #
-# This task is only run when deployment_type == 'vsphere'
-#
-# NOTE: There is no equivalent for 'bare-metal' as the
-#       infrastructure has been setup by the customer.
-#
-#       This code only handles infrastructure creation
-#       on VMWare. All other infrastructure creation
-#       is handled externally and therefore will not
-#       have this code applied.
+# Runs for all Terraform-provisioned topologies: azure, openstack, vsphere.
+# Skipped for bare_metal — infrastructure is pre-existing, not created by this
+# tooling, so there is no reliable git ref or Terraform tooling version to record.
 #
 - name: Setting up sas-iac-buildinfo
-  when: deployment_type == 'vsphere'
+  when: deployment_type in ['vsphere', 'openstack', 'azure']
   block:
     - name: Register Git HASH information
       ansible.builtin.shell: |
         cd "{{ k8s_tool_base }}"
         "{{ k8s_tool_base }}/files/tools/iac_git_info.sh"
       register: git_hash
+      delegate_to: localhost
+      connection: local
+      become: false
       tags:
         - install
         - update
@@ -30,6 +27,9 @@
         cd "{{ k8s_tool_base }}"
         "{{ k8s_tool_base }}/files/tools/iac_tooling_version.sh"
       register: iac_tooling_version
+      delegate_to: localhost
+      connection: local
+      become: false
       tags:
         - install
         - update
@@ -47,6 +47,7 @@
       ansible.builtin.shell: |
         export KUBECONFIG="{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
         kubectl apply -f "{{ iac_inventory_dir }}/sas-iac-buildinfo-cm.yaml"
+      no_log: false
       tags:
         - install
         - update

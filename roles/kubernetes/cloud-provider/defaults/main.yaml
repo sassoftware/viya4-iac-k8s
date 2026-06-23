@@ -1,0 +1,12 @@
+---
+# Default variables for cloud-provider role
+
+# Deployment type selector
+deployment_type: "azure"
+
+# Enable/disable cloud provider deployment
+enable_cloud_provider: true
+
+# Cloud provider timeout settings
+cloud_provider_wait_timeout: 300
+cloud_provider_wait_delay: 5

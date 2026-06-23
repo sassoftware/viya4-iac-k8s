@@ -1,0 +1,268 @@
+---
+# Initialize Kubernetes cluster on primary control plane
+# Only runs on the first control plane node
+
+- name: Check if cluster is already initialized
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_initialized
+  tags:
+    - cluster-init
+    - check
+
+- name: Generate kubeadm configuration
+  template:
+    src: kubeadm-config.yaml.j2
+    dest: /tmp/kubeadm-config.yaml
+    owner: root
+    group: root
+    mode: '0600'
+  tags:
+    - cluster-init
+    - config
+
+- name: Verify containerd socket is ready before kubeadm init
+  ansible.builtin.shell: |
+    set -e
+    echo "Checking containerd socket..."
+    for i in {1..30}; do
+      if [ -S /run/containerd/containerd.sock ]; then
+        echo "Socket exists, testing CRI..."
+        if ctr version >/dev/null 2>&1; then
+          echo "containerd is ready"
+          exit 0
+        fi
+      fi
+      echo "Attempt $i: Waiting for containerd to be ready..."
+      sleep 2
+    done
+    echo "ERROR: containerd failed to become ready"
+    systemctl status containerd
+    exit 1
+  changed_when: false
+  tags:
+    - cluster-init
+    - init
+
+# --- kube-vip: deploy static pod BEFORE kubeadm init ---
+# kubelet (started by kubeadm init) will pick up this manifest automatically.
+# For single CP (no VIP), these tasks are skipped.
+- name: Create /etc/kubernetes/manifests directory for kube-vip
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests
+    state: directory
+    mode: "0755"
+  when: kubernetes_vip_ip is defined and kubernetes_vip_ip != "" and kubernetes_vip_ip != "null"
+  tags:
+    - cluster-init
+    - kube-vip
+
+- name: Pull kube-vip image before kubeadm init [containerd]
+  ansible.builtin.shell: |
+    ctr image pull ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }}
+  when:
+    - kubernetes_vip_ip is defined and kubernetes_vip_ip != "" and kubernetes_vip_ip != "null"
+    - kubernetes_cri | lower == 'containerd'
+  tags:
+    - cluster-init
+    - kube-vip
+
+- name: Generate kube-vip static pod manifest [containerd]
+  ansible.builtin.shell: |
+    ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} vip /kube-vip manifest pod \
+      --arp \
+      --controlplane \
+      --services \
+      --address {{ kubernetes_vip_ip }} \
+      --leaderElection \
+      --enableLoadBalancer \
+      > /etc/kubernetes/manifests/kube-vip.yaml
+  when:
+    - kubernetes_vip_ip is defined and kubernetes_vip_ip != "" and kubernetes_vip_ip != "null"
+    - kubernetes_cri | lower == 'containerd'
+  tags:
+    - cluster-init
+    - kube-vip
+
+- name: Generate kube-vip static pod manifest [docker]
+  ansible.builtin.shell: |
+    docker run --network host --rm ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} manifest pod \
+      --arp \
+      --controlplane \
+      --services \
+      --address {{ kubernetes_vip_ip }} \
+      --leaderElection \
+      --enableLoadBalancer \
+      > /etc/kubernetes/manifests/kube-vip.yaml
+  when:
+    - kubernetes_vip_ip is defined and kubernetes_vip_ip != "" and kubernetes_vip_ip != "null"
+    - kubernetes_cri | lower == 'docker'
+  tags:
+    - cluster-init
+    - kube-vip
+
+- name: Initialize Kubernetes cluster with kubeadm
+  command: kubeadm init --config=/tmp/kubeadm-config.yaml --upload-certs
+  when: not kubeadm_initialized.stat.exists
+  register: kubeadm_init_result
+  changed_when: true
+  tags:
+    - cluster-init
+    - init
+
+- name: Create .kube directory for root user
+  file:
+    path: /root/.kube
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  tags:
+    - cluster-init
+    - kube-config
+
+# Create all kubeconfig variants immediately after init
+# admin-local.conf: for CP-local kubectl (avoids Azure LB hairpin)
+# admin-external.conf: for external kubectl access via public LB
+- name: Create localhost kubeconfig for control plane admin operations
+  shell: >
+    sed 's|server: https://.*:{{ kubeadm_api_server_port }}|server: https://127.0.0.1:{{ kubeadm_api_server_port }}|'
+    /etc/kubernetes/admin.conf > /etc/kubernetes/admin-local.conf
+  changed_when: false
+  tags:
+    - cluster-init
+    - kube-config
+
+- name: Create external kubeconfig with public LB IP
+  shell: >
+    sed 's|server: https://.*:{{ kubeadm_api_server_port }}|server: https://{{ kube_api_endpoint }}:{{ kubeadm_api_server_port }}|'
+    /etc/kubernetes/admin.conf > /etc/kubernetes/admin-external.conf
+  changed_when: false
+  tags:
+    - cluster-init
+    - kube-config
+
+- name: Copy localhost kubeconfig to root user
+  copy:
+    src: /etc/kubernetes/admin-local.conf
+    dest: /root/.kube/config
+    owner: root
+    group: root
+    mode: '0600'
+    remote_src: true
+  when: kubeadm_initialized.stat.exists or kubeadm_init_result is changed
+  tags:
+    - cluster-init
+    - kube-config
+
+- name: Fetch kubeconfig to ansible controller
+  fetch:
+    src: /etc/kubernetes/admin-external.conf
+    dest: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    flat: true
+  tags:
+    - cluster-init
+    - kube-config
+
+# Patch kubelet.conf on CP to use localhost - kubelet needs to reach API server
+# for node registration, heartbeats, and pod watching. Without this, kubelet would
+# try to reach the LB IP which fails due to Azure hairpin limitation.
+- name: Patch kubelet.conf to use localhost on control plane
+  shell: >
+    sed -i 's|server: https://.*:{{ kubeadm_api_server_port }}|server: https://127.0.0.1:{{ kubeadm_api_server_port }}|'
+    /etc/kubernetes/kubelet.conf
+  changed_when: false
+  tags:
+    - cluster-init
+    - kube-config
+
+- name: Restart kubelet to pick up patched config
+  systemd:
+    name: kubelet
+    state: restarted
+    daemon_reload: true
+  tags:
+    - cluster-init
+    - kube-config
+
+# Patch kube-proxy ConfigMap to use the control plane node's direct IP instead of
+# the Azure Internal LB endpoint. Azure LB hairpin prevents backend nodes from
+# reaching the LB frontend IP - the CP is a backend for this LB so kube-proxy
+# on the CP would fail to sync, leaving the node with no service NAT rules.
+# Using the direct CP IP works for both the CP itself (loopback) and workers
+# (reachable within the VNet).
+- name: Patch kube-proxy ConfigMap to use direct CP IP (avoid Azure LB hairpin)
+  shell: >
+    kubectl --kubeconfig /etc/kubernetes/admin-local.conf get cm kube-proxy -n kube-system -o yaml |
+    sed 's|server: https://.*:{{ kubeadm_api_server_port }}|server: https://{{ ansible_default_ipv4.address }}:{{ kubeadm_api_server_port }}|' |
+    kubectl --kubeconfig /etc/kubernetes/admin-local.conf apply -f -
+  changed_when: false
+  tags:
+    - cluster-init
+    - kube-config
+
+- name: Restart kube-proxy on control plane to pick up patched ConfigMap
+  shell: >
+    kubectl --kubeconfig /etc/kubernetes/admin-local.conf delete pod
+    -n kube-system -l k8s-app=kube-proxy
+    --field-selector spec.nodeName={{ ansible_hostname }}
+    --ignore-not-found
+  changed_when: false
+  tags:
+    - cluster-init
+    - kube-config
+
+- name: Create bootstrap token for node joining
+  shell: kubeadm token create --kubeconfig /etc/kubernetes/admin-local.conf
+  register: bootstrap_token
+  changed_when: false
+  tags:
+    - cluster-init
+    - token
+
+- name: Get certificate hash for node joining
+  shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: ca_cert_hash
+  changed_when: false
+  tags:
+    - cluster-init
+    - cert-hash
+
+- name: Upload certs and get certificate key (for secondary CP joins)
+  shell: kubeadm init phase upload-certs --upload-certs --kubeconfig /etc/kubernetes/admin-local.conf 2>/dev/null | tail -1
+  register: cert_key
+  changed_when: false
+  tags:
+    - cluster-init
+    - cert-key
+
+- name: Set join facts for worker and control plane nodes
+  set_fact:
+    kubeadm_join_token: "{{ bootstrap_token.stdout }}"
+    kubeadm_ca_cert_hash: "sha256:{{ ca_cert_hash.stdout }}"
+    kubeadm_certificate_key: "{{ cert_key.stdout }}"
+  tags:
+    - cluster-init
+    - join-config
+
+- name: Wait for cluster API server to be ready
+  wait_for:
+    host: 127.0.0.1
+    port: 6443
+    delay: 10
+    timeout: 300
+  tags:
+    - cluster-init
+    - wait-api
+
+- name: Display cluster initialization summary
+  debug:
+    msg:
+      - "Kubernetes cluster initialized successfully:"
+      - "  Control plane endpoint: {{ kubeadm_advertise_address }}:6443"
+      - "  Bootstrap token: {{ bootstrap_token.stdout | default('N/A') }}"
+      - "  CA certificate hash: sha256:{{ ca_cert_hash.stdout | default('N/A') | truncate(20) }}..."
+      - "  Admin config saved to: /root/.kube/config"
+  tags:
+    - cluster-init
+    - debug

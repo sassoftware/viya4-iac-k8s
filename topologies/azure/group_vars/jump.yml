@@ -1,0 +1,7 @@
+---
+# SSH configuration for jump server
+# Jump server has public IP - direct connection with jumpuser
+# No proxy needed
+
+ansible_user: "jumpuser"
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

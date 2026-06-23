@@ -1,0 +1,26 @@
+---
+# Azure cloud provider implementation
+# Delegates to kubeadm role's Azure CCM configuration
+
+- name: "Azure cloud provider configuration"
+  debug:
+    msg:
+      - "Configuring Azure Cloud Provider"
+      - "  Deployment: {{ deployment_type }}"
+      - "  Region: {{ azure_location }}"
+      - "  Resource Group: {{ azure_resource_group }}"
+  tags:
+    - cloud-provider
+    - azure
+    - azure-ccm
+
+- name: "Include Azure CCM configuration from kubeadm role"
+  include_role:
+    name: kubernetes/kubeadm
+    tasks_from: 06-configure-azure-cloud
+  vars:
+    azure_ccm_wait_for_ready: true
+  tags:
+    - cloud-provider
+    - azure
+    - azure-ccm

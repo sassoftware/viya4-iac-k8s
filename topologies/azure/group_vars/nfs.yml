@@ -1,0 +1,7 @@
+---
+# SSH configuration for NFS server
+# NFS server is in private subnet
+# Accessed via jump server as SSH bastion with nfsuser
+
+ansible_user: "nfsuser"
+ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q jumpuser@{{ groups["jump_server"][0] }} -o StrictHostKeyChecking=no"'

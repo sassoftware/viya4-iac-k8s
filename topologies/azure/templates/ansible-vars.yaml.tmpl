@@ -1,0 +1,127 @@
+# Ansible items
+# Note: ansible_user is set per host group in group_vars/ (jumpuser, azureuser, nfsuser)
+# ansible_user and ansible_password removed - using SSH keys and group_vars instead
+
+# VM items
+vm_os   : "ubuntu" # Choices : [ubuntu] - Ubuntu 22.04 LTS
+vm_arch : "amd64"  # Choices : [amd64] - 64-bit OS
+
+# System items
+enable_cgroup_v2    : true
+system_ssh_keys_dir : "${ system_ssh_keys_dir }"
+
+# Generic items
+prefix          : "${ prefix }"
+deployment_type : "${ deployment_type }"
+
+# Kubernetes - Common
+kubernetes_cluster_name    : "${ prefix }-oss"
+kubernetes_version         : "${ cluster_version }"
+azure_ccm_version          : "${ azure_ccm_version }"
+kubernetes_upgrade_allowed : true
+kubernetes_arch            : "amd64"
+kubernetes_cni             : "${ cluster_cni }"
+kubernetes_cni_version     : "${ cluster_cni_version }"
+kubernetes_cri             : "${ cluster_cri }"
+kubernetes_cri_version     : "${ cluster_cri_version }"
+kubernetes_service_subnet  : "${ cluster_service_subnet }"
+kubernetes_pod_subnet      : "${ cluster_pod_subnet }"
+kubernetes_cluster_dns     : "${ cluster_dns_ip }"
+
+# Kubernetes - API Server external endpoint (Azure Standard LB)
+# Public IP fronting the control plane; used for kubeconfig & certSANs.
+kube_api_endpoint      : "${ kube_api_endpoint }"
+
+# Kubernetes - Internal API endpoint (Azure Internal Standard LB)
+# Static private IP used as controlPlaneEndpoint in kubeadm-config.
+# Avoids Azure hairpin limitation when CP nodes talk to the API server.
+kubernetes_api_internal_ip : "${ cluster_api_internal_ip }"
+
+# Kubernetes - VIP (kube-vip)
+# Not used on Azure — Azure Internal LB provides HA instead.
+# Set kubernetes_vip_ip = "" to disable kube-vip for Azure deployments.
+kubernetes_vip_version : "${ cluster_vip_version }"
+kubernetes_vip_ip      : "${ cluster_vip_ip }"
+kubernetes_vip_fqdn    : "${ cluster_vip_fqdn }"
+
+# Kubernetes - Control Plane
+control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
+
+# Kubernetes - In-cluster LoadBalancer address pool
+%{ if length(cluster_lb_addresses) > 0 ~}
+kubernetes_loadbalancer_addresses:
+%{ for addr in cluster_lb_addresses ~}
+  - "${ addr }"
+%{ endfor ~}
+%{ endif ~}
+
+## Labels
+%{ if length(node_labels) != 0 ~}
+node_labels:
+%{ for k, v in node_labels ~}
+%{ if length(v) != 0 ~}
+  ${format("%s:\n", k)~}
+%{ for lv in v ~}
+  ${format("  - %s\n", lv)~}
+%{ endfor ~}
+%{ endif ~}
+%{ endfor ~}
+%{ endif ~}
+
+## Taints
+%{if length(node_taints) != 0 ~}
+node_taints:
+%{ for k, v in node_taints ~}
+%{ if length(v) != 0 ~}
+  ${format("%s:\n", k)~}
+%{ for tv in v ~}
+  ${format("  - %s\n", tv)~}
+%{ endfor ~}
+%{ endif ~}
+%{ endfor ~}
+%{ endif ~}
+
+%{ if jump_ip != null ~}
+%{ if length(jump_ip) != 0 ~}
+# Jump Server
+jump_ip        : "${jump_ip}"          # Private IP
+jump_public_ip : "${jump_public_ip}"   # Public IP for SSH bastion/proxy
+jump_user      : "jumpuser"            # Jump server SSH user
+%{ endif ~}
+%{ endif ~}
+
+%{ if nfs_ip != null ~}
+%{ if length(nfs_ip) != 0 ~}
+# NFS Server
+nfs_ip   : "${nfs_ip}"
+nfs_user : "nfsuser"  # NFS server SSH user
+
+V4_CFG_RWX_FILESTORE_ENDPOINT: "${nfs_ip}"
+V4_CFG_RWX_FILESTORE_PATH: /export
+
+# NFS Export CIDRs (from Azure VNet subnets - for /etc/exports)
+# These are passed to the nfs_server role for configuring NFS access
+aks_cidr_block  : "${aks_cidr_block}"         # K8s nodes subnet (my-k8s-k8s-subnet)
+misc_cidr_block : "${misc_cidr_block}"        # Misc subnet (my-k8s-misc-subnet) - NFS/Jump VMs
+
+# Expected number of data disks on NFS server (from nfs_data_disks tfvar)
+expected_disk_count : ${expected_disk_count}  # Length of nfs_data_disks list
+%{ endif ~}
+%{ endif ~}
+
+# Kubernetes Nodes
+k8s_user : "azureuser"  # K8s nodes SSH user (control plane, cas, general, system)
+
+# Azure Cloud Provider (for Azure CCM and Load Balancer)
+# azure_client_id / azure_client_secret / azure_tenant_id / azure_subscription_id
+# are resolved at Ansible runtime via group_vars/all.yml (lookup from env vars).
+enable_cloud_provider : true
+azure_resource_group  : "${ azure_resource_group }"
+azure_location        : "${ azure_location }"
+
+%{ if cr_ip != null ~}
+%{ if length(cr_ip) != 0 ~}
+# Container Registry
+cr_ip   : "${cr_ip}"
+%{ endif ~}
+%{ endif ~}

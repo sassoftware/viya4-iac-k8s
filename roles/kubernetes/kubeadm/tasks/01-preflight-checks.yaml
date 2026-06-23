@@ -1,0 +1,132 @@
+---
+# Preflight checks for Kubernetes cluster initialization
+# Validates system requirements and prerequisites
+
+- name: Validate kubernetes_version is defined and well-formed
+  assert:
+    that:
+      - kubernetes_version is defined
+      - kubernetes_version | length > 0
+      - kubernetes_version | regex_search('^[0-9]+\\.[0-9]+(\\.[0-9]+)?$')
+    fail_msg: >
+      kubernetes_version is not set or is not a valid version (X.Y or X.Y.Z).
+      Set cluster_version in your tfvars and run terraform apply to regenerate
+      the ansible-vars.yaml file before running this playbook.
+    success_msg: "kubernetes_version={{ kubernetes_version }} is valid"
+  tags:
+    - preflight
+    - version-check
+
+- name: Check kernel version
+  shell: uname -r
+  register: kernel_version
+  changed_when: false
+  tags:
+    - preflight
+    - kernel
+
+- name: Check system has at least 2 CPU cores
+  assert:
+    that:
+      - ansible_processor_vcpus >= 2
+    fail_msg: "Kubernetes requires at least 2 CPU cores"
+  tags:
+    - preflight
+    - cpu
+
+- name: Check system has at least 2GB RAM
+  assert:
+    that:
+      - ansible_memtotal_mb >= 2048
+    fail_msg: "Kubernetes requires at least 2GB RAM"
+  tags:
+    - preflight
+    - memory
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb != 0
+  changed_when: true
+  tags:
+    - preflight
+    - swap
+
+- name: Remove swap from fstab
+  lineinfile:
+    path: /etc/fstab
+    regexp: '^\S+\s+none\s+swap'
+    state: absent
+  tags:
+    - preflight
+    - swap
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+  tags:
+    - preflight
+    - kernel-modules
+
+- name: Configure kernel parameters for container networking
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - { key: "net.bridge.bridge-nf-call-iptables", value: "1" }
+    - { key: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+    - { key: "net.ipv4.ip_forward", value: "1" }
+  tags:
+    - preflight
+    - sysctl
+
+- name: Wait for dpkg lock before installing system packages
+  ansible.builtin.shell: |
+    for i in $(seq 1 60); do
+      if ! fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
+         && ! fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
+         && ! pgrep -x dpkg >/dev/null 2>&1 \
+         && ! pgrep -x apt-get >/dev/null 2>&1 \
+         && ! pgrep -x unattended-upgrade >/dev/null 2>&1; then
+        echo "dpkg lock free"
+        exit 0
+      fi
+      echo "Waiting for dpkg lock... attempt $i/60"
+      sleep 5
+    done
+    echo "WARNING: dpkg lock still held after 5 minutes"
+    exit 1
+  changed_when: false
+  tags:
+    - preflight
+    - packages
+
+- name: Install required system packages
+  ansible.builtin.package:
+    name: "{{ kubeadm_system_packages }}"
+    state: present
+  retries: 3
+  delay: 10
+  register: _sys_pkg_result
+  until: _sys_pkg_result is success
+  tags:
+    - preflight
+    - packages
+
+- name: Display preflight check summary
+  debug:
+    msg:
+      - "Preflight checks passed:"
+      - "  Kernel: {{ kernel_version.stdout }}"
+      - "  CPU cores: {{ ansible_processor_vcpus }}"
+      - "  Memory: {{ ansible_memtotal_mb }}MB"
+      - "  Swap disabled: {{ ansible_swaptotal_mb == 0 }}"
+  tags:
+    - preflight
+    - debug

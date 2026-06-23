@@ -1,0 +1,75 @@
+---
+# kubeadm init configuration template
+# Generates InitConfiguration, ClusterConfiguration, and KubeletConfiguration
+
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+bootstrapTokens:
+  - token: "{{ bootstrap_token | default('abcdef.0123456789abcdef') }}"
+    description: "kubeadm bootstrap token"
+    ttl: "24h"
+    usages:
+      - signing
+      - authentication
+nodeRegistration:
+  name: "{{ ansible_hostname }}"
+  criSocket: "{{ cri_socket }}"
+  kubeletExtraArgs:
+    - name: cloud-provider
+      value: external
+  taints:
+    - key: node-role.kubernetes.io/control-plane
+      value: ""
+      effect: NoSchedule
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: "v{{ kubernetes_full_version | default(kubernetes_version) }}"
+controlPlaneEndpoint: "{{ kubernetes_api_internal_ip }}:{{ kubeadm_api_server_port }}"
+clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
+etcd:
+  local:
+    dataDir: "/var/lib/etcd"
+networking:
+  dnsDomain: "{{ kubeadm_dns_domain }}"
+  podSubnet: "{{ kubeadm_pod_network_cidr }}"
+  serviceSubnet: "{{ kubeadm_service_cidr }}"
+controllerManager:
+  extraArgs: []
+apiServer:
+  extraArgs:
+  - name: service-account-issuer
+    value: "https://{{ kubernetes_api_internal_ip }}:{{ kubeadm_api_server_port }}"
+  - name: service-account-key-file
+    value: "/etc/kubernetes/pki/sa.key"
+  - name: service-account-signing-key-file
+    value: "/etc/kubernetes/pki/sa.key"
+  # Subject Alternative Names for the API server cert.
+  # Include localhost, the advertise/VIP addresses, and the public Azure LB
+  # endpoint so kubectl can connect from outside the VNet without TLS errors.
+  certSANs:
+    - "127.0.0.1"
+    - "localhost"
+    - "{{ ansible_hostname }}"
+    - "{{ kubeadm_advertise_address }}"
+    - "{{ kubernetes_api_internal_ip }}"
+{% if kubernetes_vip_ip is defined and kubernetes_vip_ip | length > 0 %}
+    - "{{ kubernetes_vip_ip }}"
+{% endif %}
+{% if kubernetes_vip_fqdn is defined and kubernetes_vip_fqdn | length > 0 %}
+    - "{{ kubernetes_vip_fqdn }}"
+{% endif %}
+{% if kube_api_endpoint is defined and kube_api_endpoint | length > 0 %}
+    - "{{ kube_api_endpoint }}"
+{% endif %}
+certificatesDir: "{{ kubeadm_cert_dir }}"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: "{{ kubeadm_kubelet_cgroupDriver }}"
+failSwapOn: true
+tlsCipherSuites:
+  - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+  - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+  - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384

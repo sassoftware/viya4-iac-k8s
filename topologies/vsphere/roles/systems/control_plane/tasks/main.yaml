@@ -1,0 +1,40 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# Install NFS client utilities required for NFS volume mounting
+- name: Install NFS client utilities
+  ansible.builtin.package:
+    name: nfs-common
+    state: present
+    update_cache: true
+  tags:
+    - install
+    - update
+
+- name: Generate control plane shared ssh key pair
+  ansible.builtin.command: "{{ item }}"
+  with_items:
+    - rm -rf ~/.ssh/{{ control_plane_ssh_key_name }}
+    - ssh-keygen -t rsa -q -N '' -b 4096 -f ~/.ssh/{{ control_plane_ssh_key_name }}
+  tags:
+    - install
+    - update
+
+- name: Get the ssh key file content
+  ansible.builtin.command:
+    cat ~/.ssh/{{ control_plane_ssh_key_name }}.pub
+  register: ssh_key
+  tags:
+    - install
+    - update
+
+# Copy over public keys to enable file transfers between control plane nodes on your systems
+- name: Add ssh keys for control plane nodes
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ ssh_key.stdout }}"
+    state: present
+  tags:
+    - install
+    - update

@@ -1,0 +1,301 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+#
+# Kubernetes Playbook - Installs all elements needed for a stable
+#                       kubernetes cluster for use with Viya 4
+#
+# Multi-stage Kubernetes cluster deployment using kubeadm with Azure Cloud Provider
+#
+
+# Stage 1: Preflight checks and common setup (all nodes)
+- hosts: all
+  name: Kubernetes Setup - Common Preflight Checks
+  become: true
+  become_user: root
+  gather_facts: true
+  roles:
+    - { role: kubernetes/common }
+
+# Stage 2: Initialize cluster on primary control plane using kubeadm modules
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Cluster - Initialize Primary Control Plane (kubeadm)
+  become: true
+  become_user: root
+  gather_facts: true
+  roles:
+    - { role: kubernetes/kubeadm }
+  tags:
+    - install
+
+# Stage 3: Join worker nodes to cluster using kubeadm modules
+- hosts: k8s_node
+  name: Kubernetes Cluster - Join Worker Nodes (kubeadm)
+  become: true
+  become_user: root
+  serial: 1
+  gather_facts: true
+  roles:
+    - { role: kubernetes/kubeadm }
+  pre_tasks:
+    - name: Wait for control plane API server to be ready
+      wait_for:
+        host: "{{ hostvars[groups['k8s_control_plane'][0]].get('kubeadm_advertise_address', groups['k8s_control_plane'][0]) }}"
+        port: 6443
+        timeout: 300
+        delay: 5
+  tags:
+    - install
+
+# Stage 4: Join secondary control plane nodes
+- hosts: k8s_control_plane[1:]
+  name: Kubernetes Cluster - Join Secondary Control Planes (kubeadm)
+  become: true
+  become_user: root
+  serial: 1
+  gather_facts: true
+  roles:
+    - { role: kubernetes/kubeadm }
+  pre_tasks:
+    - name: Wait for primary control plane to be ready
+      wait_for:
+        host: "{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}"
+        port: 6443
+        timeout: 300
+        delay: 5
+  tags:
+    - install
+
+# Stage 4.5: Set node InternalIPs from Azure IMDS before CNI initialises
+# With --cloud-provider=external, kubelet does not register InternalIP on the node.
+# The Azure CCM is responsible for this, but CCM v1.33+ skips initialisation when
+# the providerID is already set by the kubelet (k8s 1.31+ behaviour).  Calico needs
+# the InternalIP to choose the correct VXLAN peer address; without it, calico-typha
+# gets no pod IP, Endpoints are empty, and calico-node crashes.
+# Solution: query Azure IMDS on each node to obtain its private IP, then patch the
+# Kubernetes node status/addresses with the correct InternalIP before CNI starts.
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Patch Node InternalIPs from Azure IMDS
+  become: true
+  become_user: root
+  gather_facts: false
+  tasks:
+    - name: Patch all node InternalIPs from gathered Ansible facts
+      ansible.builtin.shell: |
+        {% for host in groups['k8s_control_plane'] + groups['k8s_node'] %}
+        kubectl --kubeconfig /root/.kube/config patch node \
+          "{{ hostvars[host]['ansible_hostname'] }}" \
+          --subresource=status --type=merge \
+          -p "{\"status\":{\"addresses\":[{\"type\":\"Hostname\",\"address\":\"{{ hostvars[host]['ansible_hostname'] }}\"},{\"type\":\"InternalIP\",\"address\":\"{{ hostvars[host]['ansible_default_ipv4']['address'] }}\"}]}}" \
+          && echo "Patched {{ hostvars[host]['ansible_hostname'] }} => {{ hostvars[host]['ansible_default_ipv4']['address'] }}" || true
+        {% endfor %}
+      changed_when: true
+      tags:
+        - install
+        - node-ip
+
+# Stage 4.6: Apply labels and taints to all nodes BEFORE CNI installation
+# IMPORTANT: Taints MUST be applied before CNI (Calico) is installed,
+# otherwise system pods like Calico APIServer will be scheduled on tainted nodes
+# (e.g., CAS nodes) without the required tolerations, and they won't be evicted later.
+- hosts: k8s
+  name: Kubernetes Setup - Labels and Taints (Pre-CNI)
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/labels_taints }
+  tags:
+    - install
+
+# Stage 4.7: Remove cloud provider uninitialized taint before CNI
+# The uninitialized taint is added by kubeadm when using cloud provider.
+# If it's not removed before Calico is deployed, Calico pods won't be able to schedule
+# because they won't have tolerations for this taint. Removing it early ensures
+# both Calico and the CCM can proceed without conflicts.
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Remove Cloud Provider Uninitialized Taint (Pre-CNI)
+  become: true
+  become_user: root
+  gather_facts: false
+  tasks:
+    - name: Remove uninitialized taint from all nodes before CNI deployment
+      ansible.builtin.shell: |
+        KUBECONFIG=/root/.kube/config kubectl taint nodes --all \
+          node.cloudprovider.kubernetes.io/uninitialized:NoSchedule- 2>/dev/null || true
+      changed_when: false
+      tags:
+        - install
+
+# Stage 5: Install CNI network plugin on primary control plane
+# CRITICAL: CNI MUST be deployed before Azure CCM.
+# Without a CNI, nodes remain NotReady and pods (including CoreDNS, CCM) cannot schedule.
+# After CNI is deployed, nodes transition to Ready and the cluster is stable.
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Cluster - Network Addon (CNI) Setup
+  become: true
+  become_user: root
+  roles:
+    - { role: "kubernetes/cni/{{ kubernetes_cni }}" }
+  tags:
+    - install
+
+# Stage 5.5: Configure cloud provider (Azure CCM) AFTER CNI installation
+# Now that Calico has deployed and nodes are Ready, deploy Azure CCM.
+# The CCM will remove any remaining uninitialized taint and set providerID on nodes.
+# With the cluster stable and CNI working, CCM can initialize without issues.
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Cloud Provider - Configure Azure CCM (Post-CNI)
+  become: true
+  become_user: root
+  roles:
+    - role: kubernetes/cloud-provider
+      vars:
+        deployment_type: "{{ deployment_type | default('azure') }}"
+      when: enable_cloud_provider | default(true)
+  tags:
+    - install
+
+# Stage 6: Setup kube-vip for HA control plane (non-Azure environments)
+# Skipped when kubernetes_vip_ip is empty (Azure uses LB instead).
+- hosts: k8s_control_plane
+  name: Kubernetes Setup - Virtual IP (kube-vip) for HA
+  become: true
+  become_user: root
+  roles:
+    - role: kubernetes/vip/primary
+      when: inventory_hostname == groups['k8s_control_plane'][0] and kubernetes_vip_ip is defined and kubernetes_vip_ip != "" and kubernetes_vip_ip != "null"
+    - role: kubernetes/vip/secondary
+      when: inventory_hostname != groups['k8s_control_plane'][0] and kubernetes_vip_ip is defined and kubernetes_vip_ip != "" and kubernetes_vip_ip != "null"
+  tags:
+    - install
+
+# Stage 7: Additional node setup
+# DISABLED - kubernetes/kubeadm role already installs kubelet/kubeadm/kubectl.
+# Running toolbox again purges/reinstalls them and breaks the cluster.
+# - hosts: k8s
+#   name: Kubernetes Setup - Additional Node Configuration
+#   become: true
+#   become_user: root
+#   roles:
+#     - { role: kubernetes/toolbox }
+#   tags:
+#     - install
+
+# Stage 8: Setup default storage class for cluster
+- hosts: k8s_control_plane[0]
+  name: Default Storage Class Setup
+  become: true
+  become_user: root
+  pre_tasks:
+    - name: Ensure iac_inventory_dir exists on control plane
+      ansible.builtin.file:
+        path: "{{ iac_inventory_dir }}"
+        state: directory
+        mode: '0755'
+      tags: always
+    - name: Place kubeconfig where roles expect it
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin-local.conf
+        dest: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+        remote_src: true
+        mode: '0600'
+        force: true
+      tags: always
+  roles:
+    # - { role: kubernetes/storage/sig-storage-local-static-provisioner }
+    - { role: kubernetes/storage/nfs-csi-driver }
+
+# Stage 9: Setup metrics-server for cluster
+- hosts: k8s_control_plane[0]
+  name: Metrics Server Setup
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/metrics/metrics-server }
+
+# Stage 10: Misc cluster related items
+- hosts: k8s_control_plane[0]
+  name: Setup - Misc
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/sas-iac-buildinfo }
+
+# ---------------------------------------------------------------------------
+# Stage 11: Generate a portable static kubeconfig
+# ---------------------------------------------------------------------------
+# Pulls /etc/kubernetes/admin.conf from the primary control plane, rewrites
+# the `server:` field to point at the Azure LB public IP (kube_api_endpoint),
+# and writes the result to the local workspace so it can be used from any
+# machine that has reachability to the LB and is in api_server_source_cidrs.
+- hosts: k8s_control_plane[0]
+  name: Generate static kubeconfig with LB endpoint
+  become: true
+  become_user: root
+  gather_facts: false
+  tasks:
+    - name: Read admin.conf from control plane
+      ansible.builtin.slurp:
+        src: /etc/kubernetes/admin.conf
+      register: _admin_kubeconfig
+      tags:
+        - kubeconfig
+        - install
+
+    - name: Decode admin.conf into a variable
+      ansible.builtin.set_fact:
+        _admin_kubeconfig_text: "{{ _admin_kubeconfig.content | b64decode }}"
+      tags:
+        - kubeconfig
+        - install
+
+    - name: Validate kube_api_endpoint is defined
+      ansible.builtin.assert:
+        that:
+          - kube_api_endpoint is defined
+          - kube_api_endpoint | length > 0
+        fail_msg: >
+          kube_api_endpoint is not set in ansible-vars.yaml. Run terraform
+          apply to (re)generate it from the azure_api_lb module output.
+        success_msg: "Using LB endpoint https://{{ kube_api_endpoint }}:6443"
+      tags:
+        - kubeconfig
+        - install
+
+    - name: "Rewrite server: line to point at the Azure LB public IP"
+      ansible.builtin.set_fact:
+        _patched_kubeconfig: >-
+          {{ _admin_kubeconfig_text
+             | regex_replace('server:\s*https?://[^\s]+',
+                             'server: https://' ~ kube_api_endpoint ~ ':6443') }}
+      tags:
+        - kubeconfig
+        - install
+
+    - name: Write static kubeconfig to local workspace
+      ansible.builtin.copy:
+        content: "{{ _patched_kubeconfig }}"
+        dest: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+        mode: '0600'
+      delegate_to: localhost
+      become: false
+      tags:
+        - kubeconfig
+        - install
+
+    - name: Print kubeconfig location and quick-start command
+      ansible.builtin.debug:
+        msg:
+          - "============================================================"
+          - "Static kubeconfig written for cluster: {{ kubernetes_cluster_name }}"
+          - "Server endpoint : https://{{ kube_api_endpoint }}:6443"
+          - "Local file      : {{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+          - ""
+          - "Use it with:"
+          - "  export KUBECONFIG={{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+          - "  kubectl get nodes"
+          - "============================================================"
+      tags:
+        - kubeconfig
+        - install

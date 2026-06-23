@@ -10,9 +10,16 @@ spec:
   calicoNetwork:
     # Note: The ipPools section cannot be modified post-install.
     bgp: Disabled
+    # Use kubernetes node InternalIP for VXLAN peer routing.
+    # This avoids Calico using the wrong IP when firstFound picks up an unexpected interface.
+    nodeAddressAutodetectionV4:
+      kubernetes: NodeInternalIP
     ipPools:
     - cidr: {{ kubernetes_pod_subnet }}
-      encapsulation: VXLANCrossSubnet
+      # Use VXLAN (always, not just cross-subnet) because Azure NICs do not have
+      # IP forwarding enabled by default: unencapsulated cross-node pod traffic
+      # is dropped by the Azure SDN when the destination is a pod IP.
+      encapsulation: VXLAN
       natOutgoing: Enabled
       nodeSelector: all()
 ---

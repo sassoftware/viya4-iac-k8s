@@ -1,0 +1,104 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Supported operating systems:
+#   - Ubuntu 22.04 LTS (cgroup v2 default)
+#   - Ubuntu 24.04 LTS (cgroup v2 default)
+#
+# Kubernetes 1.35 drops cgroup v1 support. Ubuntu 20.04 and older use
+# cgroup v1 by default and are NOT supported with Kubernetes >= 1.35.
+---
+- name: Verify OS supports cgroup v2 (required for Kubernetes 1.35+)
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: Unsupported OS detected: {{ ansible_distribution }} {{ ansible_distribution_version }}.
+      Kubernetes 1.35+ requires cgroup v2. Supported OSes: Ubuntu 22.04/24.04.
+      cgroup v2 may not be active — the common role will attempt to enable it via GRUB,
+      but results are not guaranteed.
+  when:
+    - not (ansible_distribution == "Ubuntu" and
+           ansible_distribution_version in ["22.04", "24.04"])
+  tags:
+    - install
+    - update
+
+- name: OS cgroup v2 check passed
+  ansible.builtin.debug:
+    msg: "OS cgroup v2 check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_version in ["22.04", "24.04"]
+  tags:
+    - install
+    - update
+
+- name: Configure partition for Ubuntu 22.04 LTS Operating System
+  ansible.builtin.set_fact:
+    partition_number: 2
+  when:
+    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
+  tags:
+    - install
+    - update
+
+- name: Expand Root Partition - growpart
+  ansible.builtin.command: "growpart /dev/sda {{ partition_number }}" # CentOS - 1 # Ubuntu - 2
+  register: grow_result
+  failed_when: grow_result.rc >= 2
+  tags:
+    - install
+
+#
+# NOTE: This command must match the disk type of your system when
+#       using vSphere or any virtual vm's
+#
+- name: Expand Root File System - xfs_grow
+  ansible.builtin.command: "xfs_growfs -d /"
+  tags:
+    - install
+
+- name: Set owner and group for Ubuntu OS
+  ansible.builtin.set_fact:
+    owner: nobody
+    group: nogroup
+  tags:
+    - install
+    - update
+
+- name: Create /mnt/sas/volumes directory
+  ansible.builtin.file:
+    path: /mnt/sas/volumes
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: "0777"
+  ignore_errors: true
+  tags:
+    - install
+    - update
+
+#
+# Create local-static-provisioner items for later use
+#
+
+# Copy script
+- name: Copy link creation script
+  ansible.builtin.copy:
+    src: ./files/link_devs.sh
+    dest: /tmp/link_devs.sh
+    owner: root
+    group: root
+    mode: "0700"
+  tags:
+    - install
+
+# TODO: Add code here to add partitions for disks
+#       that are not going to be used for local-static
+#       storage class storage
+
+# Run script
+- name: Run link creation script
+  ansible.builtin.shell: |
+    /tmp/link_devs.sh
+  tags:
+    - install

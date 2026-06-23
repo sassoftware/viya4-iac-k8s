@@ -1,0 +1,25 @@
+# AWS cloud provider configuration template
+# Placeholder for future AWS implementation
+#
+# To implement, configure:
+# - AWS credentials (access key, secret key)
+# - AWS region and VPC
+# - Network Load Balancer settings
+# - IAM roles and policies
+
+# Example structure (not yet implemented):
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: aws-cloud-provider
+#   namespace: kube-system
+# type: Opaque
+# stringData:
+#   cloud-config: |
+#     [Global]
+#     Zone={{ aws_zone }}
+#     VPC={{ aws_vpc_id }}
+#     SubnetID={{ aws_subnet_id }}
+#     SecurityGroupID={{ aws_security_group_id }}
+#     RoleARN={{ aws_iam_role_arn }}
+#     UseInstanceRoleCredentials=true

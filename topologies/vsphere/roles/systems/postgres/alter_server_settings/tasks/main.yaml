@@ -1,0 +1,27 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+- name: Create PostgreSQL server settings script
+  ansible.builtin.shell: |
+    rm -f /tmp/postgres_system.psql && touch /tmp/postgres_system.psql
+  tags:
+    - install
+    - update
+
+# This should be able to support any other PostgreSQL server settings
+# but noting that is an experimental feature
+- name: Update PostgreSQL server settings script
+  ansible.builtin.shell: |
+    echo 'ALTER SYSTEM SET {{ item | replace("postgres_system_setting_", "") }} = {{ vars[item] }};' >> /tmp/postgres_system.psql
+  with_items: "{{ lookup('ansible.builtin.varnames', '^postgres_system_setting_.+', wantlist=True) }}"
+  tags:
+    - install
+    - update
+
+- name: Apply PostgreSQL server settings script
+  ansible.builtin.shell: |
+    psql -f /tmp/postgres_system.psql
+  tags:
+    - install
+    - update

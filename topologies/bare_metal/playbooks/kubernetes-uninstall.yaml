@@ -1,0 +1,28 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# Compute nodes
+- hosts: k8s_node
+  name: Kubernetes Uninstall - Compute Nodes
+  become: true
+  become_user: root
+  serial: 1
+  roles:
+    - { role: kubernetes/node/removal }
+
+# Control plane
+- hosts: k8s_control_plane
+  name: Kubernetes Uninstall - Control Plane
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/control_plane/removal }
+
+# Clean up toolbox items
+- hosts: k8s
+  name: Kubernetes Uninstall - Toolbox Items
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/toolbox }

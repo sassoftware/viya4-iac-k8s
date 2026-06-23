@@ -2,16 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-- name: Verify Ubuntu version is supported
-  ansible.builtin.assert:
-    that:
-      - ansible_distribution == "Ubuntu"
-      - ansible_distribution_version in ["22.04", "24.04"]
-    fail_msg: "Unsupported OS: {{ ansible_distribution }} {{ ansible_distribution_version }}. Only Ubuntu 22.04 and 24.04 are supported."
-    success_msg: "OS version check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
-  tags:
-    - install
-    - update
+# Supported: Ubuntu 22.04/24.04 and Rocky Linux 9 / RHEL 9
 
 - name: Add ssh keys - root user
   ansible.posix.authorized_key:
@@ -37,22 +28,25 @@
     - install
     - update
 
-- name: Update OS
+- name: Update OS (bare_metal only)
   ansible.builtin.package:
     name: '*'
     state: latest
-    update_cache: true # Proxied command for apt : apt-get update
+    update_cache: true
   when:
-    - ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04" or ansible_distribution_version == "22.04")
     - deployment_type == "bare_metal"
   tags:
     - install
     - update
 
-- name: Enable cgroup v2 # https://rootlesscontaine.rs/getting-started/common/cgroup2/#enabling-cgroup-v2
+# ---- cgroup v2 -------------------------------------------------------------
+# https://rootlesscontaine.rs/getting-started/common/cgroup2/#enabling-cgroup-v2
+
+- name: Enable cgroup v2 (Debian/Ubuntu — update-grub)
   vars:
     option: systemd.unified_cgroup_hierarchy
     value: "1"
+  when: ansible_os_family == "Debian"
   tags:
     - install
   block:
@@ -83,8 +77,54 @@
         group: root
         mode: "0644"
 
-    - name: Update GRUB
+    - name: Update GRUB (Debian)
       ansible.builtin.command: update-grub
+
+- name: Enable cgroup v2 (RHEL/Rocky — grub2-mkconfig)
+  vars:
+    option: systemd.unified_cgroup_hierarchy
+    value: "1"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+  block:
+    - name: Retrieve contents of /etc/default/grub
+      ansible.builtin.command: cat /etc/default/grub
+      register: grub_content
+      changed_when: false
+
+    - name: Retrieve existing GRUB_CMDLINE_LINUX options, if any
+      set_fact:
+        grub_cmdline_original: "{{ grub_content.stdout | regex_search('^GRUB_CMDLINE_LINUX=\"([^\"]*)\"$', '\\1', multiline=True) }}"
+
+    - name: Set {{ option }}={{ value }} if option previously disabled
+      set_fact:
+        grub_cmdline_updated: "{{ grub_cmdline_original.0 | default('') | replace(option + '=0', option + '=' + value) }}"
+
+    - name: Adding {{ option }}={{ value }} if option not present
+      set_fact:
+        grub_cmdline_updated: '{{ (grub_cmdline_updated + " " + option + "=" + value) | trim }}'
+      when: 'option not in grub_cmdline_updated'
+
+    - name: Adding updated GRUB_CMDLINE_LINUX to /etc/default/grub file
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX='
+        line: 'GRUB_CMDLINE_LINUX="{{ grub_cmdline_updated }}"'
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Update GRUB (RHEL/Rocky)
+      ansible.builtin.shell: |
+        if [ -d /sys/firmware/efi ]; then
+          grub2-mkconfig -o /boot/efi/EFI/rocky/grub.cfg 2>/dev/null || \
+          grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg 2>/dev/null || true
+        else
+          grub2-mkconfig -o /boot/grub2/grub.cfg 2>/dev/null || true
+        fi
+
+# ---- CPU/memory cgroup delegation -----------------------------------------
 
 - name: Enable CPU, CPUSET, and I/O delegation for non-root users
   tags:
@@ -103,29 +143,7 @@
           [Service]
           Delegate=cpu cpuset io memory pids
 
-# - name: Disable the firewalld - for RHEL based operating systems
-#   systemd:
-#     name: firewalld
-#     enabled: no
-#     state: stopped
-#   tags:
-#     - install
-
-# - name: Disable SELinux - for RHEL based operating systems
-#   shell: |
-#     /usr/sbin/setenforce 0
-#     /usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-#     exit 0
-#   tags:
-#     - install
-
-# - name: Install openshift pip module
-#   pip:
-#     name: openshift
-#   vars:
-#     ansible_python_interpreter: /usr/bin/python3
-#   tags:
-#     - install
+# ---- Common packages ------------------------------------------------------
 
 - name: Install required packages for every machine
   ansible.builtin.package:
@@ -135,6 +153,39 @@
     packages:
       - sshpass
       - conntrack
+  tags:
+    - install
+    - update
+
+- name: Install ipvsadm for IPVS load balancing support
+  ansible.builtin.package:
+    name: ipvsadm
+    state: present
+  tags:
+    - install
+    - update
+
+- name: Add IPVS kernel module load file
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/ipvs.conf
+    mode: "0644"
+    content: |
+      ip_vs
+      ip_vs_rr
+      ip_vs_wrr
+      ip_vs_sh
+      nf_conntrack
+  tags:
+    - install
+    - update
+
+- name: Load IPVS kernel modules
+  ansible.builtin.shell: |
+    modprobe ip_vs
+    modprobe ip_vs_rr
+    modprobe ip_vs_wrr
+    modprobe ip_vs_sh
+    modprobe nf_conntrack
   tags:
     - install
     - update
@@ -151,6 +202,8 @@
 
 - name: Execute helm installation script
   ansible.builtin.command: /tmp/get-helm-3 --version v{{ kubernetes_helm_version }} --no-sudo
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
   tags:
     - install
     - update
@@ -179,6 +232,17 @@
   ansible.builtin.lineinfile:
     path: /etc/hosts.allow
     line: 'rpcbind : ALL'
+    create: true
+  tags:
+    - install
+    - update
+
+- name: Add VIP FQDN to /etc/hosts (no DNS entry exists)
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "{{ kubernetes_vip_fqdn }}"
+    line: "{{ kubernetes_vip_ip }}  {{ kubernetes_vip_fqdn }}"
+    state: present
   tags:
     - install
     - update

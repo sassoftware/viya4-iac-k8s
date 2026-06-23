@@ -2,48 +2,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 locals {
+  deployment_type_normalized = lower(var.deployment_type)
+  is_azure                   = local.deployment_type_normalized == "azure"
+  is_openstack               = local.deployment_type_normalized == "openstack"
+  is_bare_metal              = local.deployment_type_normalized == "bare_metal"
+  is_vsphere                 = local.deployment_type_normalized == "vsphere"
 
-  # Systems
-
-  # Kubernetes
-  cluster_name = "${var.prefix}-oss"
-  
-  # Calculate DNS IP as the 10th IP in the service subnet
-  cluster_dns_ip = cidrhost(var.cluster_service_subnet, 10)
-
-  ## User defined node_pools
-  node_pools  = var.node_pools == null ? {} : { for k, v in var.node_pools : k => merge(var.node_pool_defaults, v, ) }
-  node_labels = var.node_pools == null ? {} : { for k, v in local.node_pools : k => [for lk, lv in v.node_labels : "${lk}=${lv}"] }
-  node_taints = var.node_pools == null ? {} : { for k, v in local.node_pools : k => v.node_taints }
-
-  ## Control plane nodes
-  control_plane_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "control_plane" }
-  control_plane_ips   = flatten(sort(flatten([for item in values(module.control_plane) : values(item)])))
-
-  ## System nodes
-  system_nodes = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if k == "system" }
-  # system_node_ips = flatten(sort(flatten([for item in values(module.system) : values(item)]))) not used, ref for future use
-
-  ## Nodes
-  nodes    = local.node_pools == null ? {} : { for k, v in local.node_pools : k => v if(k != "control_plane" && k != "system") }
-  node_ips = flatten(sort(flatten([for item in values(merge(module.system, module.node)) : values(item)])))
-
-  ## Load Balancer addresses and data items for kube-vip and MetalLB
-  loadbalancer_addresses = var.cluster_lb_addresses != null ? length(var.cluster_lb_addresses) > 0 ? [for v in var.cluster_lb_addresses : v] : null : null
-
-  # PostgreSQL
-  postgres_servers = var.postgres_servers == null ? {} : { for k, v in var.postgres_servers : k => merge(var.postgres_server_defaults, v, ) }
-
-  postgres_outputs = length(local.postgres_servers) != 0 ? { for k, v in local.postgres_servers :
-    k => {
-      "server_name" : "${local.cluster_name}-${k}-pgsql",
-      "fqdn" : "${local.cluster_name}-${k}-pgsql.${var.cluster_domain}",
-      "admin" : v.administrator_login,
-      "password" : v.administrator_password,
-      "server_port" : "5432",
-      "ssl_enforcement_enabled" : v.server_ssl == "off" ? false : true
-      "internal" : false
-    }
-  } : {}
-
+  # active_module resolves the single instantiated topology module so that
+  # outputs.tf can reference outputs uniformly as local.active_module.<output>
+  # instead of repeating the four-way ternary chain for every output.
+  # one() returns the sole element of a count=1 list, or null for count=0.
+  active_module = (
+    local.is_azure      ? one(module.azure)      :
+    local.is_openstack  ? one(module.openstack)  :
+    local.is_bare_metal ? one(module.bare_metal) :
+    local.is_vsphere    ? one(module.vsphere)    : null
+  )
 }

@@ -6,7 +6,6 @@
 # Installing Kubernetes tooling
 #
 
-# Only applicable for releases older than Ubuntu 22.04
 - name: Create /etc/apt/keyrings directory
   ansible.builtin.file:
     path: /etc/apt/keyrings
@@ -14,7 +13,7 @@
     mode: "0755"
     owner: root
     group: root
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04")
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
@@ -35,24 +34,92 @@
     - install
     - update
 
-# Apply Kubernetes public signing key
-- name: Apply Kubernetes public signing key
+# Apply Kubernetes public signing key (Debian/Ubuntu)
+- name: Apply Kubernetes public signing key (Debian/Ubuntu)
   ansible.builtin.get_url:
     url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/Release.key"
     dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-# Add Kubernetes apt repository
-- name: Add Kubernetes apt repository
+# Add Kubernetes apt repository (Debian/Ubuntu)
+- name: Add Kubernetes apt repository (Debian/Ubuntu)
   ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
     state: present
     update_cache: true
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
+
+# ===== RHEL/Rocky: DNF-based Kubernetes install ============================
+
+- name: Add Kubernetes yum repository (RHEL/Rocky)
+  ansible.builtin.copy:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    mode: "0644"
+    content: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/rpm/
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/rpm/repodata/repomd.xml.key
+      exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Install kubelet, kubeadm, kubectl (RHEL/Rocky)
+  ansible.builtin.dnf:
+    name:
+      - "kubelet-{{ kubernetes_version }}"
+      - "kubeadm-{{ kubernetes_version }}"
+      - "kubectl-{{ kubernetes_version }}"
+    state: present
+    disable_excludes: kubernetes
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Install versionlock plugin (RHEL/Rocky)
+  ansible.builtin.package:
+    name: python3-dnf-plugin-versionlock
+    state: present
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Lock Kubernetes package versions (RHEL/Rocky)
+  ansible.builtin.command: dnf versionlock add kubelet kubeadm kubectl
+  when: ansible_os_family == "RedHat"
+  ignore_errors: true
+  tags:
+    - install
+
+- name: Enable kubelet service (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Remove kubelet, kubeadm, kubectl (RHEL/Rocky uninstall)
+  ansible.builtin.dnf:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: absent
+    disable_excludes: kubernetes
+  when: ansible_os_family == "RedHat"
+  tags:
+    - uninstall
 
 - name: Download crictl
   ansible.builtin.get_url:
@@ -113,17 +180,55 @@
     - install
     - update
 
+# Resolve kubernetes_full_version (always X.Y.Z) for package installation
+# Matches logic in kubeadm role to handle both "1.34" (minor) and "1.34.2" (full) formats
+- name: Detect whether kubernetes_version already includes a patch number
+  ansible.builtin.set_fact:
+    _toolbox_k8s_version_is_full: "{{ kubernetes_version | regex_search('^[0-9]+\\.[0-9]+\\.[0-9]+$') is not none }}"
+  tags:
+    - install
+
+- name: Look up latest available patch version for kubeadm (Debian, minor only)
+  ansible.builtin.shell: |
+    set -o pipefail
+    apt-cache madison kubeadm \
+      | awk '{print $3}' \
+      | grep -E "^{{ kubernetes_version | replace('.', '\\.') }}\\." \
+      | sort -V \
+      | tail -n1
+  args:
+    executable: /bin/bash
+  register: _toolbox_k8s_madison
+  changed_when: false
+  when:
+    - ansible_os_family == "Debian"
+    - not _toolbox_k8s_version_is_full
+  tags:
+    - install
+
+- name: Set kubernetes_full_version for toolbox package installation
+  ansible.builtin.set_fact:
+    _toolbox_kubernetes_full_version: >-
+      {%- if _toolbox_k8s_version_is_full -%}
+      {{ kubernetes_version }}
+      {%- else -%}
+      {{ (_toolbox_k8s_madison.stdout | default('')).split('-')[0] }}
+      {%- endif -%}
+  tags:
+    - install
+
 # Update apt package index and install kubelet, kubeadm, kubectl
 - name: Update apt package index and install kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - "kubelet={{ _toolbox_kubernetes_full_version }}*"
+      - "kubeadm={{ _toolbox_kubernetes_full_version }}*"
+      - "kubectl={{ _toolbox_kubernetes_full_version }}*"
     state: present
     update_cache: true
     allow_downgrade: true
     allow_change_held_packages: true
+  when: ansible_os_family == "Debian"
   tags:
     - install
 
@@ -136,6 +241,7 @@
     - kubelet
     - kubeadm
     - kubectl
+  when: ansible_os_family == "Debian"
   tags:
     - install
 
@@ -147,19 +253,33 @@
     - kubelet
     - kubeadm
     - kubectl
+  when: ansible_os_family == "Debian"
+  tags:
+    - uninstall
+
+- name: Resolve kubernetes_full_version for uninstall (if not already set)
+  ansible.builtin.set_fact:
+    _toolbox_kubernetes_full_version: >-
+      {%- if kubernetes_version | regex_search('^[0-9]+\\.[0-9]+\\.[0-9]+$') -%}
+      {{ kubernetes_version }}
+      {%- else -%}
+      {{ (lookup('pipe', 'apt-cache madison kubeadm 2>/dev/null | awk '\''{print $3}\'' | grep -E "^' + (kubernetes_version | replace('.', '\\.')) + '\\." | sort -V | tail -n1', wantlist=False)).split('-')[0] if ansible_os_family == "Debian" else kubernetes_version }}
+      {%- endif -%}
+  when: _toolbox_kubernetes_full_version is not defined
   tags:
     - uninstall
 
 - name: Update apt package index and remove kubelet, kubeadm, kubectl
   ansible.builtin.apt:
     pkg:
-      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - "kubelet={{ _toolbox_kubernetes_full_version }}*"
+      - "kubeadm={{ _toolbox_kubernetes_full_version }}*"
+      - "kubectl={{ _toolbox_kubernetes_full_version }}*"
     state: absent
     update_cache: true
     allow_change_held_packages: true
     allow_downgrade: true
+  when: ansible_os_family == "Debian"
   tags:
     - uninstall
 

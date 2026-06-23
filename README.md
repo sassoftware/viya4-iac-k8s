@@ -1,203 +1,394 @@
-# SAS Viya 4 Infrastructure as Code (IaC) for Open Source Kubernetes
+# SAS Viya 4 Infrastructure as Code — Upstream Kubernetes (Multi-Topology)
 
-# Table of Contents
+Automates provisioning and configuration of production-grade Kubernetes clusters
+for SAS Viya 4 deployments across **OpenStack (HPOS)**, **VMware vSphere**,
+**Microsoft Azure**, and **Bare Metal** environments.
 
-- [Kubernetes Support](#kubernetes-support)
-- [Release Notes](#release-notes)
+---
+
+## Repository Overview
+
+This repository implements the **topology dispatcher pattern** — a single codebase
+that supports four  platforms without any shared mutable state between them.
+
+Each  platform lives in its own fully self-contained directory under `topologies/`
+with its own Terraform provider, variables, Ansible playbooks, and OS-level roles.
+A thin root `main.tf` acts as a dispatcher but is **not invoked by the scripts** —
+both `deploy.sh` and `oss-k8s.sh` call `terraform -chdir=topologies/<system>` directly,
+so only the active topology's provider is ever loaded or authenticated.
+
+Shared Kubernetes bootstrap logic (kubeadm, CNI, storage, metrics) lives in
+`roles/kubernetes/` at the repo root and is inherited by all topologies via the
+dual `roles_path = ./roles:../../roles` setting in each topology's `ansible.cfg`.
+A bug fix in a shared role automatically benefits all four topologies simultaneously.
+
+| Topology | Cloud | Entry Point | Terraform Provisioning |
+|---|---|---|---|
+| `openstack` | OpenStack / HPOS | `scripts/oss-k8s.sh` | ✅ Nova VMs + Neutron networking |
+| `vsphere` | VMware vSphere | `scripts/oss-k8s.sh` | ✅ vSphere VMs |
+| `azure` | Microsoft Azure | `scripts/deploy.sh` | ✅ Azure VMs + VNet + NSG |
+| `bare_metal` | Pre-existing VMs | `scripts/oss-k8s.sh` | ❌ Ansible-only (no Terraform) |
+
+---
+
+## Table of Contents
+
 - [Overview](#overview)
+- [Architecture](#architecture)
+- [Repository Structure](#repository-structure)
+- [Supported Topologies](#supported-topologies)
 - [Prerequisites](#prerequisites)
-  - [Machines](#machines)
-    - [VMware vSphere](#vmware-vsphere)
-    - [Physical or Virtual Machines](#physical-or-virtual-machines)
-  - [Networking](#networking)
-  - [Technical Prerequisites](#technical-prerequisites)
-    - [Script Requirements](#script-requirements)
-    - [Docker Requirements](#docker-requirements)
-- [Getting Started](#getting-started)
-  - [Clone This Project](#clone-this-project)
-  - [Customize Input Values](#customize-input-values)
-    - [vSphere/vCenter Machines](#vspherevcenter-machines)
-    - [SAS Viya IaC Configuration Files](#sas-viya-iac-configuration-files)
-  - [Create and Manage Cluster Resources](#create-and-manage-cluster-resources)
-- [Contributing](#contributing)
-- [License](#license)
-- [Additional Resources](#additional-resources)
+- [Quick Start](#quick-start)
+- [Cluster Creation Flow](#cluster-creation-flow)
+- [What Gets Created](#what-gets-created)
+- [Teardown](#teardown)
+- [Docker Usage](#docker-usage)
+- [Additional Documentation](#additional-documentation)
 
-## Kubernetes Support
-At this time, the viya4-iac-k8s project supports Kubernetes versions 1.31 through 1.33.
-
-## Release Notes
-
-- A problem with the implementation of the default storage class and its usage of an NFS server as its
-backing store has been addressed with [this issue](https://github.com/sassoftware/viya4-iac-k8s/issues/6).
+---
 
 ## Overview
 
-This project is an **optional** tool to automate cluster provisioning for **VMware vSphere/vCenter and bare-metal** environments. It contains Terraform scripts to provision cloud infrastructure resources for VMware, and it contains Ansible files to apply the elements of a Kubernetes cluster that are required to deploy SAS Viya 4 product offerings. Here is a list of resources that this project can create:
+This project automates the full lifecycle of a SAS Viya 4 Kubernetes cluster:
 
->- An open source [Kubernetes](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) cluster with the following components:
-  >>- Container Runtime Interface (CRI): [containerd](https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd)
-  >>- Container Network Interface (CNI): [Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
-  >>- Cluster-level virtual IP address (VIP): [kube-vip](https://kube-vip.io/)
-  >>- Cluster load balancer: [kube-vip](https://kube-vip.io/docs/usage/cloud-provider/) or [MetalLB](https://metallb.universe.tf/configuration/#layer-2-configuration)
->- Nodes with required labels and taints
->- Infrastructure to deploy the SAS Viya CAS server in SMP or MPP mode
+```
+Credentials → terraform apply (VMs) → ansible setup (OS) → ansible install (K8s) → kubeconfig
+```
 
-[<img src="./docs/images/viya4-iac-k8s-diag.png" alt="Architecture Diagram" width="750"/>](./docs/images/viya4-iac-k8s-diag.png?raw=true)
+| Phase | Tool | What It Does |
+|---|---|---|
+| `apply` | Terraform | Provisions VMs, disks, networks, generates `inventory` + `ansible-vars.yaml` |
+| `setup` | Ansible | OS packages, sysctl, SSH keys, containerd, Helm |
+| `install` | Ansible | kubeadm init, CNI (Calico), kube-vip, node join, kubeconfig fetch |
 
-### Scope and Limitations
+After `apply setup install` completes, a ready-to-use kubeconfig is written to the
+workspace directory. Use it immediately with `kubectl`.
 
-> **Important**: This project provisions upstream open-source Kubernetes clusters for **VMware vSphere/vCenter** and **bare-metal (physical/VM)** environments only. It is **not** required to obtain SAS support for CNCF-conformant Kubernetes distributions.
->
-> As of SAS Viya platform 2026.05, SAS provides standard support for any [CNCF-conformant Kubernetes distribution](https://www.cncf.io/certification/software-conformance/). Customers using other CNCF-certified distributions (e.g., managed Kubernetes services, other on-premises distributions) do **not** need to use this IaC tooling — they can provision clusters using their preferred methods and still receive standard SAS support.
->
-> This project is one optional tool for a specific subset of deployment scenarios, not an enabler or prerequisite for broader CNCF Kubernetes support.
+---
 
-To learn about all phases and options of the SAS Viya platform deployment process, see [Getting Started with SAS Viya and Open Source Kubernetes](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopscon&docsetTarget=p1qungdpndaksyn156ng6duptma0.htm) in _SAS&reg; Viya&reg; Platform Operations_.
+## Architecture
 
-Once the resources are provisioned, use the [viya4-deployment](https://github.com/sassoftware/viya4-deployment) project to deploy SAS Viya platform in your cloud environment. For more information about SAS Viya platform requirements and documentation for the deployment process, refer to [SAS Viya Platform Operations](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopswn&docsetTarget=titlepage.htm).
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       User                                  │
+│                                                             │
+│   scripts/deploy.sh          scripts/oss-k8s.sh             │
+│   (SYSTEM=azure)             (SYSTEM=openstack /            │
+│                               bare_metal / vsphere)         │
+└──────────┬────────────────────────────┬─────────────────────┘
+           │ terraform                  │ terraform
+           │ -chdir=topologies/azure    │ -chdir=topologies/<SYSTEM>
+           │                            │
+           ▼                            ▼
+    ┌──────────┐  ┌──────────┐  ┌─────────────┐  ┌──────────┐
+    │  azure/  │  │openstack/│  │ bare_metal/ │  │ vsphere/ │
+    │ topology │  │ topology │  │  topology   │  │ topology │
+    │          │  │          │  │             │  │          │
+    │ provider │  │ provider │  │  local      │  │ provider │
+    │ azurerm  │  │openstack │  │  only       │  │ vsphere  │
+    │          │  │          │  │             │  │          │
+    │versions: │  │versions: │  │ versions:   │  │versions: │
+    │azurerm + │  │openstack │  │ local only  │  │vsphere + │
+    │local     │  │+ local   │  │             │  │local     │
+    │          │  │          │  │             │  │          │
+    │VM modules│  │VM modules│  │ inventory + │  │VM modules│
+    │azure_net │  │openstack │  │ ansible-vars│  │vm/server │
+    │azure_vm  │  │-vm       │  │ from IPs    │  │          │
+    └────┬─────┘  └────┬─────┘  └──────┬──────┘  └────┬─────┘
+         │             │               │               │
+         └─────────────┴───────────────┴───────────────┘
+                                │
+                    ┌───────────▼────────────────────────┐
+                    │   Ansible (per topology)           │
+                    │                                    │
+                    │  ANSIBLE_CONFIG →                  │
+                    │    topologies/<topo>/ansible.cfg   │
+                    │  (set at runtime by script /       │
+                    │   entrypoint.sh, never baked in)   │
+                    │                                    │
+                    │  roles_path = ./roles:../../roles  │
+                    │  │                                 │
+                    │  ├── ./roles/systems/<topo>/       │
+                    │  │     └── topology-specific       │
+                    │  │         OS roles                │
+                    │  └── ../../roles/kubernetes/       │
+                    │        └── shared K8s bootstrap    │
+                    │            roles (all topologies)  │
+                    │                                    │
+                    │  playbooks/                        │
+                    │    systems-install.yaml            │
+                    │    kubernetes-install.yaml         │
+                    │    kubernetes-uninstall.yaml       │
+                    └────────────────────────────────────┘
+```
 
-This project supports infrastructure that is built on **physical machines** ("bare metal" machines or Linux VMs) or on **VMware vSphere or vCenter** machines. If you need to create a cluster in [AWS](https://github.com/sassoftware/viya4-iac-aws), [Microsoft Azure](https://github.com/sassoftware/viya4-iac-azure/), or [GCP](https://github.com/sassoftware/viya4-iac-gcp/), use the appropriate SAS Viya IaC repository to perform the associated tasks.
+> **Note:** Root `main.tf` exists as an alternative entry point for direct
+> `terraform apply` from the repo root, but is **not invoked by the scripts**.
+> Scripts call `terraform -chdir=topologies/<system>` directly so only the
+> active topology's provider is loaded and authenticated.
+
+---
+
+## Repository Structure
+
+```
+viya4-iac-k8s/
+├── scripts/
+│   ├── oss-k8s.sh              ← Orchestration: OpenStack / vSphere / bare metal
+│   ├── deploy.sh               ← Orchestration: Azure
+│   └── lib/
+│       └── common.sh           ← Shared credential helpers (sourced by both scripts)
+│
+├── topologies/
+│   ├── openstack/              ← OpenStack (HPOS) — Terraform + Ansible
+│   │   ├── main.tf             ← OpenStack VM provisioning
+│   │   ├── variables.tf        ← All input variables
+│   │   ├── locals.tf           ← Derived values
+│   │   ├── outputs.tf          ← Cluster outputs
+│   │   ├── versions.tf         ← Provider requirements
+│   │   ├── provider.tf.example ← Copy to provider.tf and fill in credentials
+│   │   ├── ansible.cfg         ← Ansible config (roles_path includes shared roles)
+│   │   ├── requirements.yml    ← Galaxy collections (topology-local copy)
+│   │   ├── sample-input-openstack.tfvars
+│   │   ├── modules/openstack-vm/   ← Nova instance + floating IP module
+│   │   ├── playbooks/          ← kubernetes-install / uninstall / systems-install
+│   │   ├── roles/systems/      ← OS-level Ansible roles
+│   │   └── templates/          ← inventory.tmpl, ansible-vars.yaml.tmpl
+│   │
+│   ├── vsphere/                ← VMware vSphere — Terraform + Ansible
+│   ├── azure/                  ← Microsoft Azure — Terraform + Ansible
+│   └── bare_metal/             ← Physical/existing VMs — Ansible only
+│
+├── roles/
+│   └── kubernetes/             ← Shared Kubernetes roles (all topologies)
+│       ├── common/             ← Pre-flight checks, package installs
+│       ├── control_plane/      ← kubeadm init, kube-vip, CNI
+│       ├── node/               ← Worker node join
+│       ├── storage/            ← NFS storage class
+│       └── sas-iac-buildinfo/  ← Cluster build metadata ConfigMap
+│
+├── docker/
+│   ├── Dockerfile              ← All tooling pre-installed (terraform, ansible, helm)
+│   └── entrypoint.sh           ← Routes SYSTEM= to correct script
+│
+├── files/tools/                ← Helper scripts baked into Docker image
+├── tests/                      ← Terraform variable validation tests
+├── requirements.txt            ← Python deps: ansible-core, kubernetes, openshift
+├── requirements.yml            ← Ansible Galaxy collections (single source of truth)
+├── terraform.tfvars            ← YOUR cluster config (create from topology sample)
+└── docs/
+    ├── DEPLOYMENT_GUIDE.md     ← Full deployment reference
+    └── ARCHITECTURE_DIAGRAMS.md
+```
+
+Each topology under `topologies/` is a **fully self-contained Terraform root module**
+with its own `provider.tf`, `variables.tf`, `playbooks/`, and `roles/systems/`.
+The shared `roles/kubernetes/` directory at the repo root is used by all topologies
+via `roles_path = ./roles:../../roles` in each `ansible.cfg`.
+
+---
+
+## Supported Topologies
+
+| Topology | Script | Terraform Dir | VMs Provisioned |
+|---|---|---|---|
+| `openstack` | `scripts/oss-k8s.sh` | `topologies/openstack/` | ✅ OpenStack Nova + Neutron |
+| `vsphere` | `scripts/oss-k8s.sh` | `topologies/vsphere/` | ✅ VMware vSphere |
+| `azure` | `scripts/deploy.sh` | `topologies/azure/` | ✅ Azure VMs |
+| `bare_metal` | `scripts/oss-k8s.sh` | _(none — Ansible only)_ | ❌ Pre-existing machines |
+
+---
 
 ## Prerequisites
 
-Use of these tools requires operational knowledge of the following technologies:
+### Tooling
 
-- Systems
-- Networking
-- Bash
-- [Terraform](https://www.terraform.io/intro/index.html)
-- [Docker](https://www.docker.com/)
-- [Ansible](https://docs.ansible.com/ansible/latest/user_guide/index.html#getting-started)
-- [Helm](https://helm.sh/)
-- [kube-vip](https://kube-vip.io/)
-- [MetalLB](https://metallb.universe.tf/)
-- [Kubernetes](https://kubernetes.io/docs/concepts/)
+| Tool | Minimum Version |
+|---|---|
+| Terraform | ≥ 1.10.0 |
+| Python 3 | ≥ 3.8 |
+| ansible-core | 2.16.4 (via `requirements.txt`) |
+| OpenStack CLI | latest (OpenStack topology only) |
 
-### Machines
+Install all Python + Ansible dependencies:
+```bash
+pip install -r requirements.txt
+ansible-galaxy collection install -r requirements.yml
+```
 
-The tools in this repository can create systems as needed **only** if you are running on VMware vSphere or vCenter. If you are not using vSphere or vCenter, you must supply your own machines (either VMs or physical machines).
+### SSH Keypair
 
-Regardless of which method you choose, the machines in your deployment must meet the minimal requirements listed below:
-
-- Machines in your target environment are running **Ubuntu Linux LTS 24.04** or **22.04**
-- Machines have a default user account with password-less `sudo` capabilities
-- At least 3 machines for the control plane nodes in your cluster
-- At least 6 machines for the application nodes in your cluster
-- 1 machine to serve as a jump server
-- 1 machine to serve as an NFS server
-- (Optional) At least 1 machine to host a PostgreSQL server (for the SAS Infrastructure Data Server component) if you plan to use an external database server with your cluster.
-
-  You can instead use the internal PostgreSQL server, which is deployed by default on a node in the cluster.
-
-> **NOTE**: Remember that these machines are not managed by a provider or by automated tooling. The nodes that you add here dictate the capacity of the cluster. If you need to increase or decrease the number of nodes in the cluster, you must perform the task manually. There is **NO AUTOSCALING** with this setup.
-
-#### VMware vSphere
-
-Deployment with vSphere requires a Linux image that can be used as the basis for your machines. This image requires the following minimal settings:
-
-- Ubuntu Linux LTS 24.04 or 22.04 minimal installation
-- 2 CPUs
-- 4 GB of memory
-- 8 GB disk, thin provisioned
-- Root file system mounted at `/dev/sd2`
-
-> **NOTE**: These items are all automatically adjusted to suit each individual deployment. These values are only the minimum starting point. They will be changed as components are created.
-
-#### Physical or Virtual Machines
-
-In addition to supporting VMware, this project also works with existing physical or virtual machines. You will need root access to these machines, and you will need to pass this along, following the sample [inventory](./examples/bare-metal/sample-inventory) and [ansible-vars.yaml](./examples/bare-metal/sample-ansible-vars.yaml) files that are provided in this repository.
-
-### Networking
-
-The following items are required to support the systems that are created in your environment:
-
-- A network that is routable by all the target machines
-- A static or assignable IP address for each target machine
-- At least 3 floating IP addresses for the following components:
-  - The Kubernetes cluster virtual IP address
-  - The load balancer IP address
-  - A CIDR block or range of IP addresses for additional load balancers. These are used when exposing user interfaces for various SAS product offerings.
-
-A more comprehensive description of these items and their requirements can be found in the [Requirements](./docs/REQUIREMENTS.md) document.
-
-### Technical Prerequisites
-
-This project supports the following options for running the scripts in this repository to automate cluster provisioning:
-
-- Running the bash `oss-k8s.sh` script on your local machine
-- Using a Docker container to run the `oss-k8s.sh` script
-
-   For more information, see [Docker Usage](./docs/user/DockerUsage.md). Using Docker to run the Terraform and Ansible scripts is recommended.
-
-#### Script Requirements
-
-View the [Dependencies Documentation](./docs/user/Dependencies.md) to see the required software that needs to installed in order to run the SAS Viya IaC tools here on your local system
-
-#### Docker Requirements
-
-If you are using the predefined dockerfile in this project in order to run the script, you need only an instance of [Docker](https://docs.docker.com/get-docker/).
-
-## Getting Started
-
-When you have prepared your environment with the prerequisites, you are ready to obtain and customize the Terraform scripts that will set up your Kubernetes cluster.
-
-### Clone This Project
-
-Run the following commands from a terminal session:
+Ansible uses SSH key auth to connect to all cluster nodes. Generate a dedicated keypair:
 
 ```bash
-# clone this repo
-git clone -b <release-version-tag> https://github.com/sassoftware/viya4-iac-k8s
-
-# move to the project directory
-cd viya4-iac-k8s
+mkdir -p ~/.ssh/oss
+ssh-keygen -t ed25519 -f ~/.ssh/oss/my-keypair -N "" -C "viya4-iac-k8s"
+chmod 700 ~/.ssh/oss && chmod 600 ~/.ssh/oss/my-keypair
 ```
-**NOTE:** To obtain a tagged release version of this project, always refer to the desired release version tag when cloning this repository as shown above. Alternatively, you can `git checkout <tag>` the tagged release version if you've already cloned the repository without a tag. 
 
-You can find the latest release version in the [releases page](https://github.com/sassoftware/viya4-iac-k8s/releases).
+Upload `~/.ssh/oss/my-keypair.pub` to your cloud platform, then set
+`openstack_ssh_keypair` (or `control_plane_ssh_key_name`) in `terraform.tfvars`
+to match the uploaded keypair name.
 
-### Customize Input Values
+---
 
-#### vSphere/vCenter Machines
+## Quick Start
 
-Terraform scripts require variable definitions as input. Review the variables files and modify default values to meet your requirements. Create a file named `terraform.tfvars` in order to customize the input variable values that are documented in the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
+### Step 1 — Copy the sample tfvars for your topology
 
-To get started, you can copy one of the example variable definition files that are provided in the `./examples` folder. For more information about the variables that are declared in each file, refer to the [CONFIG-VARS.md](docs/CONFIG-VARS.md) file.
+```bash
+# OpenStack
+cp topologies/openstack/sample-input-openstack.tfvars terraform.tfvars
 
-You have the option to specify variable definitions that are not included in `terraform.tfvars` or to use a variable definition file other than `terraform.tfvars`. See [Advanced Terraform Usage](docs/user/AdvancedTerraformUsage.md) for more information.
+# vSphere
+cp topologies/vsphere/sample-input-vsphere.tfvars terraform.tfvars
 
-#### SAS Viya IaC Configuration Files
+# Azure
+cp topologies/azure/sample-input-azure.tfvars terraform.tfvars
 
-In order to use this repository, modify the [inventory file](./examples/bare-metal/sample-inventory) to provide information about the machine targets for the SAS Viya platform deployment.
+# Bare Metal
+cp topologies/bare_metal/sample-input-bare-metal.tfvars terraform.tfvars
+```
 
-Modify the [ansible-vars.yaml file](./examples/bare-metal/sample-ansible-vars.yaml) to customize the configuration settings for your environment.
+### Step 2 — Edit terraform.tfvars
 
-### Create and Manage Cluster Resources
+Set at minimum:
+- `prefix` — cluster name prefix (cluster becomes `<prefix>-oss`)
+- `deployment_type` — `"openstack"`, `"vsphere"`, `"azure"`, or `"bare_metal"`
+- Cloud-specific settings (image, keypair, network, flavors/sizes)
+- `node_pools` — count and flavor for each workload class
 
-Create and manage the required cluster resources for your SAS Viya 4 deployment. Perform one of the following steps, based on whether you are using Docker:
+See the topology README for the full variable reference.
 
-- Run the [oss-k8s.sh](docs/user/ScriptUsage.md) script directly on your workstation
-- Start the [Docker container](docs/user/DockerUsage.md) (recommended)
+### Step 3 — Set credentials and run
 
-## Contributing
+```bash
+# OpenStack
+export $(grep -v '^#' ~/.openstack_creds.env | grep -v '^$' | xargs)
+export SYSTEM=openstack
+./scripts/oss-k8s.sh apply setup install
 
-> We welcome your contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to submit contributions to this project.
+# vSphere
+export VSPHERE_SERVER=vcenter.example.com VSPHERE_USER=admin VSPHERE_PASSWORD=xxx
+export SYSTEM=vsphere
+./scripts/oss-k8s.sh apply setup install
 
-## License
+# Azure
+export ARM_SUBSCRIPTION_ID=... ARM_TENANT_ID=... ARM_CLIENT_ID=... ARM_CLIENT_SECRET=...
+export SYSTEM=azure
+./scripts/deploy.sh apply setup install
 
-> This project is licensed under the [Apache 2.0 License](LICENSE).
+# Bare Metal (no apply step)
+export SYSTEM=bare_metal ANSIBLE_USER=rocky
+./scripts/oss-k8s.sh setup install
+```
 
-## Additional Resources
+---
 
-- [Terraform](https://www.terraform.io/)
-- [Ansible](https://docs.ansible.com/ansible/2.9/index.html)
-- [Docker](https://docs.docker.com/)
-- [Helm](https://helm.sh/)
-- [Kubernetes](https://kubernetes.io/)
-  - [Kubernetes - Docs](https://kubernetes.io/docs/home/)
-  - [Kubernetes - `kubeadm` Bootstrap guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/)
-  - [Kubernetes - CRI - Containerd](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime)
-  - [Kubernetes - CNI - Calico](https://kubernetes.io/docs/concepts/cluster-administration/networking/#calico)
-- [kube-vip](https://kube-vip.io/)
-- [MetalLB](https://metallb.universe.tf/)
+## Cluster Creation Flow
+
+```
+oss-k8s.sh apply setup install
+       │
+       ├─── apply ──────────────────────────────────────────────────────────────┐
+       │      │                                                                 │
+       │      ├─ [openstack only] allocate_vip_floating_ip                     │
+       │      │    └─ openstack floating ip create  (idempotent)              │
+       │      ├─ terraform -chdir=topologies/<SYSTEM> init                     │
+       │      ├─ terraform -chdir=topologies/<SYSTEM> apply                   │
+       │      │    └─ Creates: VMs, disks, security groups, inventory,        │
+       │      │                ansible-vars.yaml                               │
+       │      ├─ sleep 60  (OS boot time)                                     │
+       │      └─ [openstack only] patch_vip_allowed_pairs                     │
+       │           └─ Neutron PUT /ports/{id} allowed_address_pairs           │
+       │                                                                       │
+       ├─── setup ──────────────────────────────────────────────────────────────┤
+       │      │                                                                 │
+       │      ├─ pip install -r requirements.txt                               │
+       │      ├─ ansible-galaxy collection install -r requirements.yml        │
+       │      └─ ansible-playbook systems-install.yaml                        │
+       │           └─ roles/systems: packages, sysctl, SSH keys, containerd  │
+       │                                                                       │
+       └─── install ────────────────────────────────────────────────────────────┘
+              │
+              ├─ [openstack only] patch_vip_allowed_pairs  (idempotent re-run)
+              ├─ pip install -r requirements.txt
+              ├─ ansible-galaxy collection install -r requirements.yml
+              └─ ansible-playbook kubernetes-install.yaml
+                   └─ roles/kubernetes:
+                        common/      → container runtime, kubeadm, kubelet
+                        control_plane/init/primary   → kubeadm init + kube-vip
+                        control_plane/init/secondary → control plane join
+                        node/init    → worker node join
+                        cni/         → Calico CNI install
+                        storage/     → NFS storage class
+                        sas-iac-buildinfo/ → ConfigMap with deployment metadata
+```
+
+---
+
+## What Gets Created
+
+| File | Location | Description |
+|---|---|---|
+| `terraform.tfstate` | repo root | Terraform state — keep safe, back up |
+| `inventory` | repo root | Ansible inventory (node IPs + groups) |
+| `ansible-vars.yaml` | repo root | Ansible variables passed to all playbooks |
+| `<prefix>-oss-kubeconfig.conf` | repo root | Cluster admin kubeconfig |
+
+Access the cluster:
+```bash
+export KUBECONFIG=$(pwd)/<prefix>-oss-kubeconfig.conf
+kubectl get nodes -o wide
+```
+
+---
+
+## Teardown
+
+```bash
+export SYSTEM=openstack   # or vsphere / azure
+./scripts/oss-k8s.sh uninstall destroy
+```
+
+- `uninstall` — runs `kubernetes-uninstall.yaml`, removes kubeadm state from all nodes
+- `destroy` — runs `terraform destroy`, deletes all cloud resources, removes state files
+
+> You will be prompted to confirm (`yes`) before `destroy` proceeds.
+
+---
+
+## Docker Usage
+
+The Docker image has all tooling pre-installed (Terraform, Ansible, Helm, kubectl,
+OpenStack CLI). Mount your workspace directory containing `terraform.tfvars`:
+
+```bash
+# Build
+docker build -t viya4-iac-k8s -f docker/Dockerfile .
+
+# Run (OpenStack example)
+docker run --rm \
+  -e SYSTEM=openstack \
+  --env-file ~/.openstack_creds.env \
+  -v $(pwd):/workspace \
+  viya4-iac-k8s apply setup install
+```
+
+The entrypoint automatically routes `SYSTEM=azure` to `deploy.sh` and all other
+values to `oss-k8s.sh`. All files (`terraform.tfvars`, `terraform.tfstate`,
+`inventory`, `ansible-vars.yaml`, kubeconfig) are read from and written to
+`/workspace`.
+
+---
+
+## Additional Documentation
+
+| Document | Description |
+|---|---|
+| [`topologies/openstack/README.md`](topologies/openstack/README.md) | OpenStack (HPOS) — full step-by-step guide |
+| [`topologies/vsphere/README.md`](topologies/vsphere/README.md) | VMware vSphere — full step-by-step guide |
+| [`topologies/azure/README.md`](topologies/azure/README.md) | Azure — full step-by-step guide |
+| [`topologies/bare_metal/README.md`](topologies/bare_metal/README.md) | Bare metal — full step-by-step guide |
+| [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md) | Detailed deployment reference |
+| [`docs/ARCHITECTURE_DIAGRAMS.md`](docs/ARCHITECTURE_DIAGRAMS.md) | Architecture diagrams |

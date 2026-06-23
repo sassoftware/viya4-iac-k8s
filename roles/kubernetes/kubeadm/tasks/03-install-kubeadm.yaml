@@ -1,0 +1,274 @@
+---
+# Install kubeadm, kubectl, and kubelet
+
+- name: Create /etc/apt/keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - gpg-key
+
+- name: Download Kubernetes GPG key (Debian)
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version.split('.')[0] }}.{{ kubernetes_version.split('.')[1] }}/deb/Release.key"
+    dest: /tmp/kubernetes-apt-keyring.asc
+    mode: '0644'
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - gpg-key
+
+- name: Add Kubernetes GPG key to keyring (Debian)
+  ansible.builtin.shell: |
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg < /tmp/kubernetes-apt-keyring.asc
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - gpg-key
+
+- name: Add Kubernetes repository (Debian)
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version.split('.')[0] }}.{{ kubernetes_version.split('.')[1] }}/deb/ /"
+    state: present
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - repo
+
+# RedHat support disabled - Ubuntu-only deployment
+# - name: Add Kubernetes repository (RedHat)
+#   community.general.yum_repository:
+#     name: kubernetes
+#     baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+#     enabled: true
+#     gpgcheck: true
+#     gpgkey: https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+#   when: ansible_os_family == "RedHat"
+#   tags:
+#     - kubeadm-install
+#     - repo
+
+- name: Unhold kubeadm packages if they exist (Debian)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: install
+  loop:
+    - kubeadm
+    - kubectl
+    - kubelet
+  when: ansible_os_family == "Debian"
+  failed_when: false
+  tags:
+    - kubeadm-install
+    - packages
+
+# ------------------------------------------------------------------
+# Resolve kubernetes_full_version (always X.Y.Z)
+# ------------------------------------------------------------------
+# Users can pass kubernetes_version as either "1.34" (minor) or
+# "1.34.2" (full). kubeadm requires vX.Y.Z in ClusterConfiguration,
+# so when only minor is supplied we query apt for the latest patch
+# available in the configured pkgs.k8s.io repo.
+- name: Refresh apt cache so kubeadm versions are visible
+  ansible.builtin.apt:
+    update_cache: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - version-resolve
+
+- name: Detect whether kubernetes_version already includes a patch number
+  ansible.builtin.set_fact:
+    _k8s_version_is_full: "{{ kubernetes_version | regex_search('^[0-9]+\\.[0-9]+\\.[0-9]+$') is not none }}"
+  tags:
+    - kubeadm-install
+    - version-resolve
+
+- name: Look up latest available patch version for kubeadm (Debian, minor only)
+  ansible.builtin.shell: |
+    set -o pipefail
+    apt-cache madison kubeadm \
+      | awk '{print $3}' \
+      | grep -E "^{{ kubernetes_version | replace('.', '\\.') }}\\." \
+      | sort -V \
+      | tail -n1
+  args:
+    executable: /bin/bash
+  register: _k8s_madison
+  changed_when: false
+  when:
+    - ansible_os_family == "Debian"
+    - not _k8s_version_is_full
+  tags:
+    - kubeadm-install
+    - version-resolve
+
+- name: Set kubernetes_full_version (X.Y.Z) for kubeadm config
+  ansible.builtin.set_fact:
+    kubernetes_full_version: >-
+      {%- if _k8s_version_is_full -%}
+      {{ kubernetes_version }}
+      {%- else -%}
+      {{ (_k8s_madison.stdout | default('')).split('-')[0] }}
+      {%- endif -%}
+  tags:
+    - kubeadm-install
+    - version-resolve
+
+- name: Validate kubernetes_full_version was resolved
+  ansible.builtin.assert:
+    that:
+      - kubernetes_full_version is defined
+      - kubernetes_full_version | length > 0
+      - kubernetes_full_version | regex_search('^[0-9]+\\.[0-9]+\\.[0-9]+$')
+    fail_msg: >
+      Could not resolve a full X.Y.Z patch version from kubernetes_version='{{ kubernetes_version }}'.
+      Either pin a full version (e.g. 1.34.2) in cluster_version, or check that the
+      pkgs.k8s.io/core:/stable:/v{{ kubernetes_version.split('.')[0] }}.{{ kubernetes_version.split('.')[1] }}/deb/
+      repository contains kubeadm packages.
+    success_msg: "Resolved kubernetes_full_version={{ kubernetes_full_version }}"
+  tags:
+    - kubeadm-install
+    - version-resolve
+
+- name: Install kubeadm, kubectl, and kubelet (Debian)
+  ansible.builtin.package:
+    name:
+      - "kubeadm={{ kubernetes_full_version }}*"
+      - "kubectl={{ kubernetes_full_version }}*"
+      - "kubelet={{ kubernetes_full_version }}*"
+    state: present
+    update_cache: true
+    allow_change_held_packages: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - packages
+
+# RedHat support disabled - Ubuntu-only deployment
+# - name: Install kubeadm, kubectl, and kubelet (RedHat)
+#   ansible.builtin.package:
+#     name:
+#       - "kubeadm-{{ kubernetes_version }}"
+#       - "kubectl-{{ kubernetes_version }}"
+#       - "kubelet-{{ kubernetes_version }}"
+#     state: present
+#   when: ansible_os_family == "RedHat"
+#   tags:
+#     - kubeadm-install
+#     - packages
+
+# Wait for any other apt/dpkg process (unattended-upgrades, etc.) to release
+# the dpkg frontend lock before attempting to mark holds. Without this we
+# race with cloud-init / unattended-upgrades and fail intermittently.
+- name: Wait for dpkg frontend lock to be released
+  ansible.builtin.shell: |
+    set -e
+    for i in $(seq 1 60); do
+      if ! fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
+         && ! fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
+         && ! pgrep -x apt >/dev/null 2>&1 \
+         && ! pgrep -x apt-get >/dev/null 2>&1 \
+         && ! pgrep -x dpkg >/dev/null 2>&1 \
+         && ! pgrep -x unattended-upgrade >/dev/null 2>&1; then
+        echo "dpkg lock free"
+        exit 0
+      fi
+      sleep 5
+    done
+    echo "dpkg lock still held after 5 minutes" >&2
+    exit 1
+  changed_when: false
+  when: ansible_os_family == "Debian"
+  tags:
+    - kubeadm-install
+    - package-hold
+
+- name: Hold kubeadm package at current version (Debian)
+  ansible.builtin.dpkg_selections:
+    name: kubeadm
+    selection: hold
+  when: ansible_os_family == "Debian"
+  register: _hold_kubeadm
+  retries: 10
+  delay: 10
+  until: _hold_kubeadm is succeeded
+  tags:
+    - kubeadm-install
+    - package-hold
+
+- name: Hold kubectl package at current version (Debian)
+  ansible.builtin.dpkg_selections:
+    name: kubectl
+    selection: hold
+  when: ansible_os_family == "Debian"
+  register: _hold_kubectl
+  retries: 10
+  delay: 10
+  until: _hold_kubectl is succeeded
+  tags:
+    - kubeadm-install
+    - package-hold
+
+- name: Hold kubelet package at current version (Debian)
+  ansible.builtin.dpkg_selections:
+    name: kubelet
+    selection: hold
+  when: ansible_os_family == "Debian"
+  register: _hold_kubelet
+  retries: 10
+  delay: 10
+  until: _hold_kubelet is succeeded
+  tags:
+    - kubeadm-install
+    - package-hold
+
+# RedHat support disabled - Ubuntu-only deployment
+# - name: Hold kubeadm package at current version (RedHat)
+#   ansible.builtin.shell: yum versionlock add kubeadm
+#   when: ansible_os_family == "RedHat"
+#   changed_when: false
+#   tags:
+#     - kubeadm-install
+#     - package-hold
+
+# - name: Hold kubectl package at current version (RedHat)
+#   ansible.builtin.shell: yum versionlock add kubectl
+#   when: ansible_os_family == "RedHat"
+#   changed_when: false
+#   tags:
+#     - kubeadm-install
+#     - package-hold
+
+# - name: Hold kubelet package at current version (RedHat)
+#   ansible.builtin.shell: yum versionlock add kubelet
+#   when: ansible_os_family == "RedHat"
+#   changed_when: false
+#   tags:
+#     - kubeadm-install
+#     - package-hold
+
+- name: Enable kubelet service
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+    masked: false
+    daemon_reload: true
+  tags:
+    - kubeadm-install
+    - kubelet
+
+- name: Display kubeadm installation summary
+  debug:
+    msg:
+      - "Kubeadm tools installed successfully:"
+      - "  Kubernetes version: {{ kubernetes_full_version | default(kubernetes_version) }}"
+      - "  Packages held at current version to prevent auto-upgrades"
+  tags:
+    - kubeadm-install
+    - debug

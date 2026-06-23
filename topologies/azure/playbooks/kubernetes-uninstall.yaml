@@ -1,0 +1,246 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# Kubernetes Uninstall Playbook
+# =============================================================================
+# Order of operations:
+#   1. Drain and remove worker nodes (while API server is still running)
+#   2. Clean network interfaces on all nodes
+#   3. Reset kubeadm on worker nodes
+#   4. Reset kubeadm on control plane (tears down API server)
+#   5. Remove kube packages from all nodes
+# =============================================================================
+
+# Stage 1: Drain and remove worker nodes WHILE the API server is still up
+- hosts: k8s_node
+  name: Kubernetes Uninstall - Drain and Remove Worker Nodes
+  become: true
+  become_user: root
+  serial: 1
+  tasks:
+    - name: Drain the worker node
+      ansible.builtin.shell: |
+        kubectl drain {{ ansible_hostname }} --delete-emptydir-data --force --ignore-daemonsets --timeout 60s
+      delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+      ignore_errors: true
+      tags:
+        - uninstall
+
+    - name: Remove the worker node from the cluster
+      ansible.builtin.shell: |
+        kubectl delete nodes {{ ansible_hostname }}
+      delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+      ignore_errors: true
+      tags:
+        - uninstall
+  tags:
+    - uninstall
+
+# Stage 2: Clean up network interfaces (CNI plugin cleanup)
+- hosts: k8s
+  name: Kubernetes Uninstall - Clean Network Interfaces
+  become: true
+  become_user: root
+  tasks:
+    - name: Remove CNI network interfaces
+      ansible.builtin.shell: |
+        ip link delete cni0 2>/dev/null || true
+        ip link delete flannel.1 2>/dev/null || true
+        ip link delete weave 2>/dev/null || true
+        ip link delete vxlan.calico 2>/dev/null || true
+        ip link delete tunl0 2>/dev/null || true
+      ignore_errors: true
+      tags:
+        - uninstall
+  tags:
+    - uninstall
+
+# Stage 3: Reset kubeadm on worker nodes
+- hosts: k8s_node
+  name: Kubernetes Uninstall - Reset Worker Nodes (kubeadm)
+  become: true
+  become_user: root
+  serial: 1
+  tasks:
+    - name: Reset kubeadm on worker nodes
+      ansible.builtin.command: kubeadm reset -f
+      ignore_errors: true
+      tags:
+        - uninstall
+
+    - name: Remove kubeadm configuration from workers
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/kubernetes
+        - /var/lib/kubelet
+        - /etc/cni/net.d
+      ignore_errors: true
+      tags:
+        - uninstall
+
+    - name: Clean up IPTables on workers
+      ansible.builtin.shell: |
+        iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+      ignore_errors: true
+      tags:
+        - uninstall
+  tags:
+    - uninstall
+
+# Stage 4: Reset kubeadm on control plane (this tears down the API server)
+- hosts: k8s_control_plane
+  name: Kubernetes Uninstall - Reset Control Plane (kubeadm)
+  become: true
+  become_user: root
+  tasks:
+    - name: Reset kubeadm cluster on control plane
+      ansible.builtin.command: kubeadm reset -f
+      ignore_errors: true
+      tags:
+        - uninstall
+
+    - name: Remove kubeadm configuration and state
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/kubernetes
+        - /var/lib/kubelet
+        - /var/lib/etcd
+        - /etc/cni/net.d
+        - /root/.kube
+      ignore_errors: true
+      tags:
+        - uninstall
+
+    - name: Clean up IPTables on control plane
+      ansible.builtin.shell: |
+        iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+      ignore_errors: true
+      tags:
+        - uninstall
+  tags:
+    - uninstall
+
+# Stage 5: Remove kube packages from all nodes
+- hosts: k8s
+  name: Kubernetes Uninstall - Remove Kube Packages
+  become: true
+  become_user: root
+  tasks:
+    - name: Set kubernetes version facts
+      ansible.builtin.set_fact:
+        k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
+      tags:
+        - uninstall
+
+    - name: Set kubernetes major/minor version facts
+      ansible.builtin.set_fact:
+        k8s_major_version: "{{ k8s_version_semantic_parts[0] }}"
+        k8s_minor_version: "{{ k8s_version_semantic_parts[1] }}"
+      tags:
+        - uninstall
+
+    - name: Detect whether kubernetes_version includes a patch number
+      ansible.builtin.set_fact:
+        _k8s_version_is_full: "{{ kubernetes_version | regex_search('^[0-9]+\\.[0-9]+\\.[0-9]+$') is not none }}"
+      tags:
+        - uninstall
+
+    - name: Add Kubernetes apt repository for uninstall
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
+        state: present
+        update_cache: true
+      failed_when: false
+      tags:
+        - uninstall
+
+    - name: Look up latest available patch version for kubeadm (minor only)
+      ansible.builtin.shell: |
+        set -o pipefail
+        apt-cache madison kubeadm \
+          | awk '{print $3}' \
+          | grep -E "^{{ kubernetes_version | replace('.', '\\.') }}\\." \
+          | sort -V \
+          | tail -n1
+      args:
+        executable: /bin/bash
+      register: _k8s_madison
+      changed_when: false
+      when: not _k8s_version_is_full
+      failed_when: false
+      tags:
+        - uninstall
+
+    - name: Set kubernetes_full_version for package removal
+      ansible.builtin.set_fact:
+        kubernetes_full_version: >-
+          {%- if _k8s_version_is_full -%}
+          {{ kubernetes_version }}
+          {%- else -%}
+          {{ (_k8s_madison.stdout | default('')).split('-')[0] }}
+          {%- endif -%}
+      tags:
+        - uninstall
+
+    - name: Unhold kube packages before removal
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: purge
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+      failed_when: false
+      tags:
+        - uninstall
+
+    - name: Remove kubelet, kubeadm, kubectl packages
+      ansible.builtin.apt:
+        pkg:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: absent
+        purge: true
+        update_cache: true
+      ignore_errors: true
+      tags:
+        - uninstall
+
+    - name: Remove crictl binary
+      ansible.builtin.file:
+        path: /usr/local/bin/crictl
+        state: absent
+      tags:
+        - uninstall
+
+    - name: Remove crictl config
+      ansible.builtin.file:
+        path: /etc/crictl.yaml
+        state: absent
+      tags:
+        - uninstall
+
+    - name: Remove Kubernetes apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
+        state: absent
+        update_cache: true
+      failed_when: false
+      tags:
+        - uninstall
+
+    - name: Remove Kubernetes GPG keyring
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        state: absent
+      tags:
+        - uninstall
+  tags:
+    - uninstall

@@ -1,0 +1,19 @@
+---
+# kubeadm join configuration template
+# Used by worker nodes and secondary control plane nodes
+
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "{{ hostvars[groups['k8s_control_plane'][0]].get('kubeadm_advertise_address', hostvars[groups['k8s_control_plane'][0]].get('ansible_default_ipv4', {}).get('address', groups['k8s_control_plane'][0])) }}:{{ kubeadm_api_server_port }}"
+    token: "{{ join_token }}"
+    caCertHashes:
+      - "{{ token_ca_cert_hash }}"
+nodeRegistration:
+  name: "{{ ansible_hostname }}"
+  criSocket: "{{ cri_socket }}"
+  kubeletExtraArgs:
+    - name: cloud-provider
+      value: external
+  taints: []

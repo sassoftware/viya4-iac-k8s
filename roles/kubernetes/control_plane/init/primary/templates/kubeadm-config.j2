@@ -58,7 +58,12 @@ kind: KubeletConfiguration
 authentication:
   anonymous:
     enabled: false
+# cgroupDriver is auto-detected from the CRI via KubeletCgroupDriverFromCRI
+# feature gate (GA in K8s 1.34, requires containerd 2.0.0+).
+# Explicit cgroupDriver setting is deprecated in K8s 1.34 and removed in 1.36.
 cgroupDriver: systemd
+featureGates:
+  KubeletCgroupDriverFromCRI: true
 clusterDNS:
   - "{{ kubernetes_cluster_dns }}"
 clusterDomain: "{{ kubernetes_dns_domain | default('cluster.local') }}"

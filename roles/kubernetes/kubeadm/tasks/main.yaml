@@ -1,0 +1,35 @@
+---
+# Main task dispatcher for kubeadm role
+# Executes tasks conditionally based on node role in cluster
+
+- name: "Include preflight checks"
+  include_tasks: 01-preflight-checks.yaml
+  tags:
+    - kubeadm
+    - preflight
+
+- name: "Include container runtime installation"
+  include_tasks: 02-install-runtime.yaml
+  tags:
+    - kubeadm
+    - runtime
+
+- name: "Include kubeadm tools installation"
+  include_tasks: 03-install-kubeadm.yaml
+  tags:
+    - kubeadm
+    - kubeadm-tools
+
+- name: "Initialize primary control plane cluster"
+  include_tasks: 04-init-cluster.yaml
+  when: inventory_hostname == groups['k8s_control_plane'][0]
+  tags:
+    - kubeadm
+    - cluster-init
+
+- name: "Join worker and secondary control plane nodes"
+  include_tasks: 05-join-cluster.yaml
+  when: inventory_hostname != groups['k8s_control_plane'][0]
+  tags:
+    - kubeadm
+    - cluster-join

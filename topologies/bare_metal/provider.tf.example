@@ -1,0 +1,10 @@
+# Example provider configuration for standalone use of the bare_metal topology.
+# The bare_metal topology uses ONLY the hashicorp/local provider — no cloud
+# credentials or remote API calls occur.
+#
+# Copy this file to provider.tf and run:
+#   terraform init
+#   terraform apply -var-file="sample-input-bare-metal.tfvars"
+#
+# No configuration is required in this file. The local provider is configured
+# automatically by the required_providers block in versions.tf.

@@ -1,0 +1,148 @@
+# OpenStack deployment for viya4-iac-k8s
+#
+# Cluster: pscontour-oss
+#
+# Authentication and Ansible credentials are expected to come from:
+#   ~/.openstack_creds.env
+#
+# Workflow:
+#   1. source ~/.openstack_creds.env
+#   2. export SYSTEM=openstack
+#   3. ./scripts/oss-k8s.sh apply setup install
+
+deployment_type = "openstack"
+
+# Prefix used by this repo to derive the cluster name as:
+#   <prefix>-oss
+prefix = "mycluster"
+
+# OpenStack provider settings
+openstack_auth_url    = "https://<openstack-endpoint>:5000/v3/"
+openstack_tenant_name = "<teant>" #exmaple "PSCLOUD-IAC-1"
+openstack_region      = "RegionOne"
+openstack_domain_name       = "sas-ldap"
+openstack_network_name      = "provider"
+openstack_image_name        = "rocky96"
+openstack_ssh_keypair       = "terraform-test-key"
+openstack_availability_zone = "nova-11"
+openstack_flavor_defaults   = "np.8x16x250"
+openstack_floating_ip_pool  = null
+openstack_security_groups   = ["default"]
+openstack_insecure          = true
+
+# Systems
+system_ssh_keys_dir = "/root/.ssh/oss"
+ansible_user        = "rocky"
+ansible_password    = ""
+
+# Kubernetes - Cluster
+cluster_version        = "1.35.3"
+cluster_cni            = "calico"
+cluster_cni_version    = "3.30.0"
+cluster_cri            = "containerd"
+cluster_cri_version    = "2.2.2"
+cluster_service_subnet = "10.43.0.0/16"
+cluster_pod_subnet     = "10.42.0.0/16"
+
+cluster_domain = "<cluster-domain>" # example "pscloud-iac-1.hpos5.rnd.sas.com"
+
+# Kubernetes - Cluster VIP
+cluster_vip_version = "0.8.7"
+cluster_vip_ip      = "<vip-ip>" #from allocate_vip.sh
+cluster_vip_fqdn    = "<prefix>-vip.<your-dns-zone>" #example "mycluster-oss-vip.unx.xx.com"
+
+# Kubernetes - Load Balancer
+cluster_lb_type      = "kube_vip"
+cluster_lb_addresses = ["range-global: <lb-ip>-<lb-ip>"] # example ["range-global: 10.x.y.51-10.x.y.51"]
+
+control_plane_ssh_key_name = "cp_ssh"
+
+# Node pools
+node_pools = {
+  control_plane = {
+    count       = 1
+    flavor      = "np.8x32x150"
+    os_disk     = 100
+    node_taints = []
+    node_labels = {}
+  },
+  system = {
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    node_taints = []
+    node_labels = {
+      "workload.sas.com/class" = "system"
+    }
+  },
+  stateless = {
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    node_taints = ["workload.sas.com/class=stateless:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateless"
+    }
+  },
+  cas = {
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 200
+    misc_disks  = [100, 100]
+    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "cas"
+    }
+  },
+  compute = {
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    node_taints = ["workload.sas.com/class=compute:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class"        = "compute"
+      "launcher.sas.com/prepullImage" = "sas-programming-environment"
+    }
+  },
+  stateful = {
+    count       = 1
+    flavor      = "np.8x16x250"
+    os_disk     = 100
+    misc_disks  = [150]
+    node_taints = ["workload.sas.com/class=stateful:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "stateful"
+    }
+  }
+}
+
+# Optional auxiliary servers
+create_jump = true
+jump_ip     = null
+
+create_nfs = true
+nfs_ip     = null
+
+create_cr = false
+
+# Internal PostgreSQL
+postgres_servers = {
+  default = {
+    server_disk_size = 128
+    server_version   = 15
+    server_ssl       = "off"
+  }
+}
+
+# =============================================================================
+# vSphere provider defaults (placeholders — not used for OpenStack deployment)
+# =============================================================================
+vsphere_server        = ""
+vsphere_user          = ""
+vsphere_password      = ""
+vsphere_datacenter    = ""
+vsphere_datastore     = ""
+vsphere_resource_pool = ""
+vsphere_folder        = ""
+vsphere_template      = ""
+vsphere_network       = ""

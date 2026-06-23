@@ -1,0 +1,12 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+# Provider configuration for standalone execution from topologies/vsphere/.
+# Copy this file to provider.tf and fill in your credentials, OR export
+# environment variables: VSPHERE_USER, VSPHERE_PASSWORD, VSPHERE_SERVER.
+
+provider "vsphere" {
+  user                 = var.vsphere_user
+  password             = var.vsphere_password
+  vsphere_server       = var.vsphere_server
+  allow_unverified_ssl = true
+}

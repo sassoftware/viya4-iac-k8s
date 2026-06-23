@@ -1,0 +1,106 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# Pre-flight: validate required variables before any Kubernetes work starts.
+- hosts: localhost
+  gather_facts: false
+  name: Pre-flight — Validate required variables
+  tasks:
+    - name: Assert kubernetes_vip_ip is set
+      ansible.builtin.assert:
+        that: kubernetes_vip_ip | default('') | length > 0
+        fail_msg: >
+          kubernetes_vip_ip is empty. Set cluster_vip_ip in your tfvars
+          before running the install step.
+
+#
+# Kubernetes Playbook - Installs all elements needed for a stable
+#                       kubernetes cluster for use with Viya 4
+#
+
+# All systems
+- hosts: all
+  name: Kubernetes Setup - Common
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/common }
+
+# All kubernetes nodes
+- hosts: k8s
+  name: Kubernetes Setup - Nodes
+  become: true
+  become_user: root
+  roles:
+    - { role: "kubernetes/cri/{{ kubernetes_cri }}" } # Selection will be made based on the value of kubernetes_cri in your ansible-vars.yaml file
+    - { role: kubernetes/toolbox }
+
+# Primary control plane node
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Primary Control Plane Node
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/vip/primary }                # kube-vip : https://kube-vip.io/docs/installation/static/
+    - { role: kubernetes/control_plane/init/primary }
+    - { role: "kubernetes/cni/{{ kubernetes_cni }}" } # calico : https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico-with-kubernetes-api-datastore-50-nodes-or-less
+
+# Secure kubernetes items
+- hosts: localhost
+  name: Kubernetes Setup - Secure Kubernetes Items
+  roles:
+    - { role: kubernetes/misc }
+
+# Secondary control plane nodes
+- hosts: k8s_control_plane[1:]
+  name: Kubernetes Setup - Secondary Control Plane Nodes
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/control_plane/init/secondary }
+    - { role: kubernetes/vip/secondary }
+
+# Compute nodes
+- hosts: k8s_node
+  name: Kubernetes Setup - Compute Nodes
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/baseline }
+    - { role: kubernetes/node/init }
+
+# Kubernetes loadbalancer
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Load Balancer
+  become: true
+  become_user: root
+  roles:
+    - { role: "kubernetes/loadbalancer/{{ kubernetes_loadbalancer }}" }
+
+# Label/Taint Kubernetes nodes
+- hosts: k8s
+  name: Kubernetes Setup - Labels and Taints
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/node/labels_taints }
+
+# Setup default storage class for cluster
+- hosts: localhost
+  name: Default Storage Class Setup
+  roles:
+    - { role: kubernetes/storage/sig-storage-local-static-provisioner }
+    - { role: kubernetes/storage/nfs-csi-driver }
+
+# Setup metrics-server for cluster
+- hosts: localhost
+  name: Metrics Server Setup
+  roles:
+    - { role: kubernetes/metrics/metrics-server }
+
+# Misc cluster related items
+- hosts: localhost
+  name: Setup - Misc
+  roles:
+    - { role: kubernetes/sas-iac-buildinfo }
