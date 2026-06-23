@@ -61,8 +61,9 @@
           inventory file to use the Ubuntu system default cert and key files."
   when:
     - postgres_server_ssl|lower == "on"
-    - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length > 0)
-    - (systems_postgres_server_ssl_cert_file|length > 0) and (systems_postgres_server_ssl_key_file|length == 0)
+    - >
+      ((systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length > 0)) or
+      ((systems_postgres_server_ssl_cert_file|length > 0) and (systems_postgres_server_ssl_key_file|length == 0))
   tags:
     - install
     - update

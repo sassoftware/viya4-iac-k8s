@@ -125,8 +125,9 @@
           systems_postgres_server_ssl_key_file'. Ensure that both these variables are set, or remove both of them."
   when:
     - postgres_server_ssl|lower == "on"
-    - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length > 0)
-    - (systems_postgres_server_ssl_cert_file|length > 0) and (systems_postgres_server_ssl_key_file|length == 0)
+    - >
+      ((systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length > 0)) or
+      ((systems_postgres_server_ssl_cert_file|length > 0) and (systems_postgres_server_ssl_key_file|length == 0))
   tags:
     - install
     - update
