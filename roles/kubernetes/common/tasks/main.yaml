@@ -4,6 +4,30 @@
 ---
 # Supported: Ubuntu 22.04/24.04 and Rocky Linux 9 / RHEL 9
 
+# ---------------------------------------------------------------------------
+# Apt source remediation — replace any broken/dead Ubuntu mirror entries with
+# the canonical archive.ubuntu.com mirror before any apt install is attempted.
+# This is idempotent: if the mirror is already correct, replace changes nothing.
+# ---------------------------------------------------------------------------
+- name: Replace broken apt mirror in /etc/apt/sources.list (Debian/Ubuntu)
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list
+    regexp: 'mirrors\.wikimedia\.org/ubuntu'
+    replace: 'archive.ubuntu.com/ubuntu'
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Remove broken apt mirror files from /etc/apt/sources.list.d/ (Debian/Ubuntu)
+  ansible.builtin.shell: |
+    grep -rl 'mirrors\.wikimedia\.org' /etc/apt/sources.list.d/ 2>/dev/null | xargs -r rm -f
+  when: ansible_os_family == "Debian"
+  changed_when: false
+  tags:
+    - install
+    - update
+
 - name: Add ssh keys - root user
   ansible.posix.authorized_key:
     user: root
