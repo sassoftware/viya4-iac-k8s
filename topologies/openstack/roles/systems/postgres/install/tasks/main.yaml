@@ -203,6 +203,50 @@
         systems_postgres_server_ssl_cert_file_dest: "{{ cert_result.dest }}"
         systems_postgres_server_ssl_key_file_dest: "{{ key_result.dest }}"
 
+- name: Generate self-signed SSL cert for Rocky/RHEL (no user-supplied cert)
+  when:
+    - ansible_os_family == "RedHat"
+    - postgres_server_ssl|lower == "on"
+    - (systems_postgres_server_ssl_cert_file|length == 0) and (systems_postgres_server_ssl_key_file|length == 0)
+  tags:
+    - install
+    - update
+  block:
+    - name: Generate self-signed SSL key and cert
+      ansible.builtin.command:
+        cmd: >-
+          openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes
+          -keyout /etc/pki/tls/private/ssl-cert-sas-{{ ansible_hostname }}.key
+          -out /etc/pki/tls/certs/ssl-cert-sas-{{ ansible_hostname }}.crt
+          -subj "/CN={{ ansible_hostname }}"
+        creates: "/etc/pki/tls/certs/ssl-cert-sas-{{ ansible_hostname }}.crt"
+    - name: Set permissions on SSL cert (Rocky/RHEL)
+      ansible.builtin.file:
+        path: "/etc/pki/tls/certs/ssl-cert-sas-{{ ansible_hostname }}.crt"
+        owner: root
+        group: root
+        mode: "0644"
+    - name: Set permissions on SSL key (Rocky/RHEL)
+      ansible.builtin.file:
+        path: "/etc/pki/tls/private/ssl-cert-sas-{{ ansible_hostname }}.key"
+        owner: root
+        group: postgres
+        mode: "0640"
+    - name: Fetch SSL Cert (Rocky/RHEL)
+      ansible.builtin.fetch:
+        src: "/etc/pki/tls/certs/ssl-cert-sas-{{ ansible_hostname }}.crt"
+        dest: "{{ inventory_dir }}/"
+        flat: true
+    - name: Fetch SSL Key (Rocky/RHEL)
+      ansible.builtin.fetch:
+        src: "/etc/pki/tls/private/ssl-cert-sas-{{ ansible_hostname }}.key"
+        dest: "{{ inventory_dir }}/"
+        flat: true
+    - name: Set cert/key dest facts (Rocky/RHEL)
+      ansible.builtin.set_fact:
+        systems_postgres_server_ssl_cert_file_dest: "/etc/pki/tls/certs/ssl-cert-sas-{{ ansible_hostname }}.crt"
+        systems_postgres_server_ssl_key_file_dest: "/etc/pki/tls/private/ssl-cert-sas-{{ ansible_hostname }}.key"
+
 - name: Alter postgresql.conf - Update ssl
   ansible.builtin.lineinfile:
     path: "{{ pg_conf_dir }}/postgresql.conf"
