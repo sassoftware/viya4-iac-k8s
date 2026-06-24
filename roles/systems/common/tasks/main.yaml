@@ -95,13 +95,29 @@
 
 # ---- OS Update ---------------------------------------------------------------
 
-# On re-runs, sources.list.d entries from a previous run (postgres, docker)
-# may reference stale or broken key files, causing apt update to fail before
-# those roles have had a chance to regenerate the keys. Remove them here so
-# apt update only uses the base OS repos; the respective roles re-add them.
+# On re-runs, sources.list.d entries from a previous run (postgres, docker,
+# kubernetes) may reference stale or broken key files, causing apt update to
+# fail before those roles have had a chance to regenerate the keys.
 - name: Remove stale third-party apt source files before OS update (Debian/Ubuntu)
   ansible.builtin.shell: |
-    find /etc/apt/sources.list.d/ \( -name '*postgresql*' -o -name '*docker*' \) -delete 2>/dev/null || true
+    find /etc/apt/sources.list.d/ \( \
+      -name '*postgresql*' -o \
+      -name '*docker*' -o \
+      -name '*kubernetes*' -o \
+      -name '*pkgs.k8s*' \
+    \) -delete 2>/dev/null || true
+  changed_when: false
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+# Wipe the apt lists cache so partial/corrupted downloads from a prior failed
+# run don't cause "Failed to update apt cache: unknown reason".
+- name: Clean apt lists cache (Debian/Ubuntu)
+  ansible.builtin.shell: |
+    rm -rf /var/lib/apt/lists/*
+    apt-get clean -y
   changed_when: false
   when: ansible_os_family == "Debian"
   tags:
@@ -122,15 +138,26 @@
     - install
     - update
 
-- name: Update OS (Debian/Ubuntu)
+- name: Refresh apt cache (Debian/Ubuntu)
+  ansible.builtin.apt:
+    update_cache: true
+  register: apt_cache_result
+  until: apt_cache_result is succeeded
+  retries: 5
+  delay: 30
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Update OS packages (Debian/Ubuntu)
   ansible.builtin.apt:
     name: '*'
     state: latest
-    update_cache: true
   register: apt_update_result
   until: apt_update_result is succeeded
-  retries: 5
-  delay: 30
+  retries: 3
+  delay: 10
   when: ansible_os_family == "Debian"
   tags:
     - install
