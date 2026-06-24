@@ -43,13 +43,15 @@
     - update
 
 # Ubuntu 22.04/24.04/26.04 all use the same Debian keyring location.
-# Installing the Docker gpg key
+# The Docker GPG endpoint serves an ASCII-armored key; dearmor it to binary
+# .gpg format so apt can validate signatures correctly.
 - name: Installing the Docker gpg key
-  ansible.builtin.get_url:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    dest: /usr/share/keyrings/docker-archive-keyring.gpg
-    mode: '0644'
-    force: true
+  ansible.builtin.shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+      | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  args:
+    executable: /bin/bash
+  changed_when: true
   tags:
     - install
     - update
