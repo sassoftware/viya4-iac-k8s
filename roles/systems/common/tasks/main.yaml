@@ -95,11 +95,29 @@
 
 # ---- OS Update ---------------------------------------------------------------
 
+- name: Wait for apt/dpkg locks to be released (Debian/Ubuntu)
+  ansible.builtin.shell: |
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+          fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+          fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
+      sleep 5
+    done
+  changed_when: false
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
 - name: Update OS (Debian/Ubuntu)
   ansible.builtin.apt:
     name: '*'
     state: latest
     update_cache: true
+  register: apt_update_result
+  until: apt_update_result is succeeded
+  retries: 5
+  delay: 30
   when: ansible_os_family == "Debian"
   tags:
     - install
