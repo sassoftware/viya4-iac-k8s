@@ -5,10 +5,12 @@
 # ===== Debian/Ubuntu: PostgreSQL via APT ===================================
 
 # Ubuntu 22.04/24.04/26.04 all use the same Debian keyring location.
+# Key is saved as .asc (ASCII-armored) to match its content type; apt 1.4+
+# (Ubuntu 22.04+) accepts ASCII-armored keys via signed-by= natively.
 - name: Install PostgreSQL GPG key (Debian/Ubuntu)
   ansible.builtin.get_url:
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
-    dest: /usr/share/keyrings/postgres-archive-keyring.gpg
+    dest: /usr/share/keyrings/postgres-archive-keyring.asc
     mode: '0644'
     force: true
   when: ansible_os_family == "Debian"
@@ -18,7 +20,7 @@
 
 - name: Add PostgreSQL apt repository (Debian/Ubuntu)
   ansible.builtin.apt_repository:
-    repo: deb [arch=amd64 signed-by=/usr/share/keyrings/postgres-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
+    repo: deb [arch=amd64 signed-by=/usr/share/keyrings/postgres-archive-keyring.asc] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
     state: present
   when: ansible_os_family == "Debian"
   tags:
