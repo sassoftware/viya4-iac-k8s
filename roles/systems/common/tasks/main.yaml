@@ -95,6 +95,19 @@
 
 # ---- OS Update ---------------------------------------------------------------
 
+# On re-runs, sources.list.d entries from a previous run (postgres, docker)
+# may reference stale or broken key files, causing apt update to fail before
+# those roles have had a chance to regenerate the keys. Remove them here so
+# apt update only uses the base OS repos; the respective roles re-add them.
+- name: Remove stale third-party apt source files before OS update (Debian/Ubuntu)
+  ansible.builtin.shell: |
+    find /etc/apt/sources.list.d/ \( -name '*postgresql*' -o -name '*docker*' \) -delete 2>/dev/null || true
+  changed_when: false
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
 - name: Wait for apt/dpkg locks to be released (Debian/Ubuntu)
   ansible.builtin.shell: |
     while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
