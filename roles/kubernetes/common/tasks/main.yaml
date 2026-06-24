@@ -28,11 +28,49 @@
     - install
     - update
 
+# Remove stale third-party sources from a previous run before apt update
+# (same pattern as systems/common) so cached bad keys don't block this step.
+- name: Remove stale third-party apt source files (bare metal Debian/Ubuntu)
+  ansible.builtin.shell: |
+    find /etc/apt/sources.list.d/ \( \
+      -name '*postgresql*' -o \
+      -name '*docker*' -o \
+      -name '*kubernetes*' -o \
+      -name '*pkgs.k8s*' \
+    \) -delete 2>/dev/null || true
+  changed_when: false
+  when:
+    - deployment_type == "bare_metal"
+    - ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Wait for apt/dpkg locks to be released (bare metal Debian/Ubuntu)
+  ansible.builtin.shell: |
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+          fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+          fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
+      sleep 5
+    done
+  changed_when: false
+  when:
+    - deployment_type == "bare_metal"
+    - ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
 - name: Update OS (bare_metal only)
   ansible.builtin.package:
     name: '*'
     state: latest
     update_cache: true
+  register: k8s_common_os_update
+  until: k8s_common_os_update is succeeded
+  retries: 2
+  delay: 20
   when:
     - deployment_type == "bare_metal"
   tags:
