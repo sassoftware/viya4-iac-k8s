@@ -30,13 +30,21 @@
 
 # ---- Ubuntu-only: unattended-upgrades cleanup --------------------------------
 
+- name: Gather service facts (Debian/Ubuntu)
+  ansible.builtin.service_facts:
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
 - name: Disable and turn off unattended-upgrades
   ansible.builtin.systemd:
     name: unattended-upgrades.service
     enabled: false
     state: stopped
-  ignore_errors: true
-  when: ansible_os_family == "Debian"
+  when:
+    - ansible_os_family == "Debian"
+    - "'unattended-upgrades.service' in ansible_facts.services"
   tags:
     - install
     - update
