@@ -20,7 +20,6 @@
     - update
     - uninstall
 
-# ✅ define SSH option once for reuse
 - name: Prepare SSH key option
   ansible.builtin.set_fact:
     ssh_key_option: "{{ ('-i ' + ansible_ssh_private_key_file) if (ansible_ssh_private_key_file is defined) else '' }}"
