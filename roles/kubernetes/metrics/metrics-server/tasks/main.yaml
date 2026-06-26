@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
+
 - name: Get control plane IP from inventory
   ansible.builtin.shell: |
     grep -A1 '\[k8s_control_plane\]' {{ iac_inventory_dir }}/inventory | tail -1 | awk '{print $1}'
@@ -19,6 +20,15 @@
     - update
     - uninstall
 
+# ✅ MUST include tags (important)
+- name: Prepare SSH key option
+  ansible.builtin.set_fact:
+    ssh_key_option: "{{ ('-i ' + ansible_ssh_private_key_file) if (ansible_ssh_private_key_file is defined) else '' }}"
+  tags:
+    - install
+    - update
+    - uninstall
+
 - name: Write metrics-server helm values to temp file
   ansible.builtin.copy:
     content: "{{ kubernetes_METRICS_SERVER_CONFIG | to_nice_yaml }}"
@@ -29,8 +39,7 @@
 
 - name: Copy helm values to control plane
   ansible.builtin.shell: >
-    scp -o StrictHostKeyChecking=no
-    -i {{ ansible_ssh_private_key_file }}
+    scp -o StrictHostKeyChecking=no {{ ssh_key_option }}
     /tmp/metrics-server-values.yaml
     {{ ansible_user }}@{{ cp_host }}:/tmp/metrics-server-values.yaml
   tags:
@@ -39,8 +48,7 @@
 
 - name: Deploy metrics-server
   ansible.builtin.shell: >
-    ssh -o StrictHostKeyChecking=no
-    -i {{ ansible_ssh_private_key_file }}
+    ssh -o StrictHostKeyChecking=no {{ ssh_key_option }}
     {{ ansible_user }}@{{ cp_host }}
     "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm upgrade --install
     {{ kubernetes_METRICS_SERVER_NAME }}
@@ -57,8 +65,7 @@
 
 - name: Remove metrics-server
   ansible.builtin.shell: >
-    ssh -o StrictHostKeyChecking=no
-    -i {{ ansible_ssh_private_key_file }}
+    ssh -o StrictHostKeyChecking=no {{ ssh_key_option }}
     {{ ansible_user }}@{{ cp_host }}
     "sudo KUBECONFIG=/etc/kubernetes/admin.conf /usr/local/bin/helm uninstall
     {{ kubernetes_METRICS_SERVER_NAME }}
