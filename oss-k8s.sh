@@ -347,27 +347,62 @@ allocate_vip_floating_ip() {
 # setting allowed_address_pairs at port-creation time, but allows PUTting them on
 # existing ports.  This function runs after terraform_up so the ports already exist.
 patch_vip_allowed_pairs() {
+
+    # ----------------------------------------------------------
+    # Build complete VIP list
+    # ----------------------------------------------------------
+
+    local VIPS=()
+
+    # Control-plane VIP
     local VIP
-    VIP=$(grep -E '^\s*cluster_vip_ip\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*//' | tr -d ' "')
-    if [[ -z "$VIP" || "$VIP" == "null" ]]; then
-        # Fallback: resolve VIP from cluster_vip_fqdn via DNS
+    VIP=$(grep -E '^\s*cluster_vip_ip\s*=' "$TFVARS" 2>/dev/null \
+        | head -1 \
+        | sed 's/.*=\s*//' \
+        | tr -d ' "')
+
+    if [[ -n "$VIP" && "$VIP" != "null" ]]; then
+        VIPS+=("$VIP")
+    fi
+
+    # Fallback from FQDN if cluster_vip_ip missing
+    if [[ ${#VIPS[@]} -eq 0 ]]; then
         local VIP_FQDN
-        VIP_FQDN=$(grep -E '^\s*cluster_vip_fqdn\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*//' | tr -d ' "')
+        VIP_FQDN=$(grep -E '^\s*cluster_vip_fqdn\s*=' "$TFVARS" 2>/dev/null \
+            | head -1 \
+            | sed 's/.*=\s*//' \
+            | tr -d ' "')
+
         if [[ -n "$VIP_FQDN" ]]; then
             VIP=$(getent hosts "$VIP_FQDN" 2>/dev/null | awk '{print $1}' | head -1)
-            [[ -n "$VIP" ]] && echo "patch_vip_allowed_pairs: cluster_vip_ip empty, resolved ${VIP_FQDN} -> ${VIP}"
-        fi
-        if [[ -z "$VIP" ]]; then
-            echo "patch_vip_allowed_pairs: cluster_vip_ip not set and cluster_vip_fqdn could not be resolved, skipping."
-            return 0
+
+            if [[ -n "$VIP" ]]; then
+                VIPS+=("$VIP")
+                echo "patch_vip_allowed_pairs: resolved ${VIP_FQDN} -> ${VIP}"
+            fi
         fi
     fi
-    local PATCH_FAILED=0
 
-    local NEUTRON_URL TOKEN TOKEN_RESPONSE JSON_BODY
-    # Build the JSON body via Python to avoid shell quoting issues with special
-    # characters in passwords (e.g. quotes, backslashes, exclamation marks).
-    # Also handles OS_PROJECT_DOMAIN_NAME falling back to OS_USER_DOMAIN_NAME.
+    # ----------------------------------------------------------
+    # Add all LB VIPs from cluster_lb_addresses
+    # ----------------------------------------------------------
+
+    while read -r lbvip; do
+        [[ -n "$lbvip" ]] && VIPS+=("$lbvip")
+    done < <(
+        grep -E '^\s*cluster_lb_addresses\s*=' "$TFVARS" \
+            | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+    )
+
+    if [[ ${#VIPS[@]} -eq 0 ]]; then
+        echo "patch_vip_allowed_pairs: no VIPs found"
+        return 0
+    fi
+
+    echo "patch_vip_allowed_pairs: VIPs discovered:"
+    printf '  %s\n' "${VIPS[@]}"
+
+    local PATCH_FAILED=0
     JSON_BODY=$(python3 -c "
 import json, os
 print(json.dumps({
@@ -418,36 +453,22 @@ for svc in body.get('token',{}).get('catalog',[]):
     PREFIX=$(grep -E '^\s*prefix\s*=' "$TFVARS" 2>/dev/null | head -1 | sed 's/.*=\s*"\(.*\)".*/\1/' | tr -d ' "')
     local CLUSTER_NAME="${PREFIX}-oss"
 
-    # Build allowed_address_pairs list: VIP + all IPs from cluster_lb_addresses ranges.
-    # cluster_lb_addresses format: ["range-global: A.B.C.D-A.B.C.E", ...]
-    # We extract the first IP of each range as representative (kube-vip ARPs from worker nodes,
-    # but the control-plane port must also allow the IPs so OpenStack passes the traffic).
-    local LB_IPS=()
-    while IFS= read -r lb_line; do
-        # Extract first IP from range (e.g. "range-global: 10.119.130.154-10.119.130.154" -> "10.119.130.154")
-        local first_ip
-        first_ip=$(echo "$lb_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-        local last_ip
-        last_ip=$(echo "$lb_line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
-        # Expand simple single-octet ranges (e.g. 154-156) up to 16 IPs
-        if [[ -n "$first_ip" && -n "$last_ip" && "$first_ip" != "$last_ip" ]]; then
-            local base="${first_ip%.*}"
-            local start_oct="${first_ip##*.}"
-            local end_oct="${last_ip##*.}"
-            for oct in $(seq "$start_oct" "$end_oct"); do
-                LB_IPS+=("${base}.${oct}")
-            done
-        elif [[ -n "$first_ip" ]]; then
-            LB_IPS+=("$first_ip")
-        fi
-    done < <(grep -E '^\s*cluster_lb_addresses' "$TFVARS" 2>/dev/null | grep -oE '"[^"]*range[^"]*"' | tr -d '"')
+    # ----------------------------------------------------------
+    # Build allowed_address_pairs using ALL discovered VIPs
+    # ----------------------------------------------------------
 
-    # Build JSON array: VIP first, then LB IPs (deduplicated)
-    local PAIRS_JSON="{\"ip_address\":\"${VIP}\"}"
-    for lb_ip in "${LB_IPS[@]}"; do
-        [[ "$lb_ip" == "$VIP" ]] && continue   # skip if same as VIP
-        PAIRS_JSON+=",{\"ip_address\":\"${lb_ip}\"}"
+    local PAIRS_JSON=""
+    local FIRST=true
+
+    for vip in "${VIPS[@]}"; do
+        if [[ "$FIRST" == true ]]; then
+            PAIRS_JSON="{\"ip_address\":\"${vip}\"}"
+            FIRST=false
+        else
+            PAIRS_JSON+=",{\"ip_address\":\"${vip}\"}"
+        fi
     done
+
     local PATCH_BODY="{\"port\":{\"allowed_address_pairs\":[${PAIRS_JSON}]}}"
 
     # Both kube_vip and metallb require ALL cluster node ports to have the LB IPs
@@ -465,7 +486,9 @@ for svc in body.get('token',{}).get('catalog',[]):
     # Default to kube_vip if not set in tfvars (matches variables.tf default)
     LB_TYPE="${LB_TYPE:-kube_vip}"
 
-    echo "patch_vip_allowed_pairs: [${LB_TYPE}] patching ALL node ports for cluster '${CLUSTER_NAME}' with VIP ${VIP} + LB IPs [${LB_IPS[*]}]"
+    echo "patch_vip_allowed_pairs: [${LB_TYPE}] patching ALL node ports for cluster '${CLUSTER_NAME}'"
+
+    printf '  VIP -> %s\n' "${VIPS[@]}"
 
     # Look up ports by device_id (Nova server UUID) from Terraform state to avoid
     # matching stale orphaned ports from previous runs that share the same name prefix.
@@ -525,21 +548,30 @@ for p in json.load(sys.stdin).get('ports', []):
     fi
 
     while IFS= read -r line; do
-        PORT_ID=$(echo "$line" | awk '{print $1}')
-        PORT_NAME=$(echo "$line" | awk '{print $2}')
-        RESULT=$(curl -sk -X PUT \
-          -H "X-Auth-Token: $TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "$PATCH_BODY" \
-          "${NEUTRON_URL}/v2.0/ports/${PORT_ID}" | \
-          python3 -c "import sys,json; d=json.load(sys.stdin); p=d.get('port',{}); print('OK' if p.get('allowed_address_pairs') else str(d.get('NeutronError','unknown error')))" 2>/dev/null)
-        echo "  port $PORT_NAME ($PORT_ID): $RESULT"
-        [[ "$RESULT" != "OK" ]] && PATCH_FAILED=1
-    done <<< "$PORT_LIST"
+
+    PORT_ID=$(echo "$line" | awk '{print $1}')
+    PORT_NAME=$(echo "$line" | awk '{print $2}')
+
+    echo "PATCH_BODY=$PATCH_BODY"
+
+    RESULT=$(curl -sk -X PUT \
+      -H "X-Auth-Token: $TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$PATCH_BODY" \
+      "${NEUTRON_URL}/v2.0/ports/${PORT_ID}" | \
+      python3 -c "import sys,json; d=json.load(sys.stdin); p=d.get('port',{}); print('OK' if p.get('allowed_address_pairs') else str(d.get('NeutronError','unknown error')))" 2>/dev/null)
+
+    echo "  port $PORT_NAME ($PORT_ID): $RESULT"
+
+    [[ "$RESULT" != "OK" ]] && PATCH_FAILED=1
+
+done <<< "$PORT_LIST"
+
 
     if [[ "$PATCH_FAILED" -eq 1 ]]; then
         echo "patch_vip_allowed_pairs: ERROR - one or more ports failed to patch. The install step will fail."
-        echo "patch_vip_allowed_pairs: Run manually: openstack --insecure port set --allowed-address ip-address=${VIP} <port-id>"
+        echo "patch_vip_allowed_pairs: Run manually and verify allowed_address_pairs contain all VIPs:"
+        printf '  %s\n' "${VIPS[@]}"
         return 1
     fi
     echo "patch_vip_allowed_pairs: all node ports patched successfully."
@@ -867,3 +899,4 @@ done
 #       ;;
 #   esac
 # done
+
