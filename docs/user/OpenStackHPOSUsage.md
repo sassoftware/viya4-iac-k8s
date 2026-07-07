@@ -215,10 +215,10 @@ options each create an additional Service:
 If the pool runs out of IPs a `LoadBalancer` Service remains in `Pending` state and
 the pods that depend on it (e.g. CAS) will fail to start.
 
-The script defaults to **5 IPs** (`LB_COUNT=5`). Override with:
+The script defaults to **3 IPs** (`LB_COUNT=3`). Override with:
 
 ```bash
-LB_COUNT=8 ./allocate-vip.sh
+LB_COUNT=4 ./allocate-vip.sh
 ```
 
 #### Run the script
