@@ -239,7 +239,7 @@ The script will:
 Example output (contiguous block — written as a range):
 ```
 [cluster_vip_ip]      = "10.119.129.26"
-[cluster_lb_addresses] = ["range-global: 10.119.129.63-10.119.129.67"]
+[cluster_lb_addresses] = ["range-global: 10.119.129.63-10.119.129.65"]
 ```
 
 Example output (non-contiguous — written as individual /32 CIDRs):
@@ -300,7 +300,11 @@ openstack_domain_name       = "sas-ldap"
 openstack_network_name      = "provider"
 openstack_image_name        = "rocky96"           # ← CHANGE: your Glance image name
 openstack_ssh_keypair       = "my-keypair"          # ← must match Step 2 (keypair name uploaded to OpenStack)
-system_ssh_keys_dir         = "/root/.ssh/oss"      # ← absolute path; tilde (~) does not expand inside Docker
+# Root container run:
+system_ssh_keys_dir         = "/root/.ssh/oss"
+
+# Non-root container run:
+# system_ssh_keys_dir       = "/build/.ssh/oss"
 openstack_availability_zone = "nova-11"            # ← CHANGE: your AZ
 openstack_flavor_defaults   = "np.8x16x250"        # ← CHANGE: your default flavor
 openstack_floating_ip_pool  = null                 # null = no floating IPs (static mode)
@@ -318,7 +322,7 @@ cluster_vip_fqdn    = "<prefix>-vip.<your-dns-zone>"              # ← from Ste
 
 # Load Balancer — populated by allocate-vip.sh (Step 6)
 cluster_lb_type      = "kube_vip"
-cluster_lb_addresses = ["range-global: 10.119.129.63-10.119.129.63"]  # ← from Step 6
+cluster_lb_addresses = ["range-global: 10.119.129.63-10.119.129.65"]  # ← from Step 6 (3 IPs: Envoy + CAS + spare)
 
 # Node pools
 # REQUIRED: control_plane and system keys must always be present.
@@ -436,6 +440,51 @@ export SYSTEM=openstack
 
 #### Option B — Docker
 
+You can run the Docker container either as your host user (non-root) or as root.
+The SSH key mount path and the `system_ssh_keys_dir` value in `terraform.tfvars`
+must match the runtime user model you choose.
+
+##### Option B1 — Non-root container run
+
+Use this option when you want files created in the workspace to be owned by your
+host user instead of root.
+
+Set the following in `terraform.tfvars`:
+
+```hcl
+system_ssh_keys_dir = "/build/.ssh/oss"
+```
+
+Run:
+
+```bash
+cd /path/to/viya4-iac-k8s
+
+docker run --rm -it \
+  --network host \
+  --group-add root \
+  --user "$(id -u):$(id -g)" \
+  --env SYSTEM=openstack \
+  --env IAC_TOOLING=docker \
+  --env-file $HOME/.openstack_creds.env \
+  --volume $(pwd):/workspace \
+  --volume $HOME/.ssh/oss:/build/.ssh/oss \
+  viya4-iac-k8s:latest apply setup install
+```
+
+##### Option B2 — Root container run
+
+Use this option when you want to run the container as root and keep SSH keys under
+`/root/.ssh/oss` inside the container.
+
+Set the following in `terraform.tfvars`:
+
+```hcl
+system_ssh_keys_dir = "/root/.ssh/oss"
+```
+
+Run:
+
 ```bash
 cd /path/to/viya4-iac-k8s
 
@@ -453,35 +502,44 @@ docker run --rm -it \
 
 > **Docker notes:**
 >
-> ⚠️ **`--user root:root` is required.** Do NOT use `$(id -u):$(id -g)`.
-> Inside the container the home directory is `/root`. If you run as your host UID
-> then `~/` resolves to a non-existent directory, SSH key lookups fail, and you
-> will see `no such identity: /root/.ssh/oss/<keypair>: Permission denied`.
+> ⚠️ The value of `system_ssh_keys_dir` in `terraform.tfvars` **must match** the
+> SSH key mount path used in the Docker command.
+>
+> - Non-root container run → `system_ssh_keys_dir = "/build/.ssh/oss"`
+> - Root container run → `system_ssh_keys_dir = "/root/.ssh/oss"`
+>
+> If the paths do not match, Ansible will try to use a key path that does not
+> exist inside the container and fail with errors similar to:
+>
+> ```text
+> no such identity: /root/.ssh/oss/<keypair>: Permission denied
+> ```
 >
 > ⚠️ **Use `$HOME/.ssh/oss`, not `$(pwd)/.ssh/oss`** for the SSH key volume mount.
-> `$(pwd)` is your repo directory — `$(pwd)/.ssh/oss` does not exist.
-> `$HOME/.ssh/oss` is your actual key directory. Mounting the wrong path means
-> the container sees an empty `/root/.ssh/oss/` and every SSH attempt fails.
+> `$(pwd)` is your repo directory — `$(pwd)/.ssh/oss` does not exist unless you
+> created it manually. `$HOME/.ssh/oss` is your actual key directory.
 >
 > ⚠️ **Do NOT add `:ro` to the SSH key volume mount.**
 > During `setup`, Ansible generates a `cluster_access` keypair and writes it to
-> `system_ssh_keys_dir` (`/root/.ssh/oss/`). If the mount is read-only, the key
-> cannot be written back to your host. The subsequent `install` step (whether in
-> the same or a separate docker run) requires `cluster_access` and will fail with
-> `Identity file /root/.ssh/oss/cluster_access not accessible` if it was not persisted.
+> `system_ssh_keys_dir`. If the mount is read-only, the key cannot be written
+> back to your host. The subsequent `install` step, or DAC install later, requires
+> `cluster_access` and will fail if it was not persisted.
 >
-> ⚠️ **Your `openstack_ssh_keypair` private key must be in `$HOME/.ssh/oss/`.**
-> The directory should contain at minimum:
-> ```
-> my-keypair       ← private key matching openstack_ssh_keypair in terraform.tfvars
-> my-keypair.pub   ← corresponding public key
-> ```
-> (`cluster_access` is generated by `setup` — do not create it manually.)
+> ⚠️ **Your `openstack_ssh_keypair` private key must exist in the mounted SSH directory.**
+> The private key filename must match `openstack_ssh_keypair` in `terraform.tfvars`.
+> For example, if `terraform.tfvars` contains:
 >
-> - `--volume $HOME/.ssh/oss:/root/.ssh/oss` mounts your SSH keys into the
->   container at the same absolute path used by `system_ssh_keys_dir` in `terraform.tfvars`.
->   This is **required** — Ansible reads the private key from this path during `setup install`,
->   and writes the generated `cluster_access` key back to your host during `setup`.
+> ```hcl
+> openstack_ssh_keypair = "terraform-test-key"
+> ```
+>
+> then the mounted SSH directory must contain:
+>
+> ```text
+> terraform-test-key
+> terraform-test-key.pub
+> ```
+>
 > - `--network host` is **required** for OpenStack environments on private/corporate networks.
 >   Without it, Docker uses bridge networking (NAT) and the container cannot reach internal
 >   OpenStack endpoints (Keystone, Neutron, Nova). The symptom is `patch_vip_allowed_pairs:
@@ -574,6 +632,29 @@ JUMP_SVR_PRIVATE_KEY: "/config/jump_svr_private_key"  # fixed container path —
 
 # Kubeconfig — DAC uses this to talk to the cluster
 KUBECONFIG: "/config/kubeconfig"                # fixed container path — do not change
+
+## 3rd Party
+
+### Ingress Controller
+# This cluster uses Contour as the ingress controller.
+V4_CFG_INGRESS_TYPE: "contour"
+
+# Contour's Envoy proxy gets a LoadBalancer-type Service that consumes one IP
+# from your cluster_lb_addresses pool. Set externalTrafficPolicy to match your
+# load balancer type:
+#   kube_vip  → Cluster
+#   metallb   → Local
+CONTOUR_CONFIG:
+  envoy:
+    service:
+      externalTrafficPolicy: Cluster  # adjust to Local if using metallb
+      # loadBalancerIP: <first-lb-pool-ip>  # optional: pin Envoy to specific IP
+
+### CAS LoadBalancer (optional)
+# If you want CAS to be reachable externally via its own LoadBalancer Service,
+# enable the option below. This consumes a second IP from cluster_lb_addresses.
+# Ensure your pool has enough IPs (allocate-vip.sh defaults to LB_COUNT=5).
+# V4_CFG_CAS_ENABLE_LOADBALANCER: true
 ```
 
 > ⚠️ `JUMP_SVR_PRIVATE_KEY` and `KUBECONFIG` are **container-internal paths** — these
