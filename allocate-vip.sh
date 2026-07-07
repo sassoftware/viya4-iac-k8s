@@ -35,10 +35,10 @@ TFVARS="${SCRIPT_DIR}/terraform.tfvars"
 #
 # If the pool runs out of IPs a LoadBalancer Service will remain in Pending
 # state and related pods (e.g. CAS) will fail to start.
-# The default of 5 provides headroom for a full Viya + CAS LB deployment.
+# The default of 3 provides headroom for a full Viya + CAS LB deployment.
 # Override before running the script:  LB_COUNT=8 ./allocate-vip.sh
 #
-: "${LB_COUNT:=5}"
+: "${LB_COUNT:=3}"
 
 # ---------------------------------------------------------------------------
 # Validate environment
@@ -257,7 +257,7 @@ echo ""
 echo "  1. Register IPs in your DNS zone (value of cluster_domain in terraform.tfvars):"
 echo "       A    <prefix>-vip.<your-dns-zone>   ->  $VIP"
 echo "       PTR  $VIP                          ->  <prefix>-vip.<your-dns-zone>"
-echo "       A    <prefix>-lb.<your-dns-zone>    ->  ${LB_FIRST_IP}  (ingress-nginx)"
+echo "       A    viya_namespace.<prefix>-vip.<your-dns-zone>    ->  ${LB_FIRST_IP}  (ingress-nginx)"
 echo "       PTR  ${LB_FIRST_IP}                ->  <prefix>-lb.<your-dns-zone>"
 if [[ "$LB_SKIPPED" == "false" && ${#SORTED_LB_IPS[@]} -gt 1 ]]; then
     echo ""
