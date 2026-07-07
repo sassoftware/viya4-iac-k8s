@@ -193,13 +193,35 @@ openstack --insecure token issue
 
 ### Step 6 — Allocate Floating IPs for the Cluster VIP and Load Balancer
 
-Before configuring `terraform.tfvars`, you need two floating IPs reserved on your
+Before configuring `terraform.tfvars`, you need floating IPs reserved on your
 tenant network:
 
 1. **`cluster_vip_ip`** — the kube-vip control-plane HA endpoint (API server VIP)
-2. **`cluster_lb_addresses`** — the kube-vip cloud-provider LoadBalancer service VIP (used by Viya ingress)
+2. **`cluster_lb_addresses`** — a **pool** of floating IPs for Kubernetes `LoadBalancer`-type
+   Services. Each service consumes exactly one IP from this pool.
 
-Run the helper script from the repo root:
+#### How many LB IPs do you need?
+
+Every `LoadBalancer`-type Service needs one IP. With viya4-deployment (DAC) the following
+options each create an additional Service:
+
+| Condition | LoadBalancer Service created |
+| :--- | :--- |
+| Always | Envoy (Contour) — main Viya HTTPS endpoint |
+| `V4_CFG_CAS_ENABLE_LOADBALANCER: true` | CAS binary-port LB |
+| CAS Connect LB (if enabled) | CAS/CONNECT external access |
+| Consul LB (if enabled) | Consul external access |
+
+If the pool runs out of IPs a `LoadBalancer` Service remains in `Pending` state and
+the pods that depend on it (e.g. CAS) will fail to start.
+
+The script defaults to **5 IPs** (`LB_COUNT=5`). Override with:
+
+```bash
+LB_COUNT=8 ./allocate-vip.sh
+```
+
+#### Run the script
 
 ```bash
 cd /path/to/viya4-iac-k8s
@@ -210,28 +232,38 @@ cd /path/to/viya4-iac-k8s
 ```
 
 The script will:
-- Allocate two floating IPs from your tenant network
-- Automatically write `cluster_vip_ip` and `cluster_lb_addresses` into `terraform.tfvars`
-- Print the next-step instructions
+- Allocate 1 IP for `cluster_vip_ip` and `LB_COUNT` IPs for the LB pool
+- Automatically write both into `terraform.tfvars`
+- Print next-step instructions including all allocated IPs
 
-Example output:
+Example output (contiguous block — written as a range):
 ```
 [cluster_vip_ip]      = "10.119.129.26"
-[cluster_lb_addresses] = "range-global: 10.119.129.63-10.119.129.63"
+[cluster_lb_addresses] = ["range-global: 10.119.129.63-10.119.129.67"]
+```
+
+Example output (non-contiguous — written as individual /32 CIDRs):
+```
+[cluster_vip_ip]      = "10.119.129.26"
+[cluster_lb_addresses] = ["cidr-global: 10.119.129.63/32,10.119.131.7/32,..."]
 ```
 
 **After running `allocate-vip.sh`, you must:**
 
-1. Register both IPs in your DNS zone (the value of `cluster_domain` in `terraform.tfvars`):
+1. Register IPs in your DNS zone (the value of `cluster_domain` in `terraform.tfvars`):
    ```
    A    <prefix>-vip.<your-dns-zone>   →  <cluster_vip_ip>
    PTR  <cluster_vip_ip>              →  <prefix>-vip.<your-dns-zone>
-   A    <prefix>-lb.<your-dns-zone>    →  <lb_vip>
-   PTR  <lb_vip>                      →  <prefix>-lb.<your-dns-zone>
+   A    viya_namespace.<prefix>-vip.<your-dns-zone>    →  <first LB pool IP>   # used by ingress-nginx
+   PTR  <first LB pool IP>            →  <prefix>-lb.<your-dns-zone>
    ```
    > `<your-dns-zone>` is the DNS domain for your OpenStack project/tenant
    > (e.g. `myproject.openstack.example.com`). Contact your OpenStack
    > or network administrator to register the records.
+   >
+   > If you plan to enable `V4_CFG_CAS_ENABLE_LOADBALANCER: true` or other
+   > LB options in viya4-deployment, also register DNS entries for the
+   > remaining LB pool IPs printed by the script.
 2. Set `cluster_vip_fqdn` in `terraform.tfvars` to the registered FQDN:
    ```hcl
    cluster_vip_fqdn = "<prefix>-vip.<your-dns-zone>"
