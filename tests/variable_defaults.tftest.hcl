@@ -54,7 +54,7 @@ vsphere_network       = "IACdhcp" # Name of the network to to use for the VMs
 system_ssh_keys_dir = "/workspace/.ssh" # Directory holding public keys to be used on each system, TODO REPLACE ME your path may differ
 
 # Kubernetes - Cluster
-  cluster_version = "1.34.6" # Kubernetes Version
+  cluster_version = "1.36.0" # Kubernetes Version
 # The next two lines are intentionally commented out to test the assigned default values
 #cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
   #cluster_cni_version    = "3.30.3"       # Kubernetes Container Network Interface (CNI) Version
