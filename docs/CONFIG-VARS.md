@@ -69,7 +69,7 @@ Terraform input variables can be set in the following ways:
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| cluster_version        | Kubernetes version | string | "1.34.6" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_version        | Kubernetes version | string | "1.36.0" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
 | cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
 | cluster_cni_version    | Kubernetes Container Network Interface (CNI) Version | string | "3.30.3" | |
 | cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |

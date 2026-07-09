@@ -307,7 +307,7 @@ openstack_floating_ip_pool  = null                 # null = no floating IPs (sta
 openstack_insecure          = true
 
 # Kubernetes
-cluster_version     = "1.34.6"   # Latest supported: 1.32.x – 1.35.x
+cluster_version     = "1.36.0"   # Latest supported: 1.33.x – 1.36.x
 cluster_cri_version = "2.2.2"
 cluster_domain      = "<your-dns-zone>"   # ← CHANGE: your tenant DNS domain, e.g. myproject.openstack.example.com
 
@@ -533,9 +533,9 @@ All nodes should show `Ready` status. Example:
 
 ```
 NAME                          STATUS   ROLES           AGE   VERSION
-mycluster-oss-control-plane   Ready    control-plane   10m   v1.35.3
-mycluster-oss-system-01       Ready    <none>          8m    v1.35.3
-mycluster-oss-cas-01          Ready    <none>          8m    v1.35.3
+mycluster-oss-control-plane   Ready    control-plane   10m   v1.36.0
+mycluster-oss-system-01       Ready    <none>          8m    v1.36.0
+mycluster-oss-cas-01          Ready    <none>          8m    v1.36.0
 ```
 
 ---
