@@ -20,7 +20,7 @@ system_ssh_keys_dir = "~/.ssh/oss" # Directory holding public keys to be used on
 # Kubernetes - Cluster
 cluster_version        = "1.36.0"       # Kubernetes Version
 cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.30.0"       # Kubernetes Container Network Interface (CNI) Version
+cluster_cni_version    = "3.32.1"       # Kubernetes Container Network Interface (CNI) Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "2.2.2"        # Kubernetes Container Runtime Interface (CRI) Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet

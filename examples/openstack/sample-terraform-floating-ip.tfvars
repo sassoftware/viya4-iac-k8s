@@ -43,7 +43,7 @@ system_ssh_keys_dir = "/workspace/.ssh/oss" # Absolute path inside the container
 # Kubernetes - Cluster
 cluster_version        = "1.36.0"       # Kubernetes Version
 cluster_cni            = "calico"       # Kubernetes Container Network Interface (CNI)
-cluster_cni_version    = "3.30.0"       # CNI Version
+cluster_cni_version    = "3.32.1"       # CNI Version
 cluster_cri            = "containerd"   # Kubernetes Container Runtime Interface (CRI)
 cluster_cri_version    = "2.2.2"        # CRI Version
 cluster_service_subnet = "10.43.0.0/16" # Kubernetes Service Subnet
