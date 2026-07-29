@@ -481,8 +481,9 @@ variable "cluster_lb_addresses" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "cluster_enable_validation" {
-  description = "Run post-deployment validation checks (kube-proxy mode, IPVS cleanup, VIP binding, kube-vip DaemonSet rollout). Set to false to skip in air-gapped environments or when re-running specific playbook tags."
+  description = "Run post-deployment validation checks (kube-proxy mode, IPVS cleanup, VIP binding, kube-vip DaemonSet rollout). Set to false to skip in air-gapped environments or when re-running validation externally."
   type        = bool
   default     = false
 }
