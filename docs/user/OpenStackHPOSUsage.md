@@ -104,8 +104,8 @@ OS_PASSWORD=<your_openstack_password>
 OS_PROJECT_NAME=<your_project_name>
 
 # Identity domain for your USER account.
-# Use 'Default' for standard OpenStack, 'sas-ldap' for HPOS/SAS LDAP environments.
-OS_USER_DOMAIN_NAME=sas-ldap
+# Use 'Default' for standard OpenStack, 'company-ldap' for HPOS/COMPANY LDAP environments.
+OS_USER_DOMAIN_NAME=company-ldap
 
 # Identity domain for your PROJECT (tenant).
 # Required for OpenStack Identity v3. Usually the same value as OS_USER_DOMAIN_NAME.
@@ -296,7 +296,7 @@ ansible_user     = "rocky"       # ← rocky for Rocky Linux images, ubuntu for 
 ansible_password = ""            # Leave empty if using SSH key-based auth
 
 # OpenStack settings
-openstack_domain_name       = "sas-ldap"
+openstack_domain_name       = "company-ldap"
 openstack_network_name      = "provider"
 openstack_image_name        = "rocky96"           # ← CHANGE: your Glance image name
 openstack_ssh_keypair       = "my-keypair"          # ← must match Step 2 (keypair name uploaded to OpenStack)
