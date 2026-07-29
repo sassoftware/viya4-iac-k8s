@@ -108,7 +108,7 @@ COPY . /viya4-iac-k8s/
 ENV HOME=/viya4-iac-k8s
 
 # Python requirements & Ansible
-RUN pip install --upgrade pip setuptools && \
+RUN pip install --no-cache-dir --upgrade "pip==25.1.1" "setuptools==80.9.0" && \
     pip install --no-cache-dir -r requirements.txt && \
     ansible-galaxy install -r requirements.yaml && \
     chmod 755 docker-entrypoint.sh oss-k8s.sh && \
