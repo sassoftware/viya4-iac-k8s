@@ -412,7 +412,7 @@ variable "cluster_domain" {
 variable "cluster_version" {
   type        = string
   description = "Kubernetes version to install. Supported versions: 1.33.x, 1.34.x, 1.35.x, 1.36.x"
-  default     = "1.36.0"
+  default     = "1.35.0"
 
   validation {
     condition     = can(regex("^1\\.(3[3-6])\\.", var.cluster_version))

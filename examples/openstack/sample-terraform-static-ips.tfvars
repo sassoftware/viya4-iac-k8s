@@ -44,9 +44,9 @@ openstack_flavor_defaults = "np.8x16x250"
 system_ssh_keys_dir = "/workspace/.ssh/oss" # Absolute path inside the container. Mount your SSH key dir to /workspace/.ssh/oss via --volume $HOME/.ssh/oss:/workspace/.ssh/oss in the docker run command. Do NOT use /root/.ssh/... as the container runs as a non-root user.
 
 # Kubernetes - Cluster
-cluster_version        = "1.36.0"
+cluster_version        = "1.35.3"
 cluster_cni            = "calico"
-cluster_cni_version    = "3.32.1"
+cluster_cni_version    = "3.30.0"
 cluster_cri            = "containerd"
 cluster_cri_version    = "2.2.2"
 cluster_service_subnet = "10.43.0.0/16"

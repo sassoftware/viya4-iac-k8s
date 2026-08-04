@@ -142,7 +142,7 @@ deployment_type : "bare_metal" # Values are : [bare_metal|vsphere]
 kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value above
 kubernetes_arch            : "{{ vm_arch }}"
 kubernetes_cni             : "calico"        # Choices : [calico]
-kubernetes_cni_version     : "3.32.1"        # Choices : [3.32.1]
+kubernetes_cni_version     : "3.30.0"        # Choices : [3.32.1]
 kubernetes_cri             : "containerd"    # Choices : [containerd]
 kubernetes_service_subnet  : "10.43.0.0/16"  # Default cluster scoped CIDR
 kubernetes_pod_subnet      : "10.42.0.0/16"  # Default cluster scoped CIDR
