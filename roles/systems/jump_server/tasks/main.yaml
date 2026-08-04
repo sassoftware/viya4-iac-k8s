@@ -2,24 +2,30 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-# TODO: There should be other tasks here based on the OS used on your systems.
-#       The current choices are:
-#
-#       - Ubuntu 22.04 LTS
-#       - Ubuntu 24.04 LTS
-#
-- name: Set owner and group for Ubuntu OS
+- name: Set owner and group (Debian/Ubuntu)
   ansible.builtin.set_fact:
     owner: nobody
     group: nogroup
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-- name: Install nfs-common package
+- name: Set owner and group (RHEL/Rocky)
+  ansible.builtin.set_fact:
+    owner: nobody
+    group: nobody
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+# nfs-common (Debian) / nfs-utils (RHEL) — nfs-utils was already installed by systems/common on Rocky
+- name: Install nfs-common package (Debian/Ubuntu)
   ansible.builtin.package:
     name: nfs-common
     state: present
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
@@ -64,7 +70,6 @@
     - install
     - update
 
-# TODO - Verify these are the correct nfs options needed
 - name: Add entry to /etc/fstab - new entry
   ansible.builtin.lineinfile:
     path: /etc/fstab
@@ -77,19 +82,6 @@
   tags:
     - install
     - update
-
-# - name: Add entry to /etc/fstab - updated entry
-#   ansible.builtin.lineinfile:
-#     path: /etc/fstab
-#     regexp: '{{ nfs_ip }}'
-#     line: "{{ item }}"
-#   when: fstab_file_rc.stdout != "0"
-#   with_items:
-#     - "{{ nfs_ip }}:/export    /viya-share    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
-#     - "{{ nfs_ip }}:/srv/nfs/kubernetes/sc/default    /srv/nfs/kubernetes/sc/default    nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0"
-#   tags:
-#     - install
-#     - update
 
 - name: Mount /viya-share # noqa: command-instead-of-module
   ansible.builtin.command: mount -a

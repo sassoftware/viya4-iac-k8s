@@ -6,70 +6,175 @@
 #
 variable "deployment_type" {
   type        = string
-  description = "Options are: bare_metal or vsphere"
+  description = "Options are: bare_metal, vsphere, or openstack"
   default     = "bare_metal"
+
+  validation {
+    condition     = contains(["bare_metal", "vsphere", "openstack"], var.deployment_type)
+    error_message = "ERROR: Valid values for deployment_type are: bare_metal, vsphere, openstack"
+  }
 }
 
 #
 # vSphere
 #
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_server" {
   type        = string
   description = "This is the vSphere server for the environment."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_user" {
   type        = string
   description = "vSphere server user for the environment."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_password" {
   type        = string
   description = "vSphere server password"
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_datacenter" {
   type        = string
   description = "This is the name of the vSphere data center."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_datastore" {
   type        = string
   description = "This is the name of the vSphere data store."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_resource_pool" {
   type        = string
   description = "This is the name of the vSphere resource pool."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_folder" {
   type        = string
   description = "This is the name of the vSphere folder."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_template" {
   type        = string
   description = "This is the name of the VM template to clone."
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vsphere_network" {
   type        = string
   description = "This is the name of the publicly accessible network for cluster ingress and access."
   default     = null
 }
 
-# 
-# Misc.
 #
+# OpenStack
+#
+variable "openstack_auth_url" {
+  type        = string
+  description = "The OpenStack Identity (Keystone) authentication URL."
+  default     = null
+}
+
+variable "openstack_user_name" {
+  type        = string
+  description = "The username to authenticate with OpenStack."
+  default     = null
+}
+
+variable "openstack_password" {
+  type        = string
+  description = "The password to authenticate with OpenStack."
+  default     = null
+  sensitive   = true
+}
+
+variable "openstack_tenant_name" {
+  type        = string
+  description = "The OpenStack project/tenant name."
+  default     = null
+}
+
+variable "openstack_domain_name" {
+  type        = string
+  description = "The OpenStack domain name (usually 'Default')."
+  default     = "Default"
+}
+
+variable "openstack_region" {
+  type        = string
+  description = "The OpenStack region to deploy resources in."
+  default     = null
+}
+
+variable "openstack_network_name" {
+  type        = string
+  description = "The name of the OpenStack (Neutron) network to attach VMs to."
+  default     = null
+}
+
+variable "openstack_floating_ip_pool" {
+  type        = string
+  description = "The name of the external network / floating-IP pool for VM floating IPs."
+  default     = null
+}
+
+variable "openstack_image_name" {
+  type        = string
+  description = "The name of the OpenStack Glance image to use for VMs (e.g. Ubuntu 22.04)."
+  default     = null
+}
+
+variable "openstack_ssh_keypair" {
+  type        = string
+  description = "Name of the existing OpenStack Nova keypair to inject into VMs."
+  default     = null
+}
+
+variable "openstack_security_groups" {
+  type        = list(string)
+  description = "List of OpenStack security group names to apply to every VM."
+  default     = ["default"]
+}
+
+variable "openstack_availability_zone" {
+  type        = string
+  description = "OpenStack availability zone in which to create VMs."
+  default     = "nova"
+}
+
+variable "openstack_insecure" {
+  type        = bool
+  description = "Set to true to disable TLS certificate verification for the OpenStack endpoint."
+  default     = false
+}
+
+variable "openstack_cacert_file" {
+  type        = string
+  description = "Path to a CA certificate file to verify the OpenStack endpoint TLS certificate."
+  default     = null
+}
+
+variable "openstack_flavor_defaults" {
+  type        = string
+  description = "Default OpenStack Nova flavor name used when a node pool does not specify its own flavor."
+  default     = "m1.large"
+}
+# tflint-ignore: terraform_unused_declarations
 variable "gateway" {
   type        = string
   description = "Gateway IP (if using static ips)"
@@ -82,12 +187,14 @@ variable "nat_ip" {
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "netmask" {
   type        = number
   description = "Netmask (if using static ips)"
   default     = 16
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "dns_servers" {
   description = "DNS servers (if using static ips)"
   default     = ["10.19.1.24", "10.36.1.53"]
@@ -126,6 +233,7 @@ variable "node_pool_defaults" {
     ip_addresses = []
     node_taints  = []
     node_labels  = {}
+    flavor       = null # OpenStack Nova flavor name; overrides openstack_flavor_defaults
   }
 }
 
@@ -172,11 +280,13 @@ variable "jump_ip" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "jump_memory" {
   type    = number
   default = 8092
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "jump_num_cpu" {
   type    = number
   default = 4
@@ -197,11 +307,13 @@ variable "nfs_ip" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "nfs_memory" {
   type    = number
   default = 16384
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "nfs_num_cpu" {
   type    = number
   default = 4
@@ -222,11 +334,13 @@ variable "cr_ip" {
   default = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "cr_memory" {
   type    = number
   default = 8092
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "cr_num_cpu" {
   type    = number
   default = 4
@@ -296,8 +410,14 @@ variable "cluster_domain" {
 }
 
 variable "cluster_version" {
-  type    = string
-  default = "1.30.8"
+  type        = string
+  description = "Kubernetes version to install. Supported versions: 1.33.x, 1.34.x, 1.35.x, 1.36.x"
+  default     = "1.35.0"
+
+  validation {
+    condition     = can(regex("^1\\.(3[3-6])\\.", var.cluster_version))
+    error_message = "ERROR: cluster_version must be a supported Kubernetes version: 1.33.x, 1.34.x, 1.35.x, or 1.36.x"
+  }
 }
 
 variable "cluster_cni" {
@@ -307,7 +427,7 @@ variable "cluster_cni" {
 
 variable "cluster_cni_version" {
   type    = string
-  default = "3.30.3"
+  default = "3.32.1"
 }
 
 variable "cluster_cri" {
@@ -316,8 +436,9 @@ variable "cluster_cri" {
 }
 
 variable "cluster_cri_version" {
-  type    = string
-  default = "1.7.24"
+  type        = string
+  description = "Version of containerd to install. Must be >= 2.0.0 for KubeletCgroupDriverFromCRI auto-detection (GA in K8s 1.34). Required for K8s 1.36+ which drops the cgroupDriver setting."
+  default     = "2.2.2"
 }
 
 variable "cluster_service_subnet" {
@@ -358,6 +479,13 @@ variable "cluster_lb_type" {
 variable "cluster_lb_addresses" {
   type    = list(any)
   default = null
+}
+
+# tflint-ignore: terraform_unused_declarations
+variable "cluster_enable_validation" {
+  description = "Run post-deployment validation checks (kube-proxy mode, IPVS cleanup, VIP binding, kube-vip DaemonSet rollout). Set to false to skip in air-gapped environments or when re-running validation externally."
+  type        = bool
+  default     = false
 }
 
 variable "iac_tooling" {

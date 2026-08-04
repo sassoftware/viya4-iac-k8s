@@ -14,6 +14,16 @@ Now each time you invoke the script, export the variables within the file to pas
 
 An example of this file can be found in the `examples` directory [here](./../../examples/vsphere/.vsphere_creds.env).
 
+### OpenStack Environment File for Authentication
+
+Create a file that contains the OpenStack authentication variable values. Store the file outside of this repository, for example in `$HOME/.openstack_creds.env`. Protect that file so that only you have Read access to it.
+
+**NOTE**: Do not surround the values in the file with quotation marks, and make sure to avoid any trailing blank spaces.
+
+Export the variables within the file before each invocation: `export $(grep -v '^#' ~/.openstack_creds.env | xargs)`
+
+An example of this file can be found in the `examples` directory [here](./../../examples/openstack/.openstack_creds.env).
+
 ### Bare Metal Environment File for Authentication
 
 Create a file that contains the authentication variable values to use at script invocation. Store the file outside of this repository, for example in  `$HOME/.bare_metal_creds.env`. Protect that file with operating-system credentials so that only you have Read access to it
@@ -71,6 +81,37 @@ To create your system resources, run the oss-k8s.sh script with the `apply setup
 
 This command can take a few minutes to complete. Once complete, Terraform output values are written to the console. The `inventory` file, the `ansible-vars.yaml` and the `kubeconfig` file for the cluster stored here `[prefix]-oss-kubeconfig.conf` are written in the current directory, `$(pwd)`.
 
+### Create Your Infrastructure and Kubernetes Cluster - `openstack`
+
+1. Export your OpenStack credentials:
+
+   ```bash
+   export $(grep -v '^#' ~/.openstack_creds.env | xargs)
+   export SYSTEM=openstack
+   ```
+
+2. Copy and fill in an OpenStack sample tfvars file:
+
+   ```bash
+   # For floating IPs (DHCP-assigned):
+   cp examples/openstack/sample-terraform-floating-ip.tfvars terraform.tfvars
+
+   # For pre-assigned static IPs:
+   cp examples/openstack/sample-terraform-static-ips.tfvars terraform.tfvars
+   ```
+
+3. Run the full creation sequence:
+
+   ```bash
+   ./oss-k8s.sh apply setup install
+   ```
+
+   - **`apply`** — runs `terraform apply`, creating all OpenStack VMs, volumes, and floating IPs. Writes `inventory` and `ansible-vars.yaml` to `$(pwd)`.
+   - **`setup`** — runs the `systems-install.yaml` Ansible playbook to baseline the OS on every node.
+   - **`install`** — runs the `kubernetes-install.yaml` Ansible playbook to bootstrap the Kubernetes cluster with kubeadm, CNI, CRI, kube-vip, and MetalLB.
+
+   On completion, the kubeconfig is written to `./[prefix]-oss-kubeconfig.conf`.
+
 ### Create Your Kubernetes Cluster Using Physical Machines - `bare_metal`
 
 To create your Kubernetes cluster, run the oss-k8s.sh script with the `setup install` option:
@@ -101,6 +142,16 @@ To destroy all the resources that were created with the previous commands, run t
 
 ```bash
 ./oss-k8s.sh destroy
+```
+
+**NOTE**: The 'destroy' action is irreversible.
+
+### Tear Down Kubernetes Resources - OpenStack
+
+```bash
+export $(grep -v '^#' ~/.openstack_creds.env | xargs)
+export SYSTEM=openstack
+./oss-k8s.sh uninstall cleanup destroy
 ```
 
 **NOTE**: The 'destroy' action is irreversible.

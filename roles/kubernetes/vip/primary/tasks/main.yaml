@@ -17,15 +17,15 @@
     - install
   when: kubernetes_cri|lower == 'containerd'
 
+# CP kube-vip: cp_enable=true, svc_enable=false
+# LoadBalancer services are handled by the kube-vip DaemonSet, not this static pod
 - name: Generate kube-vip manifest using ARP (Layer 2) protocol on kubernetes - containerd
   ansible.builtin.shell: |
     ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} vip /kube-vip manifest pod \
       --arp \
       --controlplane \
-      --services \
       --address {{ kubernetes_vip_ip }} \
       --leaderElection \
-      --enableLoadBalancer \
       > /etc/kubernetes/manifests/kube-vip.yaml
   tags:
     - install
@@ -36,11 +36,21 @@
     docker run --network host --rm ghcr.io/kube-vip/kube-vip:v{{ kubernetes_vip_version }} manifest pod \
       --arp \
       --controlplane \
-      --services \
       --address {{ kubernetes_vip_ip }} \
       --leaderElection \
-      --enableLoadBalancer \
       > /etc/kubernetes/manifests/kube-vip.yaml
   tags:
     - install
   when: kubernetes_cri|lower == 'docker'
+
+# Safety net: ensure svc_enable is false in the static pod manifest.
+# The static pod handles CP VIP only; LoadBalancer services are delegated
+# to the kube-vip DaemonSet. Without this, any accidental --services flag
+# or version change that flips the default would break ARP on OpenStack.
+- name: Disable svc_enable in static kube-vip manifest
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: '(- name: svc_enable\s*\n\s+value: )"true"'
+    replace: '\1"false"'
+  tags:
+    - install

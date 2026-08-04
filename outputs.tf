@@ -6,15 +6,15 @@ output "cluster_name" {
 }
 
 output "jump_admin_username" {
-  value = "root"
+  value = var.ansible_user != null ? var.ansible_user : ""
 }
 
 output "jump_private_ip" {
-  value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
+  value = local.resolved_jump_ip
 }
 
 output "jump_public_ip" {
-  value = var.create_jump ? element(module.jump.ip_addresses, 0) : null
+  value = local.resolved_jump_ip
 }
 
 # TODO: Fix this must be a variable
@@ -31,15 +31,15 @@ output "nat_ip" {
 }
 
 output "nfs_admin_username" {
-  value = "root"
+  value = var.ansible_user != null ? var.ansible_user : ""
 }
 
 output "nfs_private_ip" {
-  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
+  value = local.resolved_nfs_ip
 }
 
 output "nfs_public_ip" {
-  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
+  value = local.resolved_nfs_ip
 }
 
 output "prefix" {
@@ -50,12 +50,12 @@ output "provider" {
   value = "oss"
 }
 
-output "provder_account" {
+output "provider_account" {
   value = "oss"
 }
 
 output "rwx_filestore_endpoint" {
-  value = var.create_nfs ? element(module.nfs.ip_addresses, 0) : null
+  value = local.resolved_nfs_ip
 }
 
 # TODO: Fix this must be a variable

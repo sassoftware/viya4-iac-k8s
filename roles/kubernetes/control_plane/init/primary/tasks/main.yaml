@@ -9,7 +9,7 @@
 - name: Calculate kubernetes_cluster_dns if not defined
   ansible.builtin.set_fact:
     kubernetes_cluster_dns: "{{ kubernetes_service_subnet.split('/')[0].split('.')[0:3] | join('.') }}.10"
-  when: kubernetes_cluster_dns is not defined or kubernetes_cluster_dns == ""
+  when: kubernetes_cluster_dns is not defined or not kubernetes_cluster_dns
   tags:
     - install
     - update
@@ -25,6 +25,37 @@
     - install
     - update
 
+# Clean up any stale IPVS state before kubeadm init.
+# kube-proxy reads node networking on start and may inherit stale interfaces/rules.
+- name: Remove stale kube-ipvs0 interface
+  ansible.builtin.shell: |
+    ip link show kube-ipvs0 && ip link delete kube-ipvs0 || true
+  ignore_errors: true
+  tags:
+    - install
+
+- name: Clear stale IPVS rules
+  ansible.builtin.shell: |
+    command -v ipvsadm >/dev/null 2>&1 && ipvsadm -C || true
+  ignore_errors: true
+  tags:
+    - install
+
+- name: Unload stale IPVS kernel modules
+  ansible.builtin.shell: |
+    modprobe -r ip_vs_rr ip_vs_wrr ip_vs_sh ip_vs 2>/dev/null || true
+  ignore_errors: true
+  tags:
+    - install
+
+# Initialize Kubernetes Control Plane
+- name: Check if kubeadm already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_admin_conf
+  tags:
+    - install
+
 # Workaround for https://github.com/kube-vip/kube-vip/issues/684
 # to use super-admin.conf during kubeadm init (fixed in future kube-vip releases)
 - name: Update kube-vip.yaml to use super-admin.conf for kubeadm init in 1.29+
@@ -32,20 +63,21 @@
     path: /etc/kubernetes/manifests/kube-vip.yaml
     regexp: "path: /etc/kubernetes/admin.conf"
     replace: "path: /etc/kubernetes/super-admin.conf"
-  when: kubernetes_version is version("1.29.0", "ge", version_type="semver")
+  when:
+    - not kubeadm_admin_conf.stat.exists
+    - kubernetes_version is version("1.29.0", "ge", version_type="semver")
   tags:
     - install
-    - update
 
-# Initialize Kubernetes Control Plane
 - name: Run kubeadm init
   ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs
   register: kubeadm_init
   changed_when: "'initialized successfully' in kubeadm_init.stdout or 'This node has joined the cluster' in kubeadm_init.stdout"
+  when: not kubeadm_admin_conf.stat.exists
   tags:
     - install
 
-# Workaround revert — restore original kube-vip.yaml
+# Workaround revert — restore original kube-vip.yaml (runs regardless of skip)
 - name: Restore kube-vip.yaml to use admin.conf for kubeadm init in 1.29+
   ansible.builtin.replace:
     path: /etc/kubernetes/manifests/kube-vip.yaml
@@ -91,5 +123,30 @@
     src: /etc/kubernetes/admin.conf
     dest: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
     flat: true
+  tags:
+    - install
+
+# On OpenStack, kubeadm init used the direct CP IP as controlPlaneEndpoint so
+# workers could join via L3 routing. Patch admin.conf and the fetched kubeconfig
+# to use the VIP FQDN so kubectl and all post-join operations use the HA VIP.
+- name: Patch kubeconfig to use VIP FQDN (OpenStack only)
+  ansible.builtin.replace:
+    path: "{{ item }}"
+    regexp: "https://{{ ansible_default_ipv4.address }}:6443"
+    replace: "https://{{ kubernetes_vip_fqdn }}:6443"
+  with_items:
+    - /etc/kubernetes/admin.conf
+    - ~/.kube/config
+  when: deployment_type == "openstack"
+  tags:
+    - install
+
+- name: Patch fetched kubeconfig to use VIP FQDN (OpenStack only)
+  ansible.builtin.replace:
+    path: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+    regexp: "https://{{ ansible_default_ipv4.address }}:6443"
+    replace: "https://{{ kubernetes_vip_fqdn }}:6443"
+  delegate_to: localhost
+  when: deployment_type == "openstack"
   tags:
     - install

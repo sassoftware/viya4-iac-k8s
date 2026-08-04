@@ -8,7 +8,11 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubernetes_version }}"
 clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
-controlPlaneEndpoint: "{{ kubernetes_vip_fqdn }}:6443"
+# On OpenStack the VIP is in a different subnet than the cluster nodes.
+# Setting controlPlaneEndpoint to the direct CP IP ensures workers can reach
+# the API server via plain L3 routing during kubeadm join.
+# The kubeconfig is patched post-init to use the VIP FQDN for HA kubectl access.
+controlPlaneEndpoint: "{% if deployment_type == 'openstack' %}{{ ansible_default_ipv4.address }}{% else %}{{ kubernetes_vip_fqdn }}{% endif %}:6443"
 networking:
   podSubnet: "{{ kubernetes_pod_subnet }}"
   serviceSubnet: "{{ kubernetes_service_subnet | default('10.96.0.0/12') }}"
@@ -58,7 +62,12 @@ kind: KubeletConfiguration
 authentication:
   anonymous:
     enabled: false
+# cgroupDriver is auto-detected from the CRI via KubeletCgroupDriverFromCRI
+# feature gate (GA in K8s 1.34, requires containerd 2.0.0+).
+# Explicit cgroupDriver setting is deprecated in K8s 1.34 and removed in 1.36.
 cgroupDriver: systemd
+featureGates:
+  KubeletCgroupDriverFromCRI: true
 clusterDNS:
   - "{{ kubernetes_cluster_dns }}"
 clusterDomain: "{{ kubernetes_dns_domain | default('cluster.local') }}"
@@ -71,8 +80,12 @@ readOnlyPort: 0
 # KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-mode: "ipvs"
+mode: "iptables"
 ipvs:
+  # strictARP is only enforced when mode=ipvs, but pre-setting it here ensures
+  # correct ARP behaviour if the cluster is ever migrated to IPVS mode and is
+  # required to prevent kube-proxy from absorbing ARP replies for VIPs that
+  # kube-vip/MetalLB must own exclusively.
   strictARP: true
 metricsBindAddress: "0.0.0.0:10249"
 enableProfiling: true

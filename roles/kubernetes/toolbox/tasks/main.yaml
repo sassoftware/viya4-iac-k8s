@@ -6,19 +6,6 @@
 # Installing Kubernetes tooling
 #
 
-# Only applicable for releases older than Ubuntu 22.04
-- name: Create /etc/apt/keyrings directory
-  ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: "0755"
-    owner: root
-    group: root
-  when: ansible_distribution == "Ubuntu" and (ansible_distribution_version == "24.04")
-  tags:
-    - install
-    - update
-
 - name: Set kubernetes version facts for toolbox installation
   set_fact:
     k8s_version_semantic_parts: "{{ kubernetes_version.split('.') }}"
@@ -35,24 +22,158 @@
     - install
     - update
 
-# Apply Kubernetes public signing key
-- name: Apply Kubernetes public signing key
-  ansible.builtin.get_url:
-    url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/Release.key"
-    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+# ===== Debian/Ubuntu: APT-based Kubernetes install =========================
+
+- name: Create /etc/apt/keyrings directory (Ubuntu 24.04)
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
 
-# Add Kubernetes apt repository
-- name: Add Kubernetes apt repository
+- name: Apply Kubernetes public signing key (Debian/Ubuntu)
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/Release.key"
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - update
+
+- name: Add Kubernetes apt repository (Debian/Ubuntu)
   ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/deb/ /"
     state: present
     update_cache: true
+  when: ansible_os_family == "Debian"
   tags:
     - install
     - update
+
+- name: Update apt package index and install kubelet, kubeadm, kubectl (Debian/Ubuntu)
+  ansible.builtin.apt:
+    pkg:
+      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
+    state: present
+    update_cache: true
+    allow_downgrade: true
+    allow_change_held_packages: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+
+- name: Mark the packages to hold (Debian/Ubuntu)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+
+- name: Mark the packages to purge (Debian/Ubuntu uninstall)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: purge
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: ansible_os_family == "Debian"
+  tags:
+    - uninstall
+
+- name: Remove kubelet, kubeadm, kubectl (Debian/Ubuntu uninstall)
+  ansible.builtin.apt:
+    pkg:
+      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
+      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
+    state: absent
+    update_cache: true
+    allow_change_held_packages: true
+    allow_downgrade: true
+  when: ansible_os_family == "Debian"
+  tags:
+    - uninstall
+
+# ===== RHEL/Rocky: DNF-based Kubernetes install ============================
+
+- name: Add Kubernetes yum repository (RHEL/Rocky)
+  ansible.builtin.copy:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    mode: "0644"
+    content: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/rpm/
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://pkgs.k8s.io/core:/stable:/v{{ k8s_major_version }}.{{ k8s_minor_version }}/rpm/repodata/repomd.xml.key
+      exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - update
+
+- name: Install kubelet, kubeadm, kubectl (RHEL/Rocky)
+  ansible.builtin.dnf:
+    name:
+      - "kubelet-{{ kubernetes_version }}"
+      - "kubeadm-{{ kubernetes_version }}"
+      - "kubectl-{{ kubernetes_version }}"
+    state: present
+    disable_excludes: kubernetes
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Install versionlock plugin (RHEL/Rocky)
+  ansible.builtin.package:
+    name: python3-dnf-plugin-versionlock
+    state: present
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Lock Kubernetes package versions (RHEL/Rocky)
+  ansible.builtin.command: dnf versionlock add kubelet kubeadm kubectl
+  when: ansible_os_family == "RedHat"
+  ignore_errors: true
+  tags:
+    - install
+
+- name: Enable kubelet service (RHEL/Rocky)
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+
+- name: Remove kubelet, kubeadm, kubectl (RHEL/Rocky uninstall)
+  ansible.builtin.dnf:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: absent
+    disable_excludes: kubernetes
+  when: ansible_os_family == "RedHat"
+  tags:
+    - uninstall
+
+# ===== crictl (all distros) ================================================
 
 - name: Download crictl
   ansible.builtin.get_url:
@@ -76,12 +197,12 @@
 
 - name: Generate crictl.yaml file for docker
   ansible.builtin.shell: |
-    cat >> /etc/crictl.yaml << EOF
+    cat >> /etc/crictl.yaml << CRIEOF
     runtime-endpoint: unix:///var/run/dockershim.sock
     image-endpoint: unix:///var/run/dockershim.sock
     timeout: 10
     debug: false
-    EOF
+    CRIEOF
   when: kubernetes_cri|lower == 'docker'
   tags:
     - install
@@ -89,12 +210,12 @@
 
 - name: Generate crictl.yaml file for containerd
   ansible.builtin.shell: |
-    cat >> /etc/crictl.yaml << EOF
+    cat >> /etc/crictl.yaml << CRIEOF
     runtime-endpoint: unix:///run/containerd/containerd.sock
     image-endpoint: unix:///run/containerd/containerd.sock
     timeout: 10
     debug: false
-    EOF
+    CRIEOF
   when: kubernetes_cri|lower == 'containerd'
   tags:
     - install
@@ -102,69 +223,13 @@
 
 - name: Generate crictl.yaml file for cri-o
   ansible.builtin.shell: |
-    cat >> /etc/crictl.yaml << EOF
+    cat >> /etc/crictl.yaml << CRIEOF
     runtime-endpoint: unix:///var/run/crio/crio.sock
     image-endpoint: unix:///var/run/crio/crio.sock
     timeout: 10
     debug: false
-    EOF
+    CRIEOF
   when: kubernetes_cri|lower == 'cri-o'
   tags:
     - install
     - update
-
-# Update apt package index and install kubelet, kubeadm, kubectl
-- name: Update apt package index and install kubelet, kubeadm, kubectl
-  ansible.builtin.apt:
-    pkg:
-      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
-    state: present
-    update_cache: true
-    allow_downgrade: true
-    allow_change_held_packages: true
-  tags:
-    - install
-
-# Mark the packages to hold as we control the version ;)
-- name: Mark the packages to hold as we control the version ;)
-  ansible.builtin.dpkg_selections:
-    name: "{{ item }}"
-    selection: hold
-  with_items:
-    - kubelet
-    - kubeadm
-    - kubectl
-  tags:
-    - install
-
-- name: Mark the packages to purge as we control the version ;)
-  ansible.builtin.dpkg_selections:
-    name: "{{ item }}"
-    selection: purge
-  with_items:
-    - kubelet
-    - kubeadm
-    - kubectl
-  tags:
-    - uninstall
-
-- name: Update apt package index and remove kubelet, kubeadm, kubectl
-  ansible.builtin.apt:
-    pkg:
-      - kubelet={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubeadm={{ kubernetes_version }}-{{ kube_deb_rev }}
-      - kubectl={{ kubernetes_version }}-{{ kube_deb_rev }}
-    state: absent
-    update_cache: true
-    allow_change_held_packages: true
-    allow_downgrade: true
-  tags:
-    - uninstall
-
-# TODO : Revisit when finishing cri-o integration
-# - name: Reboot machines for cni networking with cri
-#   ansible.builtin.reboot:
-#   tags:
-#     - install
