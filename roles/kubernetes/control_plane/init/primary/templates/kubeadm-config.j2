@@ -87,6 +87,14 @@ ipvs:
   # required to prevent kube-proxy from absorbing ARP replies for VIPs that
   # kube-vip/MetalLB must own exclusively.
   strictARP: true
+{% if kubernetes_loadbalancer == "kube_vip" %}
+  excludeCIDRs:
+{% for item in kubernetes_loadbalancer_addresses %}
+{% for key, value in item.items() %}
+  - "{{ value }}"
+{% endfor %}
+{% endfor %}
+{% endif %}
 metricsBindAddress: "0.0.0.0:10249"
 enableProfiling: true
 clusterCIDR: "{{ kubernetes_pod_subnet }}"
