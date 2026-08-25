@@ -384,8 +384,8 @@ Credentials are mapped from standard OpenStack environment variables by `oss-k8s
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | openstack_image_name        | Name of the Glance image used to provision cluster nodes | string | | Required. Must exist and be accessible within the target project. Must support cgroup v2: Ubuntu 22.04/24.04 or Rocky Linux 9. The image name is also used to derive the guest OS type (`ubuntu` or `rocky`) for Ansible. |
-| openstack_flavor_defaults   | Default Nova flavor used when a node pool does not specify its own `flavor` | string | "m1.large" | Must exist in the target project. Can be overridden per node pool via the `flavor` key in `node_pools`. |
-| openstack_ssh_keypair       | Name of the Nova keypair injected into cluster nodes | string | | Required. The keypair must already exist in OpenStack before cluster creation. The corresponding private key must be present in `system_ssh_keys_dir` and named to match this value. |
+| openstack_flavor_defaults   | Default OpenStack compute flavor used when a node pool does not specify its own `flavor` | string | "m1.large" | Must exist in the target project. Can be overridden per node pool via the `flavor` key in `node_pools`. |
+| openstack_ssh_keypair       | Name of the OpenStack keypair injected into cluster nodes | string | | Required. The keypair must already exist in OpenStack before cluster creation. The corresponding private key must be present in `system_ssh_keys_dir` and named to match this value. |
 | openstack_security_groups   | List of OpenStack security group names applied to all cluster VMs | list(string) | ["default"] | All named groups must exist in the target project. Groups must permit intra-cluster traffic and SSH access from the deployment host. A dedicated cluster group (for example, `["default", "k8s"]`) is recommended. |
 | openstack_network_name      | Name of the Neutron network to attach cluster VMs to | string | | Required. Must exist and be accessible within the target project. In static-IP mode, IP addresses in `node_pools` must fall within this network's subnet. |
 | openstack_floating_ip_pool  | Name of the external network pool used to allocate floating IPs | string | null | Set to the external/public network name for floating-IP mode. A value of `null` disables floating IP allocation (static IP mode). See `allocate-vip.sh` for VIP and load balancer IP allocation. |
@@ -444,10 +444,10 @@ Node pools define the compute resources for each group of cluster nodes. On Open
 
 | Name | Description | Type | Default | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| flavor       | Nova flavor name for this node pool | string | null | When `null`, falls back to `openstack_flavor_defaults`. The flavor must exist in the target project. |
+| flavor       | OpenStack compute flavor name for this node pool | string | null | When `null`, falls back to `openstack_flavor_defaults`. The flavor must exist in the target project. |
 | count        | Number of nodes (dynamic IP mode) | number | | Use `count` when OpenStack assigns IPs dynamically. Cannot be used together with `ip_addresses`. |
 | ip_addresses | List of static IP addresses | list(string) | [] | Use `ip_addresses` for static IP mode. The number of entries determines the instance count. Cannot be used together with `count`. |
-| os_disk      | Root volume size in GB | number | | Backed by Cinder block storage; not limited by the flavor's ephemeral disk size. |
+| os_disk      | Root volume size in GB | number | 25 | Backed by Cinder block storage; not limited by the flavor's ephemeral disk size. |
 | misc_disks   | Additional Cinder data volume sizes in GB | list(number) | [] | Each entry creates one Cinder volume per node. Used to back the `local-storage` storage class. |
 | node_taints  | Taints applied to nodes in this pool | list(string) | [] | |
 | node_labels  | Labels applied to nodes in this pool | map(string) | {} | |
