@@ -19,6 +19,21 @@ Supported configuration variables are listed in the tables below.  All variables
       - [Jump Server](#jump-server)
       - [NFS Server](#nfs-server)
       - [PostgreSQL Server](#postgresql-servers)
+  - [OpenStack](#openstack)
+    - [Terraform terraform.tfvars file](#terraform-terraformtfvars-file-1)
+      - [General Items](#general-items-1)
+      - [Authentication](#authentication)
+      - [Compute and Networking](#compute-and-networking)
+      - [TLS / Security](#tls--security)
+      - [Systems](#systems-1)
+      - [Kubernetes Cluster](#kubernetes-cluster-1)
+      - [Kubernetes Cluster Virtual IP Address](#kubernetes-cluster-virtual-ip-address-1)
+      - [Kubernetes Load Balancer](#kubernetes-load-balancer-1)
+      - [Control Plane](#control-plane-1)
+      - [Node Pools](#node-pools-1)
+      - [Jump Server](#jump-server-1)
+      - [NFS Server](#nfs-server-1)
+      - [PostgreSQL Servers](#postgresql-servers-1)
   - [Bare Metal](#bare-metal)
     - [Ansible ansible-vars.yaml File](#ansible-ansible-varsyaml-file)
     - [Labels/Taints](#labelstaints)
@@ -335,6 +350,171 @@ postgres_servers = {
   }
 }
 ```
+
+## OpenStack
+
+### Terraform terraform.tfvars file
+
+Sample tfvars files for floating-IP and static-IP modes are provided in [`examples/openstack/`](../examples/openstack/).
+
+#### General Items
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| prefix | A prefix used in the names of all resources created by this script | string | | Required. Must start with a lowercase letter and contain only lowercase alphanumeric characters and hyphens. Cannot start or end with a hyphen. |
+| ansible_user | The OS user account that Ansible uses to connect to cluster nodes | string | | Required. Must have password-less sudo privileges. Use `rocky` for Rocky Linux images or `ubuntu` for Ubuntu images. |
+| ansible_password | Password for the Ansible user account | string | | Leave empty when using SSH key-based authentication. |
+| deployment_type | Deployment target platform | string | "bare_metal" | Must be `openstack` for OpenStack deployments. Use `SYSTEM=openstack ./oss-k8s.sh` rather than setting this in `terraform.tfvars`. |
+
+#### Authentication
+
+Credentials are mapped from standard OpenStack environment variables by `oss-k8s.sh`. Place credentials in `~/.openstack_creds.env`, which `oss-k8s.sh` auto-sources before each Terraform invocation. `openstack_user_name` and `openstack_password` are prompted interactively if not found in the environment.
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| openstack_auth_url   | Keystone authentication URL for the OpenStack identity service | string | | Required. Sourced from `OS_AUTH_URL`. Example: `https://openstack.example.com:5000/v3`. |
+| openstack_user_name  | OpenStack username | string | | Required. Sourced from `OS_USERNAME`. Prompted interactively by `oss-k8s.sh` if not set in the environment. |
+| openstack_password   | OpenStack password | string | | Required. Sensitive. Sourced from `OS_PASSWORD`. Prompted interactively by `oss-k8s.sh` if not set. Prefer `~/.openstack_creds.env` over storing this value in `terraform.tfvars`. |
+| openstack_tenant_name | OpenStack project (tenant) name | string | | Required. Sourced from `OS_PROJECT_NAME`. |
+| openstack_domain_name | OpenStack identity domain | string | "Default" | Sourced from `OS_USER_DOMAIN_NAME`. Change only if your environment uses a non-default identity domain (for example, a company LDAP-backed domain). |
+| openstack_region     | OpenStack region where cluster resources are created | string | | Sourced from `OS_REGION_NAME`. Required in multi-region environments (for example, `RegionOne`). |
+
+#### Compute and Networking
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| openstack_image_name        | Name of the Glance image used to provision cluster nodes | string | | Required. Must exist and be accessible within the target project. Must support cgroup v2: Ubuntu 22.04/24.04 or Rocky Linux 9. The image name is also used to derive the guest OS type (`ubuntu` or `rocky`) for Ansible. |
+| openstack_flavor_defaults   | Default OpenStack compute flavor used when a node pool does not specify its own `flavor` | string | "m1.large" | Must exist in the target project. Can be overridden per node pool via the `flavor` key in `node_pools`. |
+| openstack_ssh_keypair       | Name of the OpenStack keypair injected into cluster nodes | string | | Required. The keypair must already exist in OpenStack before cluster creation. The corresponding private key must be present in `system_ssh_keys_dir` and named to match this value. |
+| openstack_security_groups   | List of OpenStack security group names applied to all cluster VMs | list(string) | ["default"] | All named groups must exist in the target project. Groups must permit intra-cluster traffic and SSH access from the deployment host. A dedicated cluster group (for example, `["default", "k8s"]`) is recommended. |
+| openstack_network_name      | Name of the Neutron network to attach cluster VMs to | string | | Required. Must exist and be accessible within the target project. In static-IP mode, IP addresses in `node_pools` must fall within this network's subnet. |
+| openstack_floating_ip_pool  | Name of the external network pool used to allocate floating IPs | string | null | Set to the external/public network name for floating-IP mode. A value of `null` disables floating IP allocation (static IP mode). See `allocate-vip.sh` for VIP and load balancer IP allocation. |
+| openstack_availability_zone | Availability Zone where all cluster resources are created | string | "nova" | Must be available to the target project. Multi-AZ deployments are not supported — all cluster resources must reside in the same AZ. |
+
+#### TLS / Security
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| openstack_insecure    | Disable TLS certificate validation for OpenStack API connections | bool | false | **Runtime override:** `oss-k8s.sh` sets this to `true` by default via `${OS_INSECURE:-true}`. Export `OS_INSECURE=false` to re-enable validation. Prefer `openstack_cacert_file` for environments with self-signed certificates. |
+| openstack_cacert_file | Path to a CA certificate file for OpenStack endpoint TLS verification | string | null | Preferred over `openstack_insecure = true` for environments with self-signed or private CA certificates. Must be an absolute path accessible to the Terraform process. |
+
+#### Systems
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| system_ssh_keys_dir | Directory containing the SSH private keys used by the deployment tooling | string | "~/.ssh" | Must be an absolute path. The tilde (`~`) is not expanded inside Docker containers; use a path such as `/workspace/.ssh/oss` and mount the directory with `--volume $HOME/.ssh/oss:/workspace/.ssh/oss`. The private key file must be named to match `openstack_ssh_keypair`. |
+
+#### Kubernetes Cluster
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| cluster_version        | Kubernetes version | string | "1.35.0" | Valid values are listed here: [SAS Viya platform Supported Kubernetes Versions](https://documentation.sas.com/?cdcId=itopscdc&cdcVersion=default&docsetId=itopssr&docsetTarget=n1ika6zxghgsoqn1mq4bck9dx695.htm#p03v0o4maa8oidn1awe0w4xlxcf6). |
+| cluster_cni            | Kubernetes container network interface (CNI) | string | "calico" | |
+| cluster_cni_version    | Kubernetes Container Network Interface (CNI) version | string | "3.32.1" | |
+| cluster_cri            | Kubernetes container runtime interface (CRI) | string | "containerd" | |
+| cluster_cri_version    | Version of the CRI specified by `cluster_cri` to be installed | string | "2.2.2" | Must be ≥ 2.0.0 for cgroup v2 auto-detection (required for Kubernetes 1.36+). See the [releases page](https://github.com/containerd/containerd/releases) for available versions. |
+| cluster_service_subnet | Kubernetes service subnet | string | "10.43.0.0/16" | Must not overlap with the OpenStack tenant network or the pod subnet. |
+| cluster_pod_subnet     | Kubernetes pod subnet | string | "10.42.0.0/16" | Must not overlap with the OpenStack tenant network or the service subnet. |
+| cluster_domain         | Base DNS domain for cluster nodes | string | | Nodes register as `<hostname>.<cluster_domain>`. Use the domain that matches your OpenStack tenant's DNS zone. |
+
+#### Kubernetes Cluster Virtual IP Address
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| cluster_vip_version | kube-vip version | string | "0.7.1" | Currently kube-vip is the only supported virtual IP provider. Minimum supported version is 0.5.7. |
+| cluster_vip_ip      | IP address for the cluster control-plane VIP | string | | Must be an available IP on the tenant network. Allocated by `allocate-vip.sh` or `oss-k8s.sh allocate` and written back into `terraform.tfvars`. Must be registered in DNS before running `setup` or `install`. |
+| cluster_vip_fqdn    | FQDN for the cluster control-plane VIP | string | | Used in the generated kubeconfig file. Must be resolvable on all cluster nodes. Defaults to `<prefix>-oss-vip.<cluster_domain>` if not set. |
+
+#### Kubernetes Load Balancer
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| cluster_lb_type      | Load balancer used in the cluster | string | "kube_vip" | Valid values: `kube_vip`, `metallb`. Use `metallb` if you plan to use SingleStore. |
+| cluster_lb_addresses | IP addresses used by the load balancer | list | null | Format depends on the selected load balancer. See [kube-vip cloud provider](https://kube-vip.io/docs/usage/cloud-provider/#the-kube-vip-cloud-provider-configmap) or [MetalLB configuration](https://metallb.universe.tf/configuration/#layer-2-configuration) for details. |
+
+#### Control Plane
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| control_plane_ssh_key_name | Name for the SSH key generated for the control plane | string | "cp_ssh" | |
+
+#### Node Pools
+
+Node pools define the compute resources for each group of cluster nodes. On OpenStack, node sizing is controlled by the Nova **flavor** rather than explicit CPU and memory values. Each node pool supports the following variables:
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| flavor       | OpenStack compute flavor name for this node pool | string | null | When `null`, falls back to `openstack_flavor_defaults`. The flavor must exist in the target project. |
+| count        | Number of nodes (dynamic IP mode) | number | | Use `count` when OpenStack assigns IPs dynamically. Cannot be used together with `ip_addresses`. |
+| ip_addresses | List of static IP addresses | list(string) | [] | Use `ip_addresses` for static IP mode. The number of entries determines the instance count. Cannot be used together with `count`. |
+| os_disk      | Root volume size in GB | number | 25 | Backed by Cinder block storage; not limited by the flavor's ephemeral disk size. |
+| misc_disks   | Additional Cinder data volume sizes in GB | list(number) | [] | Each entry creates one Cinder volume per node. Used to back the `local-storage` storage class. |
+| node_taints  | Taints applied to nodes in this pool | list(string) | [] | |
+| node_labels  | Labels applied to nodes in this pool | map(string) | {} | |
+
+**NOTE**: The `control_plane` and `system` node pools are required and must not be renamed.
+
+Sample `node_pools` for OpenStack:
+
+```hcl
+node_pools = {
+  control_plane = {
+    count   = 3
+    flavor  = "np.8x32x150"
+    os_disk = 100
+    node_taints = []
+    node_labels = {}
+  },
+  system = {
+    count   = 1
+    flavor  = "np.8x16x250"
+    os_disk = 100
+    node_taints = []
+    node_labels = {
+      "kubernetes.azure.com/mode" = "system"
+    }
+  },
+  cas = {
+    count      = 3
+    flavor     = "np.16x64x250"
+    os_disk    = 350
+    misc_disks = [150, 150]
+    node_taints = ["workload.sas.com/class=cas:NoSchedule"]
+    node_labels = {
+      "workload.sas.com/class" = "cas"
+    }
+  },
+}
+```
+
+#### Jump Server
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| create_jump    | Create a jump server | bool | false | Recommended for environments without direct network access to cluster nodes. Uses `openstack_flavor_defaults` for instance sizing. |
+| jump_disk_size | Root volume size in GB for the jump server | number | 100 | |
+| jump_ip        | Static IP address for the jump server | string | | Leave empty to allow OpenStack to assign an IP dynamically. |
+
+#### NFS Server
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| create_nfs    | Create an NFS server | bool | false | Required when using the `nfs` storage class for ReadWriteMany (RWX) volumes. Uses `openstack_flavor_defaults` for instance sizing. |
+| nfs_disk_size | Root volume size in GB for the NFS server | number | 400 | Size according to the total storage required across all RWX PersistentVolumeClaims. |
+| nfs_ip        | Static IP address for the NFS server | string | | Leave empty to allow OpenStack to assign an IP dynamically. |
+
+#### PostgreSQL Servers
+
+When configuring external PostgreSQL servers, provide their details in the `postgres_servers` block. Each entry represents a single database server. The `default` entry is always required when creating external databases. No databases are created during infrastructure provisioning — only the server VM is deployed.
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| server_disk_size       | Size of disk in GB | number | 128 | |
+| server_ip              | Static IP address for the PostgreSQL server | string | | Leave empty to allow OpenStack to assign an IP dynamically. |
+| server_version         | PostgreSQL version | string | "15" | See [SAS Viya platform System Requirements](https://documentation.sas.com/?cdcId=sasadmincdc&cdcVersion=default&docsetId=itopssr&docsetTarget=p05lfgkwib3zxbn1t6nyihexp12n.htm#p1wq8ouke3c6ixn1la636df9oa1u) for supported versions. |
+| server_ssl             | Enable SSL for PostgreSQL connections | string | "off" | Set to `on` to enable SSL. |
+| administrator_login    | PostgreSQL admin user | string | "postgres" | Cannot be changed. |
+| administrator_password | PostgreSQL admin password | string | "my$up3rS3cretPassw0rd" | Change this before deployment. |
 
 ## Bare Metal
 
