@@ -59,6 +59,27 @@ Terraform input variables can be set in the following ways:
 | vsphere_template      | Name of the VM template to clone to create VMs for the cluster | string | | |
 | vsphere_network       | Name of the network to to use for the VMs | string | | |
 
+#### OpenStack
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| openstack_auth_url          | Keystone authentication URL for the OpenStack identity service | string | | Required. Typically sourced from `OS_AUTH_URL` in `~/.openstack_creds.env`, which `oss-k8s.sh` auto-sources. Example: `https://openstack.example.com:5000/v3` |
+| openstack_user_name         | OpenStack username for authentication | string | | Required. Sourced from `OS_USERNAME` if set; otherwise `oss-k8s.sh` prompts interactively. Do not set in `terraform.tfvars` — use the env file or the prompt. |
+| openstack_password          | OpenStack password for authentication | string | | Required. Sensitive. Sourced from `OS_PASSWORD` if set; otherwise `oss-k8s.sh` prompts interactively. Never commit this value to version control. |
+| openstack_tenant_name       | OpenStack project (tenant) name | string | | Required. Sourced from `OS_PROJECT_NAME` if set. |
+| openstack_domain_name       | OpenStack identity domain used for authentication | string | "Default" | Sourced from `OS_USER_DOMAIN_NAME` if set. Change only if your environment uses a non-default identity domain (e.g. a company LDAP domain). |
+| openstack_region            | OpenStack region where cluster resources are created | string | | Sourced from `OS_REGION_NAME` if set. Required in multi-region environments (e.g. `RegionOne`). |
+| openstack_image_name        | Name of the Glance image used to provision cluster nodes | string | | Required. Image must support cgroup v2: Ubuntu 22.04/24.04 or Rocky Linux 9. The image name is also used to auto-detect `vm_os` (`ubuntu` or `rocky`) in `locals.tf`. |
+| openstack_ssh_keypair       | Name of the OpenStack keypair injected into cluster nodes | string | | Required. Must match an existing keypair uploaded to the OpenStack project. The corresponding private key must be present in `system_ssh_keys_dir`. |
+| openstack_security_groups   | List of OpenStack security group names applied to all cluster VMs | list(string) | ["default"] | Security groups must permit intra-cluster traffic and SSH from the deployment host. A dedicated cluster group (e.g. `"k8s"`) is recommended alongside `"default"`. |
+| openstack_network_name      | Name of the Neutron network used for cluster resources | string | | Required. All cluster VMs attach to this network. In static-IP mode, IP addresses must fall within this network's subnet. |
+| openstack_floating_ip_pool  | Name of the external network pool used to allocate floating IPs | string | null | Set to the external/public network name for floating-IP mode. A value of `null` disables floating IP allocation (static IP mode). See also `allocate-vip.sh`. |
+| openstack_availability_zone | OpenStack Availability Zone where all cluster resources are created | string | "nova" | Must be an AZ available to the target project. Multi-AZ deployments are not supported; all cluster resources must reside in the same AZ. |
+| openstack_flavor_defaults   | Default Nova flavor used when a node pool does not specify its own `flavor` | string | "m1.large" | Can be overridden per node pool via the `flavor` key in `node_pools`. |
+| openstack_insecure          | Disable TLS certificate validation for OpenStack API connections | bool | false | Set to `true` only for environments with self-signed certificates when `openstack_cacert_file` cannot be used. Not recommended for production. |
+| openstack_cacert_file       | Path to a CA certificate file for OpenStack endpoint TLS verification | string | null | Preferred over `openstack_insecure = true` for environments using self-signed or private CA certificates. Must be an absolute path accessible to the Terraform process. |
+| system_ssh_keys_dir         | Directory containing SSH keys used by the deployment tooling | string | "~/.ssh" | Must be an absolute path. The tilde (`~`) is not expanded inside Docker containers; use `/workspace/.ssh/oss` and mount the directory via `--volume`. The private key filename must match `openstack_ssh_keypair`. |
+
 #### Systems
 
 | Name | Description | Type | Default | Notes |

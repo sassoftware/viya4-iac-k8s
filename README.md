@@ -24,7 +24,7 @@
 - [Additional Resources](#additional-resources)
 
 ## Kubernetes Support
-At this time, the viya4-iac-k8s project supports Kubernetes versions 1.33 through 1.36.
+At this time, the viya4-iac-k8s project supports Kubernetes versions 1.33 through 1.35.
 
 ## Release Notes
 
