@@ -355,12 +355,6 @@ postgres_servers = {
 
 ### Terraform terraform.tfvars file
 
-Terraform input variables can be set in the following ways:
-
-- Individually, with the [-var command line option](https://www.terraform.io/docs/configuration/variables.html#variables-on-the-command-line).
-- In [variable definitions (.tfvars) files](https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files). We recommend using this method for most variables.
-- As [environment variables](https://www.terraform.io/docs/configuration/variables.html#environment-variables).
-
 Sample tfvars files for floating-IP and static-IP modes are provided in [`examples/openstack/`](../examples/openstack/).
 
 #### General Items
