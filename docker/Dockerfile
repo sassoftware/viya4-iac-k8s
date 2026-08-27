@@ -1,21 +1,25 @@
 # Base layer
-FROM ubuntu:22.04 AS baseline
+FROM ubuntu:24.04 AS baseline
 
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y \
-      python3 python3-dev python3-pip \
+      python3 python3-dev python3-pip python3-venv \
       curl unzip gnupg lsb-release ca-certificates software-properties-common \
       --no-install-recommends \
+  && python3 -m venv /opt/venv \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
   && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/opt/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/venv"
 
 
 # Tool building layer
 FROM baseline AS tool_builder
 
 ARG HELM_VERSION=3.17.1
-ARG KUBECTL_VERSION=1.32.7
+ARG KUBECTL_VERSION=1.35.6
 ARG TERRAFORM_VERSION=1.10.5
 
 WORKDIR /build
@@ -64,7 +68,8 @@ ENV HOME=/viya4-iac-k8s
 # Install Python dependencies and Ansible Galaxy collections.
 # requirements.yml lives at repo root — single source of truth for all topologies.
 # Pre-run terraform init so provider plugins are baked into the image.
-RUN pip install -r ./requirements.txt --no-cache-dir \
+RUN pip install --no-cache-dir --upgrade "pip==25.1.1" "setuptools==80.9.0" \
+  && pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy collection install -r ./requirements.yml \
   && chmod 755 \
        /viya4-iac-k8s/docker/entrypoint.sh \

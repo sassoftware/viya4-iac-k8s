@@ -63,7 +63,7 @@ After `apply setup install` completes, a ready-to-use kubeconfig is written to t
 
 The following diagram shows the multi-topology architecture and the relationship between the supported infrastructure platforms, shared Kubernetes roles, and SAS Viya deployment layers.
 
-![SAS Viya 4 Infrastructure as Code multi-topology architecture](./image.png)
+![SAS Viya 4 Infrastructure as Code multi-topology architecture](./docs/images/viya4-iac-k8s-diag.png)
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -235,8 +235,8 @@ cp topologies/openstack/sample-input-openstack.tfvars terraform.tfvars
 # vSphere
 cp topologies/vsphere/sample-input-vsphere.tfvars terraform.tfvars
 
-# Azure
-cp topologies/azure/sample-input-azure.tfvars terraform.tfvars
+# Azure  (deploy.sh expects this exact filename)
+cp topologies/azure/examples/sample-input-minimal.tfvars terraform-azure.tfvars
 
 # Bare Metal
 cp topologies/bare_metal/sample-input-bare-metal.tfvars terraform.tfvars

@@ -42,9 +42,9 @@ netmask     = 24
 dns_servers = ["8.8.8.8", "8.8.4.4"]
 
 # ── Kubernetes cluster ──────────────────────────────────────────────────────
-cluster_version        = "1.34.6"
+cluster_version        = "1.35.0"
 cluster_cni            = "calico"
-cluster_cni_version    = "3.30.3"
+cluster_cni_version    = "3.32.1"
 cluster_cri            = "containerd"
 cluster_cri_version    = "2.2.2"
 cluster_service_subnet = "10.43.0.0/16"

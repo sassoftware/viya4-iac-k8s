@@ -1,7 +1,16 @@
 .terraform*
 terraform.tfstate*
 /terraform.tfvars
+/terraform-azure.tfvars
 /inventory
 /ansible-vars.yaml
 /*-oss-kubeconfig.conf
 sas-iac-buildinfo-cm.yaml
+# topology-scoped generated files and credential files
+topologies/*/provider.tf
+topologies/*/terraform.tfvars
+topologies/*/terraform-*.tfvars
+topologies/*/terraform.tfstate*
+topologies/*/inventory
+topologies/*/ansible-vars.yaml
+topologies/*/.terraform*

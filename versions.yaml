@@ -18,9 +18,9 @@
 # ---------------------------------------------------------------------------
 tooling:
   terraform:    "1.10.5"
-  kubectl:      "1.32.7"
+  kubectl:      "1.35.6"
   helm:         "3.17.1"
-  ansible_core: "2.15"          # must match requirements.txt across all topologies
+  ansible_core: "2.16"          # must match requirements.txt across all topologies
 
 # ---------------------------------------------------------------------------
 # Terraform provider versions
@@ -51,7 +51,7 @@ providers:
 # ---------------------------------------------------------------------------
 kubernetes:
   - version: "1.29"
-    status:              "maintenance"
+    status:              "eol"
     eol:                 "2025-12-28"
     kubeadm_api_version: "v1beta3"
     components:
@@ -62,26 +62,59 @@ kubernetes:
       metallb:    "0.14"
 
   - version: "1.31"
-    status:              "recommended"
+    status:              "maintenance"
     eol:                 "2026-10-28"
     kubeadm_api_version: "v1beta4"        # kubeadm-config MUST use v1beta4 for >=1.31
     components:
-      containerd: "1.7"
-      calico:     "3.28"
+      containerd: "2.2"
+      calico:     "3.30"
       cilium:     "1.15"
-      kube_vip:   "0.8"
+      kube_vip:   "0.7"
       metallb:    "0.14"
 
   - version: "1.33"
-    status:              "preview"
+    status:              "recommended"
     eol:                 "2027-06-28"
     kubeadm_api_version: "v1beta4"
     components:
-      containerd: "2.0"                   # containerd 2.x config schema change
-      calico:     "3.29"
+      containerd: "2.2"
+      calico:     "3.32"
       cilium:     "1.16"
-      kube_vip:   "0.8"
-      metallb:    "0.15"
+      kube_vip:   "0.7"
+      metallb:    "0.14"
+
+  - version: "1.34"
+    status:              "recommended"
+    eol:                 "2027-10-28"
+    kubeadm_api_version: "v1beta4"
+    components:
+      containerd: "2.2"
+      calico:     "3.32"
+      cilium:     "1.17"
+      kube_vip:   "0.7"
+      metallb:    "0.14"
+
+  - version: "1.35"
+    status:              "recommended"
+    eol:                 "2028-02-28"
+    kubeadm_api_version: "v1beta4"
+    components:
+      containerd: "2.2"
+      calico:     "3.32"
+      cilium:     "1.17"
+      kube_vip:   "0.7"
+      metallb:    "0.14"
+
+  - version: "1.36"
+    status:              "preview"
+    eol:                 "2028-06-28"
+    kubeadm_api_version: "v1beta4"
+    components:
+      containerd: "2.2"
+      calico:     "3.32"
+      cilium:     "1.17"
+      kube_vip:   "0.7"
+      metallb:    "0.14"
 
 # ---------------------------------------------------------------------------
 # SAS Viya compatibility matrix
@@ -90,6 +123,8 @@ kubernetes:
 # ---------------------------------------------------------------------------
 viya_compatibility:
   "2024.12":
-    kubernetes: ["1.29", "1.30", "1.31"]
-  "2025.06":
     kubernetes: ["1.31", "1.32", "1.33"]
+  "2025.06":
+    kubernetes: ["1.33", "1.34", "1.35"]
+  "2026.03":
+    kubernetes: ["1.34", "1.35", "1.36"]

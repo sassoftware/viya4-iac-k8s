@@ -22,10 +22,10 @@ deployment_type : "bare_metal"
 #
 kubernetes_cluster_name    : "{{ prefix }}-oss" # NOTE: only change the prefix value above
 kubernetes_arch            : "{{ vm_arch }}"
-kubernetes_version         : "" # Supported versions: "1.32.x" - "1.35.x"
+kubernetes_version         : "" # Supported versions: "1.33.x" - "1.36.x"
 kubernetes_cri_version     : "" # Choices : [Ubuntu 22.04/24.04: "2.2.2"] - requires containerd >= 2.0.0 for KubeletCgroupDriverFromCRI (K8s 1.34+)
 kubernetes_cni             : "calico"       # Choices : [calico]
-kubernetes_cni_version     : "3.30.3"       # Choices : [3.30.3]
+kubernetes_cni_version     : "3.32.1"       # Choices : [3.32.1]
 kubernetes_cri             : "containerd"   # Choices : [containerd]
 kubernetes_service_subnet  : "10.43.0.0/16" # Default cluster scoped CIDR
 kubernetes_pod_subnet      : "10.42.0.0/16" # Default cluster scoped CIDR

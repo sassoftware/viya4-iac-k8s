@@ -170,11 +170,11 @@ variable "cluster_domain" {
 
 variable "cluster_version" {
   type    = string
-  default = "1.34.6"
+  default = "1.35.0"
 
   validation {
-    condition     = can(regex("^1\\.(3[2-5])\\.", var.cluster_version))
-    error_message = "ERROR: cluster_version must be 1.32.x – 1.35.x"
+    condition     = can(regex("^1\\.(3[3-6])\\.", var.cluster_version))
+    error_message = "ERROR: cluster_version must be 1.33.x \u2013 1.36.x"
   }
 }
 
@@ -185,7 +185,7 @@ variable "cluster_cni" {
 
 variable "cluster_cni_version" {
   type    = string
-  default = "3.30.3"
+  default = "3.32.1"
 }
 
 variable "cluster_cri" {

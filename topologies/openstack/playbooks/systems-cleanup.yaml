@@ -1,0 +1,223 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# =============================================================================
+# Systems Cleanup Playbook
+# =============================================================================
+# Reverses system-level setup performed by systems-install.yaml.
+# This removes NFS exports, stops services, and cleans up k8s node configs
+# so that VMs are in a clean state before `terraform destroy` removes them.
+# =============================================================================
+
+# Clean up Kubernetes node system packages (containerd, nfs-common, etc.)
+- hosts: k8s_node
+  name: Systems Cleanup - Worker Nodes
+  become: true
+  become_user: root
+  tasks:
+    - name: Stop and disable containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: stopped
+        enabled: false
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove containerd packages
+      ansible.builtin.apt:
+        pkg:
+          - containerd.io
+        state: absent
+        purge: true
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove containerd configuration
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/containerd
+        - /var/lib/containerd
+      tags:
+        - cleanup
+
+    - name: Remove NFS client utilities
+      ansible.builtin.apt:
+        pkg:
+          - nfs-common
+        state: absent
+        purge: true
+      ignore_errors: true
+      tags:
+        - cleanup
+  tags:
+    - cleanup
+
+# Clean up control plane system setup
+- hosts: k8s_control_plane
+  name: Systems Cleanup - Control Plane
+  become: true
+  become_user: root
+  tasks:
+    - name: Stop and disable containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: stopped
+        enabled: false
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove containerd packages
+      ansible.builtin.apt:
+        pkg:
+          - containerd.io
+        state: absent
+        purge: true
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove containerd configuration
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/containerd
+        - /var/lib/containerd
+      tags:
+        - cleanup
+
+    - name: Remove NFS client utilities
+      ansible.builtin.apt:
+        pkg:
+          - nfs-common
+        state: absent
+        purge: true
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove control plane SSH key pair
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "~/.ssh/{{ control_plane_ssh_key_name }}"
+        - "~/.ssh/{{ control_plane_ssh_key_name }}.pub"
+      ignore_errors: true
+      tags:
+        - cleanup
+  tags:
+    - cleanup
+
+# Clean up NFS Server
+- hosts: nfs
+  name: Systems Cleanup - NFS Server
+  become: true
+  become_user: root
+  tasks:
+    - name: Unexport all NFS shares
+      ansible.builtin.command: exportfs -ua
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Stop and disable NFS services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - nfs-kernel-server
+        - rpcbind
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove NFS server packages
+      ansible.builtin.apt:
+        pkg:
+          - nfs-kernel-server
+          - rpcbind
+        state: absent
+        purge: true
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove NFS export directory
+      ansible.builtin.file:
+        path: /srv/nfs
+        state: absent
+      tags:
+        - cleanup
+
+    - name: Clean up /etc/exports
+      ansible.builtin.file:
+        path: /etc/exports
+        state: absent
+      tags:
+        - cleanup
+  tags:
+    - cleanup
+
+# Clean up PostgreSQL Server
+- hosts: postgres
+  name: Systems Cleanup - PostgreSQL Server
+  become: true
+  become_user: root
+  tasks:
+    - name: Stop PostgreSQL service
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+        enabled: false
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove PostgreSQL packages
+      ansible.builtin.apt:
+        pkg:
+          - postgresql
+          - postgresql-client
+          - postgresql-common
+        state: absent
+        purge: true
+      ignore_errors: true
+      tags:
+        - cleanup
+
+    - name: Remove PostgreSQL data directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql
+        - /etc/postgresql
+      tags:
+        - cleanup
+  tags:
+    - cleanup
+
+# Re-enable unattended-upgrades on all nodes (reversed from systems/common)
+- hosts: all
+  name: Systems Cleanup - Re-enable Unattended Upgrades
+  become: true
+  become_user: root
+  tasks:
+    - name: Re-enable unattended-upgrades
+      ansible.builtin.systemd:
+        name: unattended-upgrades.service
+        enabled: true
+        state: started
+      ignore_errors: true
+      tags:
+        - cleanup
+  tags:
+    - cleanup

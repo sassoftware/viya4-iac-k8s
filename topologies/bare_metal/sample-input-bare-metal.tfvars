@@ -111,9 +111,9 @@ create_cr = false
 # cr_ip     = "FIXME"  # Uncomment and set if create_cr = true
 
 # ****************  OPTIONAL — KUBERNETES SETTINGS  ****************
-# cluster_version     = "1.34.6"
+# cluster_version     = "1.35.0"
 # cluster_cni         = "calico"
-# cluster_cni_version = "3.30.3"
+# cluster_cni_version = "3.32.1"
 # cluster_cri         = "containerd"
 # cluster_cri_version = "2.2.2"
 # cluster_lb_type     = "kube_vip"

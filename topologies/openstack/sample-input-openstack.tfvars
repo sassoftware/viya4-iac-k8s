@@ -84,9 +84,9 @@ cluster_vip_ip   = null # e.g. "10.119.130.100"
 cluster_vip_fqdn = null # e.g. "myteam-vip.unx.sas.com"
 
 # Kubernetes component versions
-cluster_version     = "1.34.6"
+cluster_version     = "1.35.0"
 cluster_cni         = "calico"
-cluster_cni_version = "3.30.3"
+cluster_cni_version = "3.32.1"
 cluster_cri         = "containerd"
 cluster_cri_version = "2.2.2"
 cluster_vip_version = "0.7.1"

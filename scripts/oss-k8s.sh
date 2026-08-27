@@ -409,10 +409,13 @@ for p in json.load(sys.stdin).get('ports', []):
 
 ansible_prep() {
   gather_ans_creds
-  if python3 -m pip install --user -q -r "$BASEDIR/requirements.txt"; then
-    echo "ansible_prep: Python requirements installed from requirements.txt"
-  else
-    echo "ansible_prep: WARNING — could not install Python requirements. The 'kubernetes' library may be missing; storage tasks may fail."
+  # Skip pip install inside Docker — packages are already baked into the image.
+  if [[ "${IAC_TOOLING:-}" != "docker" ]]; then
+    if python3 -m pip install --user -q -r "$BASEDIR/requirements.txt"; then
+      echo "ansible_prep: Python requirements installed from requirements.txt"
+    else
+      echo "ansible_prep: WARNING — could not install Python requirements. The 'kubernetes' library may be missing; storage tasks may fail."
+    fi
   fi
   ansible-galaxy collection install -r "$BASEDIR/requirements.yml"
 }
