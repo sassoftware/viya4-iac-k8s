@@ -336,6 +336,40 @@ postgres_servers = {
 }
 ```
 
+## Microsoft Azure
+
+### Terraform terraform.tfvars file
+
+Use the `terraform.tfvars` file (or environment variables) to supply Azure-specific values. Do **not** set `deployment_type` in `terraform.tfvars`; set `SYSTEM=azure` (or pass `-var 'deployment_type=azure'`) so `oss-k8s.sh` rewrites `provider.tf` and runtime files correctly.
+
+Authentication: prefer one of the following methods:
+- Service principal via environment variables: `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` (or the equivalent `TF_VAR_` variables).
+- Managed identity: set `azure_use_msi = true` when running from an Azure VM with a user-assigned or system-assigned identity that has the required RBAC permissions.
+
+Run `terraform plan` before `apply` to review resources and potential charges. Provisioning Azure resources (Public IPs, Load Balancers, VMs, disks) may incur costs; ensure you have adequate subscription quotas and RBAC rights (Contributor or delegated RBAC to the target resource group).
+
+| Name | Description | Type | Default | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| azure_subscription_id | Azure subscription id used for provisioning | string | | Can be supplied via `AZURE_SUBSCRIPTION_ID` env var or `TF_VAR_azure_subscription_id` |
+| azure_tenant_id | Azure AD tenant id for service principal | string | | Can be supplied via `AZURE_TENANT_ID` env var or `TF_VAR_azure_tenant_id` |
+| azure_client_id | Service principal client id (app id) | string | | Can be supplied via `AZURE_CLIENT_ID` env var or `TF_VAR_azure_client_id` |
+| azure_client_secret | Service principal client secret | string | | Can be supplied via `AZURE_CLIENT_SECRET` env var or `TF_VAR_azure_client_secret` |
+| azure_use_msi | Use managed identity for authentication (no client secret) | bool | false | Set to `true` when using managed identity on an Azure VM with appropriate RBAC |
+| azure_resource_group | Resource group name to create/use for cluster resources | string | | If omitted, pre-create the RG or wire `modules/azure_network` to create it
+| azure_location | Azure region (e.g. `eastus`, `westeurope`) | string | | |
+| azure_subnet_id | Full subnet resource id to attach VMs to | string | | Provide to use an existing subnet; leave empty to allow Terraform to create VNet/subnet when `modules/azure_network` is enabled
+| azure_nsg_id | Network Security Group resource id to apply to the subnet or NICs | string | | Provide to use existing NSG; or let `modules/azure_network` create NSG rules
+| azure_default_vm_size | VM size to use for node pools (e.g. `Standard_DS3_v2`) | string | | Can be overridden per `node_pools` entry
+| azure_vm_public_ip_enabled | Create public IPs on node NICs (not recommended for production) | bool | false | Typically `false` for private clusters; set `true` only for jump or diagnostics
+| azure_admin_username | OS user name to create on VMs | string | | OS user for cloud-init/Ansible access (e.g. `azureuser`, `ubuntu`, `rocky`)
+| ssh_public_key | Public SSH key content or path (used by cloud-init) | string | | Provide the public key to inject into VM accounts; used by Ansible to connect
+| azure_ccm_version | Azure Cloud Controller Manager (CCM) version deployed by Ansible | string | "1.35.0" | Passed into Ansible via generated `ansible-vars.yaml` (see templates)
+| tags | Map of tags to apply to Azure resources | map(string) | {} | Common tags such as `owner`, `project`, `environment` can be set here
+
+See `examples/azure/sample-terraform-azure.tfvars` for a working example. For automatic creation of VNet/subnet and public IP-based API/LoadBalancer resources, enable/wire `modules/azure_network` and `modules/azure_api_lb` in `main.tf` (these modules are present but are not automatically wired by default to avoid accidental networking changes).
+
+Refer to the Azure cluster creation guide: `docs/user/AzureUsage.md` for end-to-end steps (credentials, resource-group creation, DNS, and running `oss-k8s.sh`).
+
 ## Bare Metal
 
 ### Ansible ansible-vars.yaml File

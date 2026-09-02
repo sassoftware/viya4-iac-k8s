@@ -66,6 +66,14 @@
   roles:
     - { role: "kubernetes/loadbalancer/{{ kubernetes_loadbalancer }}" }
 
+# Cloud provider configuration (Azure CCM)
+- hosts: k8s_control_plane[0]
+  name: Kubernetes Setup - Cloud Provider
+  become: true
+  become_user: root
+  roles:
+    - { role: kubernetes/cloud-provider }
+
 # Label/Taint Kubernetes nodes
 - hosts: k8s
   name: Kubernetes Setup - Labels and Taints

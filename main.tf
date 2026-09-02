@@ -323,6 +323,190 @@ module "os_postgresql" {
   ip_addresses      = each.value.server_ip != "" ? [each.value.server_ip] : []
 }
 
+## Azure – Kubernetes node modules (optional)
+## Module usage is gated by `var.deployment_type == "azure"` so other flows are unchanged.
+
+## Optional: create Azure VNet, subnets, and NSGs
+module "az_network" {
+  source = "./modules/azure_network"
+
+  count = var.deployment_type == "azure" && var.azure_create_network ? 1 : 0
+
+  prefix              = var.prefix
+  resource_group_name = var.azure_resource_group
+  location            = var.azure_location
+  vnet_name           = null
+  vnet_address_space  = var.azure_vnet_address_space
+  dns_servers         = []
+  subnets             = { for k, v in var.azure_subnets : k => { prefixes = v.prefixes, service_endpoints = [] } }
+  existing_subnet_names = {}
+  nsg_name            = null
+  misc_nsg_name       = null
+  create_nsg_rules    = true
+  ssh_source_cidrs    = []
+  api_server_source_cidrs = []
+  nodeport_source_cidrs = []
+  tags                = var.tags
+}
+
+## Control Plane Nodes
+module "az_control_plane" {
+  source = "./modules/azure_vm"
+
+  for_each = var.deployment_type == "azure" ? local.control_plane_nodes : {}
+
+  vm_name              = replace(lower(each.key), "_", "-")
+  vm_size              = lookup(each.value, "vm_size", var.azure_default_vm_size)
+  resource_group_name  = var.azure_resource_group
+  azure_location       = var.azure_location
+  subnet_id            = var.azure_create_network && length(module.az_network) > 0 ? lookup(module.az_network[0].subnet_ids, "k8s", var.azure_subnet_id) : var.azure_subnet_id
+  nsg_id               = var.azure_create_network && length(module.az_network) > 0 ? module.az_network[0].nsg_id : var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip     = var.azure_vm_public_ip_enabled
+  admin_username       = var.azure_admin_username
+  ssh_public_key       = var.ssh_public_key
+  os_disk_size         = each.value.os_disk
+  data_disk_sizes      = each.value.misc_disks
+  node_labels          = each.value.node_labels
+  node_taints          = each.value.node_taints
+  tags                 = var.tags
+}
+
+## System Nodes
+module "az_system" {
+  source = "./modules/azure_vm"
+
+  for_each = var.deployment_type == "azure" ? local.system_nodes : {}
+
+  vm_name             = replace(lower(each.key), "_", "-")
+  vm_size             = lookup(each.value, "vm_size", var.azure_default_vm_size)
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  subnet_id           = var.azure_create_network && length(module.az_network) > 0 ? lookup(module.az_network[0].subnet_ids, "k8s", var.azure_subnet_id) : var.azure_subnet_id
+  nsg_id              = var.azure_create_network && length(module.az_network) > 0 ? module.az_network[0].nsg_id : var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip    = var.azure_vm_public_ip_enabled
+  admin_username      = var.azure_admin_username
+  ssh_public_key      = var.ssh_public_key
+  os_disk_size        = each.value.os_disk
+  data_disk_sizes     = each.value.misc_disks
+  node_labels         = each.value.node_labels
+  node_taints         = each.value.node_taints
+  tags                = var.tags
+}
+
+## Nodes
+module "az_node" {
+  source = "./modules/azure_vm"
+
+  for_each = var.deployment_type == "azure" ? local.nodes : {}
+
+  vm_name             = replace(lower(each.key), "_", "-")
+  vm_size             = lookup(each.value, "vm_size", var.azure_default_vm_size)
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  subnet_id           = var.azure_create_network && length(module.az_network) > 0 ? lookup(module.az_network[0].subnet_ids, "k8s", var.azure_subnet_id) : var.azure_subnet_id
+  nsg_id              = var.azure_create_network && length(module.az_network) > 0 ? module.az_network[0].nsg_id : var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip    = var.azure_vm_public_ip_enabled
+  admin_username      = var.azure_admin_username
+  ssh_public_key      = var.ssh_public_key
+  os_disk_size        = each.value.os_disk
+  data_disk_sizes     = each.value.misc_disks
+  node_labels         = each.value.node_labels
+  node_taints         = each.value.node_taints
+  tags                = var.tags
+}
+
+## Jump Server (optional)
+module "az_jump" {
+  source = "./modules/azure_vm"
+
+  count = (var.deployment_type == "azure" && var.create_jump) ? 1 : 0
+
+  vm_name             = "jump"
+  vm_size             = var.azure_default_vm_size
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  subnet_id           = var.azure_subnet_id
+  nsg_id              = var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip    = var.azure_vm_public_ip_enabled
+  admin_username      = var.azure_admin_username
+  ssh_public_key      = var.ssh_public_key
+}
+
+## NFS Server (optional)
+module "az_nfs" {
+  source = "./modules/azure_vm"
+
+  count = (var.deployment_type == "azure" && var.create_nfs) ? 1 : 0
+
+  vm_name             = "nfs"
+  vm_size             = var.azure_default_vm_size
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  subnet_id           = var.azure_subnet_id
+  nsg_id              = var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip    = var.azure_vm_public_ip_enabled
+  admin_username      = var.azure_admin_username
+  ssh_public_key      = var.ssh_public_key
+}
+
+## Container Registry (optional)
+module "az_cr" {
+  source = "./modules/azure_vm"
+
+  count = (var.deployment_type == "azure" && var.create_cr) ? 1 : 0
+
+  vm_name             = "cr"
+  vm_size             = var.azure_default_vm_size
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  subnet_id           = var.azure_subnet_id
+  nsg_id              = var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip    = var.azure_vm_public_ip_enabled
+  admin_username      = var.azure_admin_username
+  ssh_public_key      = var.ssh_public_key
+}
+
+## PostgreSQL Servers (optional)
+module "az_postgresql" {
+  source = "./modules/azure_vm"
+
+  for_each = (var.deployment_type == "azure" && local.postgres_servers != null) ? length(local.postgres_servers) != 0 ? local.postgres_servers : {} : {}
+
+  vm_name             = lower("${local.cluster_name}-${each.key}-pgsql")
+  vm_size             = var.azure_default_vm_size
+  resource_group_name = var.azure_resource_group
+  azure_location      = var.azure_location
+  subnet_id           = var.azure_subnet_id
+  nsg_id              = var.azure_nsg_id
+  create_nsg_association = true
+  assign_public_ip    = var.azure_vm_public_ip_enabled
+  admin_username      = var.azure_admin_username
+  ssh_public_key      = var.ssh_public_key
+}
+
+## Optional: create API Load Balancer (public/internal)
+module "az_api_lb" {
+  source = "./modules/azure_api_lb"
+
+  count = var.deployment_type == "azure" && var.azure_create_api_lb ? 1 : 0
+
+  prefix              = var.prefix
+  resource_group_name = var.azure_resource_group
+  location            = var.azure_location
+  control_plane_nic_ids = var.deployment_type == "azure" ? { for k, m in module.az_control_plane : k => m.network_interface_id } : {}
+  create_public_ip    = true
+  create_internal_lb  = true
+  subnet_id           = var.azure_create_network && length(module.az_network) > 0 ? lookup(module.az_network[0].subnet_ids, "k8s", var.azure_subnet_id) : var.azure_subnet_id
+  internal_lb_ip      = var.azure_api_internal_ip == null ? null : var.azure_api_internal_ip
+  tags                = var.tags
+}
+
 # =============================================================================
 # Ansible inventory + vars files (all deployment types)
 # =============================================================================
@@ -360,15 +544,24 @@ resource "local_file" "ansible_vars" {
     cluster_dns_ip             = local.cluster_dns_ip
     control_plane_ssh_key_name = var.control_plane_ssh_key_name
     cluster_vip_version        = var.cluster_vip_version
-    cluster_vip_ip             = var.cluster_vip_ip != null ? var.cluster_vip_ip : ""
+      cluster_vip_ip             = (var.deployment_type == "azure" && var.azure_create_api_lb && length(module.az_api_lb) > 0) ? module.az_api_lb[0].api_lb_frontend_ip : (var.cluster_vip_ip != null ? var.cluster_vip_ip : "")
     cluster_vip_fqdn           = var.cluster_vip_fqdn == null ? "${local.cluster_name}-vip.${var.cluster_domain}" : length(var.cluster_vip_fqdn) > 0 ? var.cluster_vip_fqdn : "${local.cluster_name}-vip.${var.cluster_domain}"
     cluster_lb_type            = var.cluster_lb_type
-    cluster_lb_addresses       = local.loadbalancer_addresses
+      cluster_lb_addresses       = (var.deployment_type == "azure" && var.azure_create_api_lb && length(module.az_api_lb) > 0) ? [module.az_api_lb[0].api_lb_frontend_ip] : local.loadbalancer_addresses
     nfs_ip                     = local.resolved_nfs_ip
     jump_ip                    = local.resolved_jump_ip
     cr_ip                      = local.resolved_cr_ip
     system_ssh_keys_dir        = var.system_ssh_keys_dir
     openstack_ssh_keypair      = var.openstack_ssh_keypair
+    ssh_private_key_name       = var.control_plane_ssh_key_name
+    azure_ccm_version          = var.azure_ccm_version
+    azure_subscription_id      = var.azure_subscription_id
+    azure_tenant_id            = var.azure_tenant_id
+    azure_client_id            = var.azure_client_id
+    azure_client_secret        = var.azure_client_secret
+    azure_resource_group       = var.azure_resource_group
+    azure_location             = var.azure_location
+    azure_use_msi              = var.azure_use_msi
     vm_os                      = local.vm_os
     node_labels                = local.node_labels
     node_taints                = local.node_taints

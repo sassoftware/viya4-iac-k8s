@@ -1,0 +1,440 @@
+---
+# Configure Azure Cloud Provider (CCM) and Load Balancer
+# Only runs on primary control plane node
+
+- name: Install kubernetes Python library for k8s_info module
+  ansible.builtin.pip:
+    name: kubernetes
+    state: present
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tags:
+    - azure-ccm
+    - install
+
+- name: Check if Azure credentials are available
+  set_fact:
+    azure_credentials_available: "{{ azure_client_id != '' and azure_client_secret != '' and azure_tenant_id != '' and azure_subscription_id != '' }}"
+  tags:
+    - azure-ccm
+    - check
+
+- name: Debug - Show Azure credentials status
+  debug:
+    msg:
+      - "Client ID: {{ azure_client_id }}"
+      - "Client Secret: {{ azure_client_secret[:10] if azure_client_secret else 'EMPTY' }}..."
+      - "Tenant ID: {{ azure_tenant_id }}"
+      - "Subscription ID: {{ azure_subscription_id }}"
+      - "Credentials Available: {{ azure_credentials_available }}"
+  tags:
+    - azure-ccm
+    - check
+
+- name: Generate Azure cloud provider configuration from template
+  template:
+    src: azure-ccm-config.yaml.j2
+    dest: /tmp/azure-ccm-config.json
+    owner: root
+    group: root
+    mode: '0600'
+  when: azure_credentials_available
+  register: azure_config_result
+  tags:
+    - azure-ccm
+    - config
+
+- name: Debug - Show config generation result
+  debug:
+    msg:
+      - "Config file created: {{ azure_config_result.changed }}"
+      - "Config file dest: {{ azure_config_result.dest }}"
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - debug
+
+- name: Check if Azure CCM is already deployed
+  kubernetes.core.k8s_info:
+    kind: DaemonSet
+    namespace: kube-system
+    name: cloud-controller-manager
+    kubeconfig: /root/.kube/config
+  register: azure_ccm_check
+  changed_when: false
+  tags:
+    - azure-ccm
+    - check
+
+- name: Debug - Show template file path and credentials
+  debug:
+    msg:
+      - "Credentials available: {{ azure_credentials_available }}"
+      - "Client ID length: {{ azure_client_id | length if azure_client_id else 0 }}"
+      - "Client Secret length: {{ azure_client_secret | length if azure_client_secret else 0 }}"
+      - "Tenant ID: {{ azure_tenant_id }}"
+      - "Subscription ID: {{ azure_subscription_id }}"
+  tags:
+    - azure-ccm
+    - debug
+
+- name: Verify Azure CCM config file was created
+  stat:
+    path: /tmp/azure-ccm-config.json
+  register: azure_ccm_config_stat
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - check
+
+- name: Fail if Azure CCM config file does not exist
+  fail:
+    msg: "Azure CCM config file /tmp/azure-ccm-config.json was not created. Check credentials and template."
+  when: 
+    - azure_credentials_available
+    - not azure_ccm_config_stat.stat.exists
+  tags:
+    - azure-ccm
+    - check
+
+- name: Read Azure CCM config from remote host
+  slurp:
+    src: /tmp/azure-ccm-config.json
+  register: azure_ccm_config_content
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - secret
+
+- name: Create secret for Azure credentials
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: azure-cloud-provider
+        namespace: kube-system
+      type: Opaque
+      data:
+        cloud-config: "{{ azure_ccm_config_content.content }}"
+    kubeconfig: /root/.kube/config
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - secret
+
+- name: Create ServiceAccount for cloud-controller-manager
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: cloud-controller-manager
+        namespace: kube-system
+    kubeconfig: /root/.kube/config
+  tags:
+    - azure-ccm
+    - rbac
+
+- name: Create ClusterRole for cloud-controller-manager
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: system:cloud-controller-manager
+      rules:
+        - apiGroups: [""]
+          resources: ["events"]
+          verbs: ["create", "patch", "update"]
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get", "list", "watch", "patch", "update", "delete"]
+        - apiGroups: [""]
+          resources: ["nodes/status"]
+          verbs: ["patch"]
+        - apiGroups: [""]
+          resources: ["services"]
+          verbs: ["get", "list", "watch", "patch", "update"]
+        - apiGroups: [""]
+          resources: ["services/status"]
+          verbs: ["patch", "update"]
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          verbs: ["get", "list", "watch", "create", "update"]
+        - apiGroups: [""]
+          resources: ["endpoints"]
+          verbs: ["get", "list", "watch", "create", "update"]
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["serviceaccounts"]
+          verbs: ["get", "list", "watch", "create"]
+        - apiGroups: [""]
+          resources: ["serviceaccounts/token"]
+          verbs: ["create"]
+        - apiGroups: [""]
+          resources: ["namespaces"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["persistentvolumes"]
+          verbs: ["get", "list", "watch", "update", "patch"]
+        - apiGroups: ["coordination.k8s.io"]
+          resources: ["leases"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["discovery.k8s.io"]
+          resources: ["endpointslices"]
+          verbs: ["get", "list", "watch", "create", "update", "patch"]
+    kubeconfig: /root/.kube/config
+  tags:
+    - azure-ccm
+    - rbac
+
+- name: Create ClusterRoleBinding for cloud-controller-manager
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: system:cloud-controller-manager
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: system:cloud-controller-manager
+      subjects:
+        - kind: ServiceAccount
+          name: cloud-controller-manager
+          namespace: kube-system
+    kubeconfig: /root/.kube/config
+  tags:
+    - azure-ccm
+    - rbac
+
+# Additional namespaced Role+Binding in kube-system so CCM can read
+# the `extension-apiserver-authentication` ConfigMap (requestheader-client-ca-file)
+# which it needs when serving metrics/health endpoints.
+- name: Create Role for cloud-controller-manager in kube-system
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: system::leader-locking-cloud-controller-manager
+        namespace: kube-system
+      rules:
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          resourceNames: ["extension-apiserver-authentication"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          verbs: ["create"]
+        - apiGroups: ["coordination.k8s.io"]
+          resources: ["leases"]
+          verbs: ["get", "create", "update", "patch"]
+    kubeconfig: /root/.kube/config
+  tags:
+    - azure-ccm
+    - rbac
+
+- name: Create RoleBinding for cloud-controller-manager in kube-system
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: system::leader-locking-cloud-controller-manager
+        namespace: kube-system
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: system::leader-locking-cloud-controller-manager
+      subjects:
+        - kind: ServiceAccount
+          name: cloud-controller-manager
+          namespace: kube-system
+        - kind: ServiceAccount
+          name: azure-cloud-provider
+          namespace: kube-system
+    kubeconfig: /root/.kube/config
+  tags:
+    - azure-ccm
+    - rbac
+
+- name: Create Azure CCM DaemonSet
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      metadata:
+        name: cloud-controller-manager
+        namespace: kube-system
+      spec:
+        selector:
+          matchLabels:
+            component: cloud-controller-manager
+        template:
+          metadata:
+            labels:
+              component: cloud-controller-manager
+          spec:
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                effect: NoSchedule
+              - key: node.cloudprovider.kubernetes.io/uninitialized
+                effect: NoSchedule
+                operator: Exists
+            containers:
+              - name: cloud-controller-manager
+                image: mcr.microsoft.com/oss/kubernetes/azure-cloud-controller-manager:v{{ azure_ccm_version }}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - cloud-controller-manager
+                  - --cloud-provider=azure
+                  - --cloud-config=/etc/azure/cloud-config
+                  - --cluster-cidr={{ kubeadm_pod_network_cidr | default('10.42.0.0/16') }}
+                  - --allocate-node-cidrs=false
+                  - --configure-cloud-routes=false
+                  - --controllers=*,-route
+                  - --leader-elect=true
+                  - --use-service-account-credentials=true
+                  - --v=2
+                env:
+                  - name: AZURE_ENVIRONMENT
+                    value: "AzurePublicCloud"
+                  - name: KUBERNETES_SERVICE_HOST
+                    value: "127.0.0.1"
+                  - name: KUBERNETES_SERVICE_PORT
+                    value: "6443"
+                volumeMounts:
+                  - name: etc-azure
+                    mountPath: /etc/azure
+                    readOnly: true
+                  - name: etc-kubernetes
+                    mountPath: /etc/kubernetes
+                    readOnly: true
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 100Mi
+            hostNetwork: true
+            nodeSelector:
+              node-role.kubernetes.io/control-plane: ""
+            serviceAccountName: cloud-controller-manager
+            volumes:
+              - name: etc-azure
+                secret:
+                  secretName: azure-cloud-provider
+              - name: etc-kubernetes
+                hostPath:
+                  path: /etc/kubernetes
+    kubeconfig: /root/.kube/config
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - daemonset
+
+- name: Wait for Azure CCM pods to be ready
+  ansible.builtin.shell: |
+    desired=$(KUBECONFIG=/root/.kube/config kubectl get daemonset cloud-controller-manager \
+      -n kube-system -o jsonpath='{.status.desiredNumberScheduled}' 2>/dev/null || echo 0)
+    ready=$(KUBECONFIG=/root/.kube/config kubectl get daemonset cloud-controller-manager \
+      -n kube-system -o jsonpath='{.status.numberReady}' 2>/dev/null || echo 0)
+    echo "desired=${desired} ready=${ready}"
+    [ "${desired}" -gt 0 ] && [ "${desired}" = "${ready}" ]
+  register: ccm_ready_check
+  retries: 60
+  delay: 10
+  until: ccm_ready_check.rc == 0
+  changed_when: false
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - wait
+
+- name: Create ConfigMap for Azure Load Balancer configuration
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: azure-load-balancer-config
+        namespace: kube-system
+      data:
+        load-balancer-sku: "Standard"
+        load-balancer-type: "{{ azure_lb_type | default('Standard') }}"
+        location: "{{ azure_location }}"
+        resource-group: "{{ azure_resource_group }}"
+        security-group-name: "{{ prefix }}-sg"
+        enable-multiple-standard-load-balancers: "false"
+        exclude-load-balancer-ports: ""
+        health-probe-request-path: "/healthz"
+    kubeconfig: /root/.kube/config
+  tags:
+    - azure-ccm
+    - configmap
+
+- name: Set Azure provider ID on all nodes for CCM initialization
+  ansible.builtin.shell: |
+    KUBECONFIG=/root/.kube/config kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | while read node; do
+      provider_id=$(KUBECONFIG=/root/.kube/config kubectl get node "$node" -o jsonpath='{.spec.providerID}')
+      if [ -z "$provider_id" ] || [ "$provider_id" = "<none>" ]; then
+        KUBECONFIG=/root/.kube/config kubectl patch node "$node" -p \
+          "{\"spec\":{\"providerID\":\"azure:///subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ azure_resource_group }}/providers/Microsoft.Compute/virtualMachines/$node\"}}"
+        echo "Patched $node with providerID"
+      else
+        echo "Node $node already has providerID: $provider_id"
+      fi
+    done
+  register: provider_id_patch_result
+  changed_when: "'Patched' in provider_id_patch_result.stdout"
+  when: azure_credentials_available
+  tags:
+    - azure-ccm
+    - provider-id
+
+- name: Remove uninitialized taint from all nodes (CCM compat with k8s 1.31+)
+  ansible.builtin.shell: |
+    KUBECONFIG=/root/.kube/config kubectl taint nodes --all \
+      node.cloudprovider.kubernetes.io/uninitialized:NoSchedule- 2>/dev/null || true
+    echo "Done"
+  changed_when: false
+  tags:
+    - azure-ccm
+    - remove-taint
+
+- name: Patch all node InternalIPs from gathered Ansible facts
+  ansible.builtin.shell: |
+    {% for host in groups['k8s_control_plane'] + groups['k8s_node'] %}
+    kubectl --kubeconfig /root/.kube/config patch node \
+      "{{ hostvars[host]['ansible_hostname'] }}" \
+      --subresource=status --type=merge \
+      -p "{\"status\":{\"addresses\":[{\"type\":\"Hostname\",\"address\":\"{{ hostvars[host]['ansible_hostname'] }}\"},{\"type\":\"InternalIP\",\"address\":\"{{ hostvars[host]['ansible_default_ipv4']['address'] }}\"}]}}" \
+      && echo "Patched {{ hostvars[host]['ansible_hostname'] }} => {{ hostvars[host]['ansible_default_ipv4']['address'] }}" || true
+    {% endfor %}
+  changed_when: true
+  tags:
+    - azure-ccm
+    - node-ip
+
+- name: Display Azure CCM deployment summary
+  debug:
+    msg:
+      - "Azure Cloud Provider configured successfully:"
+      - "  CCM version: {{ azure_ccm_version }}"
+      - "  Load Balancer SKU: Standard"
+      - "  Location: {{ azure_location }}"
+      - "  Resource Group: {{ azure_resource_group }}"
+      - "  Taint removal: applied (k8s 1.31+ auto-providerID path)"
+  tags:
+    - azure-ccm
+    - debug

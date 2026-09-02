@@ -1,0 +1,25 @@
+---
+# Azure cloud provider variables
+
+# Azure credentials and settings
+azure_client_id: "{{ azure_client_id | default('') }}"
+azure_client_secret: "{{ azure_client_secret | default('') }}"
+azure_tenant_id: "{{ azure_tenant_id | default('') }}"
+azure_subscription_id: "{{ azure_subscription_id | default('') }}"
+azure_resource_group: "{{ azure_resource_group | default('my-resource-group') }}"
+azure_location: "{{ azure_location | default('eastus') }}"
+
+# Azure CCM versions
+# azure_ccm_version is supplied via ansible-vars.yaml. Fallback matches the
+# latest image tag available at mcr.microsoft.com/oss/kubernetes/azure-cloud-controller-manager.
+azure_ccm_version: "{{ azure_ccm_version | default('1.33.1') }}"
+
+# Azure Load Balancer configuration
+azure_lb_type: "Standard"
+azure_lb_idle_timeout: 4
+azure_lb_health_probe_interval: 5
+
+# Azure network settings
+azure_vnet_name: "{{ prefix }}-vnet"
+azure_subnet_name: "{{ prefix }}-subnet-k8s"
+azure_nsg_name: "{{ prefix }}-sg"

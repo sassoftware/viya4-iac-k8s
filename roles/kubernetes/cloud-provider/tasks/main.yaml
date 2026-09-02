@@ -1,0 +1,11 @@
+---
+# Cloud provider dispatcher role
+# Routes to appropriate cloud provider implementation
+
+- name: "Include Azure cloud provider configuration"
+  include_tasks: "azure.yaml"
+  when: deployment_type | default('azure') == 'azure'
+  tags:
+    - cloud-provider
+    - azure
+    - azure-ccm

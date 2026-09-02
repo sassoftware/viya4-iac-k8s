@@ -6,12 +6,12 @@
 #
 variable "deployment_type" {
   type        = string
-  description = "Options are: bare_metal, vsphere, or openstack"
+  description = "Options are: bare_metal, vsphere, openstack, or azure"
   default     = "bare_metal"
 
   validation {
-    condition     = contains(["bare_metal", "vsphere", "openstack"], var.deployment_type)
-    error_message = "ERROR: Valid values for deployment_type are: bare_metal, vsphere, openstack"
+    condition     = contains(["bare_metal", "vsphere", "openstack", "azure"], var.deployment_type)
+    error_message = "ERROR: Valid values for deployment_type are: bare_metal, vsphere, openstack, azure"
   }
 }
 
@@ -398,6 +398,139 @@ variable "prefix" {
   description = "A prefix used in the name for all cloud resources created by this script. The prefix string must start with lowercase letter and contain only lowercase alphanumeric characters and hyphen or dash(-), but can not start or end with '-'."
   type        = string
 }
+
+# -----------------------------------------------------------------------------
+# Azure (optional)
+# -----------------------------------------------------------------------------
+variable "azure_resource_group" {
+  type        = string
+  description = "Azure resource group name. Leave blank to skip Azure provisioning."
+  default     = null
+}
+
+variable "azure_location" {
+  type        = string
+  description = "Azure region to provision resources in"
+  default     = "eastus"
+}
+
+variable "azure_subnet_id" {
+  type        = string
+  description = "Subnet ID in Azure to attach VMs to (optional)"
+  default     = null
+}
+
+variable "azure_nsg_id" {
+  type        = string
+  description = "Network Security Group ID to attach to NICs (optional)"
+  default     = ""
+}
+
+variable "azure_default_vm_size" {
+  type        = string
+  description = "Default VM size to use for Azure nodes"
+  default     = "Standard_DS2_v2"
+}
+
+variable "azure_vm_public_ip_enabled" {
+  type        = bool
+  description = "Assign public IPs to Azure VMs when true"
+  default     = false
+}
+
+variable "azure_admin_username" {
+  type        = string
+  description = "Admin username for Azure VMs"
+  default     = "azureuser"
+}
+
+variable "ssh_public_key" {
+  type        = string
+  description = "Path or contents of SSH public key used for VM access"
+  default     = null
+}
+
+# Azure authentication
+variable "azure_subscription_id" {
+  type        = string
+  default     = null
+}
+
+variable "azure_tenant_id" {
+  type        = string
+  default     = null
+}
+
+variable "azure_client_id" {
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "azure_client_secret" {
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "azure_use_msi" {
+  type        = bool
+  default     = false
+}
+
+
+# Optional tags applied to resources
+variable "tags" {
+  description = "Tags map applied to resources"
+  type        = map(string)
+  default     = {}
+}
+
+# Azure CCM image version used by Ansible templates when deploying the azure cloud-controller-manager
+variable "azure_ccm_version" {
+  type        = string
+  description = "Azure cloud-controller-manager image tag used by Ansible"
+  default     = "1.35.0"
+}
+
+# Optional: let Terraform create the VNet/subnets/NSGs for you
+variable "azure_create_network" {
+  description = "When true, create an Azure VNet, subnets and NSGs using modules/azure_network"
+  type        = bool
+  default     = false
+}
+
+variable "azure_vnet_address_space" {
+  description = "Address space for the VNet when created by this module"
+  type        = list(string)
+  default     = ["10.0.0.0/16"]
+}
+
+variable "azure_subnets" {
+  description = "Map of subnets to create when azure_create_network = true. Expected keys: k8s, misc"
+  type = map(object({
+    prefixes = list(string)
+  }))
+  default = {
+    k8s = { prefixes = ["10.0.1.0/24"] }
+    misc = { prefixes = ["10.0.2.0/24"] }
+  }
+}
+
+# Optional: create API load balancer resources (public/internal)
+variable "azure_create_api_lb" {
+  description = "When true, create an API Load Balancer using modules/azure_api_lb"
+  type        = bool
+  default     = false
+}
+
+variable "azure_api_internal_ip" {
+  description = "Static private IP for the internal API LB frontend (if creating internal LB)"
+  type        = string
+  default     = null
+}
+
+
 
 variable "system_ssh_keys_dir" {
   type    = string
