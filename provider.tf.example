@@ -1,12 +1,19 @@
-# provider.tf.example — copy to provider.tf and uncomment ONE block matching your deployment_type.
+# provider.tf.example — copy to provider.tf and fill in credentials for your
+# active deployment_type.
 #
-# IMPORTANT: Configure ONLY the provider for your active deployment_type.
-#            Configuring multiple providers causes unused providers to attempt
-#            authentication at `terraform plan` time and fail with credential errors.
+# IMPORTANT: All provider blocks below must stay uncommented, even though only
+#            ONE topology is active at a time (via count = local.is_<x> ? 1 : 0
+#            in main.tf). Terraform validates every provider in required_providers
+#            (versions.tf) for the whole configuration graph regardless of count,
+#            so a missing block for an inactive cloud still fails schema
+#            validation (e.g. azurerm needs `features {}`, vsphere needs
+#            non-null user/password). The coalesce() fallbacks below satisfy
+#            those requirements for inactive providers without needing real
+#            credentials — only the active topology's variables need real values.
 #
 # Usage:
 #   cp provider.tf.example provider.tf
-#   # Edit provider.tf — uncomment the block for your topology, delete the rest.
+#   # Edit provider.tf — fill in credentials for your active deployment_type only.
 #   terraform init && terraform plan -var-file="<your>.tfvars"
 #
 # provider.tf is gitignored — never commit credentials.
@@ -18,42 +25,45 @@
 #   export ARM_CLIENT_ID=...        export TF_VAR_azure_client_id=...
 #   export ARM_CLIENT_SECRET=...    export TF_VAR_azure_client_secret=...
 
-# provider "azurerm" {
-#   subscription_id = var.azure_subscription_id
-#   tenant_id       = var.azure_tenant_id
-#   client_id       = var.azure_client_id
-#   client_secret   = var.azure_client_secret
-#   use_msi         = var.azure_use_msi
-#
-#   features {}
-#   resource_provider_registrations = "none"
-# }
+provider "azurerm" {
+  subscription_id = var.azure_subscription_id
+  tenant_id       = var.azure_tenant_id
+  client_id       = var.azure_client_id
+  client_secret   = var.azure_client_secret
+  use_msi         = var.azure_use_msi
+
+  features {}
+  resource_provider_registrations = "none"
+}
 
 # ─── OPENSTACK ────────────────────────────────────────────────────────────────
 # Set credentials via environment variables (recommended):
 #   export OS_AUTH_URL=...  OS_USERNAME=...  OS_PASSWORD=...  OS_TENANT_NAME=...
 
-# provider "openstack" {
-#   auth_url    = var.openstack_auth_url
-#   user_name   = var.openstack_user_name
-#   password    = var.openstack_password
-#   tenant_name = var.openstack_tenant_name
-#   domain_name = var.openstack_domain_name
-#   region      = var.openstack_region
-#   insecure    = var.openstack_insecure
-#   cacert_file = var.openstack_cacert_file
-# }
+provider "openstack" {
+  auth_url    = var.openstack_auth_url
+  user_name   = var.openstack_user_name
+  password    = var.openstack_password
+  tenant_name = var.openstack_tenant_name
+  domain_name = var.openstack_domain_name
+  region      = var.openstack_region
+  insecure    = var.openstack_insecure
+  cacert_file = var.openstack_cacert_file
+}
 
 # ─── VSPHERE ──────────────────────────────────────────────────────────────────
 # Set credentials via environment variables (recommended):
 #   export VSPHERE_SERVER=...  VSPHERE_USER=...  VSPHERE_PASSWORD=...
+#
+# vsphere_server/user/password are Required by the provider schema (no env-var
+# fallback), so coalesce() keeps them non-null when vSphere is inactive.
 
-# provider "vsphere" {
-#   vsphere_server       = var.vsphere_server
-#   user                 = var.vsphere_user
-#   password             = var.vsphere_password
-#   allow_unverified_ssl = true
-# }
+provider "vsphere" {
+  vsphere_server       = coalesce(var.vsphere_server, "unused")
+  user                 = coalesce(var.vsphere_user, "unused")
+  password             = coalesce(var.vsphere_password, "unused")
+  allow_unverified_ssl = true
+}
 
 # ─── BARE METAL ───────────────────────────────────────────────────────────────
 # No provider configuration needed — bare_metal uses only the local provider

@@ -7,7 +7,7 @@ After satisfying all of the prerequisite items that are listed in the [README.md
 ### Create the Docker Image
 
 ```bash
-docker build -t viya4-iac-k8s .
+docker build -t viya4-iac-k8s -f docker/Dockerfile .
 ```
 
 The Docker image, `viya4-iac-k8s`, contains Ansible, Terraform, Helm, and kubectl executables. The entrypoint for the Docker image is `oss-k8s.sh`. The entrypoint is run with subcommands in the subsequent steps.

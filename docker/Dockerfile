@@ -68,6 +68,12 @@ ENV HOME=/viya4-iac-k8s
 # Install Python dependencies and Ansible Galaxy collections.
 # requirements.yml lives at repo root — single source of truth for all topologies.
 # Pre-run terraform init so provider plugins are baked into the image.
+# scripts/oss-k8s.sh and deploy.sh always run terraform against topologies/<system>
+# directly (never the root dispatcher), so only those need init'ing here —
+# otherwise each fetches its provider plugin over the network at container runtime.
+# The root dispatcher is intentionally NOT init'd: its module calls use `count`,
+# which is incompatible with topologies/*/provider.tf containing its own
+# provider block (required for topologies/<system> to run standalone).
 RUN pip install --no-cache-dir --upgrade "pip==25.1.1" "setuptools==80.9.0" \
   && pip install -r ./requirements.txt --no-cache-dir \
   && ansible-galaxy collection install -r ./requirements.yml \
@@ -75,7 +81,9 @@ RUN pip install --no-cache-dir --upgrade "pip==25.1.1" "setuptools==80.9.0" \
        /viya4-iac-k8s/docker/entrypoint.sh \
        /viya4-iac-k8s/scripts/deploy.sh \
        /viya4-iac-k8s/scripts/oss-k8s.sh \
-  && terraform -chdir=/viya4-iac-k8s init \
+  && for topology in azure bare_metal openstack vsphere; do \
+       terraform -chdir=/viya4-iac-k8s/topologies/${topology} init; \
+     done \
   && git config --system --add safe.directory /viya4-iac-k8s \
   && chmod g=u -R /etc/passwd /etc/group /viya4-iac-k8s
 
