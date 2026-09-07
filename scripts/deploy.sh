@@ -74,7 +74,7 @@ terraform_prep() {
 terraform_up() {
     terraform_prep
     terraform -chdir="$TOPOLOGY_DIR" apply -parallelism=20 -state "$TFSTATE" -auto-approve -var-file "$TFVARS"
-    echo "Wait for OS startup - Sleeping for 60 seconds"
+    echo "Waiting 60s for basic VM boot..."
     sleep 60
 }
 
@@ -187,6 +187,15 @@ for item in "${arguments[@]}"; do
   fi
   if [[ "$item" == "setup" ]]; then
     ansible_prep
+    echo "Bootstrap - Waiting for all nodes to be SSH ready..."
+    ANSIBLE_CONFIG="$TOPOLOGY_DIR/ansible.cfg" ansible-playbook \
+      -i "$ANSIBLE_INVENTORY" \
+      --extra-vars "deployment_type=$SYSTEM" \
+      --extra-vars "$ANSIBLE_VARS" \
+      "$TOPOLOGY_DIR/playbooks/bootstrap.yaml" \
+      --flush-cache
+    
+    echo "Systems Install - Provisioning nodes..."
     ANSIBLE_CONFIG="$TOPOLOGY_DIR/ansible.cfg" ansible-playbook \
       -i "$ANSIBLE_INVENTORY" \
       --extra-vars "deployment_type=$SYSTEM" \

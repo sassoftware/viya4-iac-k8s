@@ -1,0 +1,153 @@
+# Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# Bootstrap playbook: Ensures ALL nodes are fully initialized before main provisioning
+# This runs separately BEFORE systems-install.yaml to handle SSH readiness properly
+# 
+# Why separate playbook?
+# - Ansible removes unreachable hosts from the play immediately
+# - Task-level retries don't re-add removed hosts
+# - A dedicated bootstrap playbook avoids this by handling connectivity separately
+# - Keeps main playbook clean and focused on provisioning
+# - Allows independent iteration on bootstrap logic
+
+- hosts: all
+  name: Bootstrap - Wait for All Nodes to be SSH Ready
+  become: false
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    # Global connection retry settings apply to this play
+    ansible_connection_retries: 5
+    ansible_connection_retry_delay: 30
+  tasks:
+    # ========================================================================
+    # PHASE 1: Initial SSH connectivity check with aggressive retries
+    # ========================================================================
+    - name: "PHASE 1: Wait for SSH to become available on all hosts"
+      block:
+        - name: Wait for SSH port to be reachable (with internal retries)
+          ansible.builtin.wait_for_connection:
+            delay: 10
+            sleep: 5
+            timeout: 600
+            connect_timeout: 30
+          register: ssh_connectivity_result
+          retries: 10
+          delay: 30
+          until: ssh_connectivity_result is succeeded
+
+        - name: Debug - SSH connectivity established
+          ansible.builtin.debug:
+            msg: "{{ inventory_hostname }} - SSH is reachable"
+
+      rescue:
+        - name: "PHASE 1 RESCUE: Extended wait for slow nodes"
+          ansible.builtin.wait_for_connection:
+            delay: 10
+            sleep: 5
+            timeout: 600
+            connect_timeout: 30
+          retries: 10
+          delay: 60
+          until: ssh_connectivity_result is succeeded
+
+    # ========================================================================
+    # PHASE 2: Cloud-init completion (if present)
+    # ========================================================================
+    - name: "PHASE 2: Wait for cloud-init to complete"
+      block:
+        - name: Wait for cloud-init status command to succeed
+          ansible.builtin.raw: |
+            set -e
+            if command -v cloud-init >/dev/null 2>&1; then
+              cloud-init status --wait
+              echo "cloud-init completed"
+            else
+              echo "cloud-init not present (normal for some OS images)"
+            fi
+          changed_when: false
+          retries: 10
+          delay: 30
+          register: cloudinit_result
+          until: cloudinit_result is succeeded
+
+      rescue:
+        - name: "PHASE 2 RESCUE: Extended wait for cloud-init"
+          ansible.builtin.raw: |
+            if command -v cloud-init >/dev/null 2>&1; then
+              cloud-init status --wait || true
+            fi
+          changed_when: false
+          retries: 5
+          delay: 60
+
+    # ========================================================================
+    # PHASE 3: SSH full readiness verification
+    # ========================================================================
+    - name: "PHASE 3: Verify SSH is fully operational"
+      block:
+        - name: Verify SSH with simple command execution
+          ansible.builtin.raw: "echo 'SSH operational' && hostname"
+          changed_when: false
+          retries: 10
+          delay: 30
+          register: ssh_verify_result
+          until: ssh_verify_result is succeeded
+
+        - name: Debug - SSH fully operational
+          ansible.builtin.debug:
+            msg: "{{ inventory_hostname }} - SSH fully operational"
+
+      rescue:
+        - name: "PHASE 3 RESCUE: Extended SSH verification"
+          ansible.builtin.raw: "echo 'SSH operational' && hostname"
+          changed_when: false
+          retries: 5
+          delay: 60
+
+    # ========================================================================
+    # PHASE 4: Python 3 availability
+    # ========================================================================
+    - name: "PHASE 4: Ensure Python 3 is available"
+      block:
+        - name: Check for Python 3
+          ansible.builtin.raw: "test -x /usr/bin/python3 && echo 'Python 3 available' || exit 1"
+          changed_when: false
+          register: python_check
+          until: python_check is succeeded
+          retries: 2
+          delay: 10
+
+      rescue:
+        - name: Install Python 3 if missing
+          ansible.builtin.raw: |
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -y
+            apt-get install -y python3
+          retries: 3
+          delay: 30
+          register: python_install
+          until: python_install is succeeded
+
+    # ========================================================================
+    # PHASE 5: Gather Ansible facts
+    # ========================================================================
+    - name: "PHASE 5: Gather facts from fully initialized node"
+      ansible.builtin.setup:
+      register: facts_result
+      retries: 3
+      delay: 10
+      until: facts_result is succeeded
+
+# ============================================================================
+# Summary Play - Confirms bootstrap success
+# ============================================================================
+- hosts: all
+  name: Bootstrap Summary - Verify All Nodes Ready
+  gather_facts: false
+  tasks:
+    - name: Final status check
+      ansible.builtin.debug:
+        msg: "✓ {{ inventory_hostname }} - READY for provisioning"
