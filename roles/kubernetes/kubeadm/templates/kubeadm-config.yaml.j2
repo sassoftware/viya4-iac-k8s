@@ -25,7 +25,11 @@ nodeRegistration:
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "v{{ kubernetes_full_version | default(kubernetes_version) }}"
+{% if groups['k8s_control_plane'] | length == 1 %}
+controlPlaneEndpoint: "{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}:{{ kubeadm_api_server_port }}"
+{% else %}
 controlPlaneEndpoint: "{{ kubernetes_api_internal_ip }}:{{ kubeadm_api_server_port }}"
+{% endif %}
 clusterName: "{{ kubernetes_cluster_name | default('kubernetes') }}"
 etcd:
   local:
@@ -38,8 +42,13 @@ controllerManager:
   extraArgs: []
 apiServer:
   extraArgs:
+{% if groups['k8s_control_plane'] | length == 1 %}
+  - name: service-account-issuer
+    value: "https://{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}:{{ kubeadm_api_server_port }}"
+{% else %}
   - name: service-account-issuer
     value: "https://{{ kubernetes_api_internal_ip }}:{{ kubeadm_api_server_port }}"
+{% endif %}
   - name: service-account-key-file
     value: "/etc/kubernetes/pki/sa.key"
   - name: service-account-signing-key-file
@@ -52,15 +61,16 @@ apiServer:
     - "localhost"
     - "{{ ansible_hostname }}"
     - "{{ kubeadm_advertise_address }}"
+{% if groups['k8s_control_plane'] | length == 1 %}
+    - "{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}"
+{% else %}
     - "{{ kubernetes_api_internal_ip }}"
-{% if kubernetes_vip_ip is defined and kubernetes_vip_ip | length > 0 %}
-    - "{{ kubernetes_vip_ip }}"
-{% endif %}
-{% if kubernetes_vip_fqdn is defined and kubernetes_vip_fqdn | length > 0 %}
-    - "{{ kubernetes_vip_fqdn }}"
 {% endif %}
 {% if kube_api_endpoint is defined and kube_api_endpoint | length > 0 %}
     - "{{ kube_api_endpoint }}"
+{% endif %}
+{% if kubernetes_vip_fqdn is defined and kubernetes_vip_fqdn | length > 0 %}
+    - "{{ kubernetes_vip_fqdn }}"
 {% endif %}
 certificatesDir: "{{ kubeadm_cert_dir }}"
 ---

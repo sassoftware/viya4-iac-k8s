@@ -8,7 +8,7 @@ output "api_lb_id" {
 
 output "api_lb_internal_id" {
   description = "Azure resource ID of the internal API server load balancer"
-  value       = azurerm_lb.api_internal.id
+  value       = var.create_internal_lb ? azurerm_lb.api_internal[0].id : null
 }
 
 output "api_lb_public_ip" {
@@ -28,7 +28,7 @@ output "api_lb_endpoint" {
 
 output "api_lb_internal_ip" {
   description = "Private IP of the internal LB frontend (used as controlPlaneEndpoint)"
-  value       = var.internal_lb_ip
+  value       = var.create_internal_lb ? var.internal_lb_ip : null
 }
 
 output "backend_pool_id" {
@@ -38,5 +38,5 @@ output "backend_pool_id" {
 
 output "backend_pool_internal_id" {
   description = "Backend address pool ID for the internal LB"
-  value       = azurerm_lb_backend_address_pool.api_internal.id
+  value       = var.create_internal_lb ? azurerm_lb_backend_address_pool.api_internal[0].id : null
 }

@@ -341,7 +341,7 @@ variable "cluster_vip_fqdn" {
 }
 
 variable "cluster_api_internal_ip" {
-  description = "Static private IP for the internal API LB frontend. Used as controlPlaneEndpoint for in-cluster HA (avoids Azure LB hairpin)."
+  description = "Static private IP for the internal API LB frontend (used when control_plane count is 2+). Must be in the k8s subnet CIDR and not conflict with VM IPs."
   type        = string
   default     = "192.168.0.100"
 }

@@ -39,6 +39,7 @@ resource "azurerm_lb" "api" {
 # ==========================================
 
 resource "azurerm_lb" "api_internal" {
+  count               = var.create_internal_lb ? 1 : 0
   name                = "${var.prefix}-k8s-api-internal-lb"
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -68,7 +69,8 @@ resource "azurerm_lb_backend_address_pool" "api" {
 # ==========================================
 
 resource "azurerm_lb_backend_address_pool" "api_internal" {
-  loadbalancer_id = azurerm_lb.api_internal.id
+  count           = var.create_internal_lb ? 1 : 0
+  loadbalancer_id = azurerm_lb.api_internal[0].id
   name            = "control-plane-pool-internal"
 }
 
@@ -91,7 +93,8 @@ resource "azurerm_lb_probe" "api" {
 # ==========================================
 
 resource "azurerm_lb_probe" "api_internal" {
-  loadbalancer_id     = azurerm_lb.api_internal.id
+  count               = var.create_internal_lb ? 1 : 0
+  loadbalancer_id     = azurerm_lb.api_internal[0].id
   name                = "api-server-probe-internal"
   protocol            = "Tcp"
   port                = var.api_server_port
@@ -123,14 +126,15 @@ resource "azurerm_lb_rule" "api" {
 # ==========================================
 
 resource "azurerm_lb_rule" "api_internal" {
-  loadbalancer_id                = azurerm_lb.api_internal.id
+  count                          = var.create_internal_lb ? 1 : 0
+  loadbalancer_id                = azurerm_lb.api_internal[0].id
   name                           = "api-server-rule-internal"
   protocol                       = "Tcp"
   frontend_port                  = var.api_server_port
   backend_port                   = var.api_server_port
   frontend_ip_configuration_name = "ApiServerInternalFrontend"
-  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.api_internal.id]
-  probe_id                       = azurerm_lb_probe.api_internal.id
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.api_internal[0].id]
+  probe_id                       = azurerm_lb_probe.api_internal[0].id
   floating_ip_enabled            = false
   idle_timeout_in_minutes        = 30
   load_distribution              = "Default"
@@ -153,9 +157,9 @@ resource "azurerm_network_interface_backend_address_pool_association" "control_p
 # ==========================================
 
 resource "azurerm_network_interface_backend_address_pool_association" "control_plane_internal" {
-  for_each = var.control_plane_nic_ids
+  for_each = var.create_internal_lb ? var.control_plane_nic_ids : {}
 
   network_interface_id    = each.value
   ip_configuration_name   = "testConfiguration"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.api_internal.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.api_internal[0].id
 }

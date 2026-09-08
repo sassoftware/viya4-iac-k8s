@@ -6,14 +6,35 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: JoinConfiguration
 discovery:
   bootstrapToken:
-    apiServerEndpoint: "{{ hostvars[groups['k8s_control_plane'][0]].get('kubeadm_advertise_address', hostvars[groups['k8s_control_plane'][0]].get('ansible_default_ipv4', {}).get('address', groups['k8s_control_plane'][0])) }}:{{ kubeadm_api_server_port }}"
+  # Secondary control-plane nodes use CP0 direct IP to avoid backend-pool hairpin issues.
+  # Workers use CP0 direct IP for single-CP clusters, and internal LB for multi-CP clusters.
+{% if inventory_hostname in groups['k8s_control_plane'] %}
+    apiServerEndpoint: "{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}:{{ kubeadm_api_server_port }}"
+{% elif groups['k8s_control_plane'] | length == 1 %}
+    apiServerEndpoint: "{{ hostvars[groups['k8s_control_plane'][0]]['ansible_default_ipv4']['address'] }}:{{ kubeadm_api_server_port }}"
+{% else %}
+    apiServerEndpoint: "{{ kubernetes_api_internal_ip }}:{{ kubeadm_api_server_port }}"
+{% endif %}
     token: "{{ join_token }}"
     caCertHashes:
       - "{{ token_ca_cert_hash }}"
+{% if inventory_hostname in groups['k8s_control_plane'] %}
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: "{{ ansible_default_ipv4.address }}"
+    bindPort: {{ kubeadm_api_server_port }}
+  certificateKey: "{{ hostvars[groups['k8s_control_plane'][0]].kubeadm_certificate_key }}"
+{% endif %}
 nodeRegistration:
   name: "{{ ansible_hostname }}"
   criSocket: "{{ cri_socket }}"
   kubeletExtraArgs:
     - name: cloud-provider
       value: external
+{% if inventory_hostname in groups['k8s_control_plane'] %}
+  taints:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+{% else %}
   taints: []
+{% endif %}

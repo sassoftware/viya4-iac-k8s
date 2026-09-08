@@ -11,9 +11,10 @@ locals {
   cluster_dns_ip = cidrhost(var.cluster_service_subnet, 10)
 
   # Node pools (merged with defaults)
-  node_pools  = var.node_pools == null ? {} : { for k, v in var.node_pools : k => merge(var.node_pool_defaults, v) }
-  node_labels = var.node_pools == null ? {} : { for k, v in local.node_pools : k => [for lk, lv in v.node_labels : "${lk}=${lv}"] }
-  node_taints = var.node_pools == null ? {} : { for k, v in local.node_pools : k => v.node_taints }
+  node_pools               = var.node_pools == null ? {} : { for k, v in var.node_pools : k => merge(var.node_pool_defaults, v) }
+  control_plane_node_count = try(local.node_pools["control_plane"].count, 0)
+  node_labels              = var.node_pools == null ? {} : { for k, v in local.node_pools : k => [for lk, lv in v.node_labels : "${lk}=${lv}"] }
+  node_taints              = var.node_pools == null ? {} : { for k, v in local.node_pools : k => v.node_taints }
 
   # Load balancer addresses
   loadbalancer_addresses = var.cluster_lb_addresses != null ? length(var.cluster_lb_addresses) > 0 ? [for v in var.cluster_lb_addresses : v] : null : null
@@ -28,7 +29,7 @@ locals {
       "admin" : v.administrator_login,
       "password" : v.administrator_password,
       "server_port" : "5432",
-      "ssl_enforcement_enabled" : v.server_ssl == "off" ? false : true
+      "ssl_enforcement_enabled" : v.server_ssl == "off" ? false : true,
       "internal" : false
     }
   } : {}
@@ -83,6 +84,10 @@ locals {
   azure_control_plane_ips = [
     for key, vm in module.azure_vms : vm.private_ip_address if startswith(key, "control_plane-")
   ]
+
+  # Single CP uses the first control plane private IP to avoid Azure ILB hairpin constraints.
+  # Multi-CP uses the internal LB frontend IP for HA.
+  kubernetes_control_plane_endpoint_ip = local.control_plane_node_count > 1 ? var.cluster_api_internal_ip : try(local.azure_control_plane_ips[0], null)
 
   azure_node_ips = [
     for key, vm in module.azure_vms : vm.private_ip_address if !startswith(key, "control_plane-")

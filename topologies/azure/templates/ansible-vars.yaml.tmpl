@@ -28,24 +28,22 @@ kubernetes_service_subnet  : "${ cluster_service_subnet }"
 kubernetes_pod_subnet      : "${ cluster_pod_subnet }"
 kubernetes_cluster_dns     : "${ cluster_dns_ip }"
 
-# Kubernetes - API Server external endpoint (Azure Standard LB)
-# Public IP fronting the control plane; used for kubeconfig & certSANs.
-kube_api_endpoint      : "${ kube_api_endpoint }"
-
-# Kubernetes - Internal API endpoint (Azure Internal Standard LB)
-# Static private IP used as controlPlaneEndpoint in kubeadm-config.
-# Avoids Azure hairpin limitation when CP nodes talk to the API server.
-kubernetes_api_internal_ip : "${ cluster_api_internal_ip }"
-
-# Kubernetes - VIP (kube-vip)
-# Not used on Azure — Azure Internal LB provides HA instead.
-# Set kubernetes_vip_ip = "" to disable kube-vip for Azure deployments.
-kubernetes_vip_version : "${ cluster_vip_version }"
-kubernetes_vip_ip      : "${ cluster_vip_ip }"
-kubernetes_vip_fqdn    : "${ cluster_vip_fqdn }"
+# Kubernetes - API Server endpoints
+# Public LB IP: Used in final kubeconfig for external kubectl access
+# controlPlaneEndpoint:
+# - Single control plane: first control plane node private IP
+# - Multi control plane: internal LB IP for HA inside the VNet
+kube_api_endpoint           : "${ kube_api_endpoint }"
+kubernetes_api_internal_ip  : "${ cluster_api_internal_ip }"
 
 # Kubernetes - Control Plane
 control_plane_ssh_key_name : ${ control_plane_ssh_key_name }
+
+# Kubernetes - Virtual IP (kube-vip)
+# Not used on Azure — Azure Internal LB provides HA instead.
+kubernetes_vip_version : "${ cluster_vip_version }"
+kubernetes_vip_ip      : "${ cluster_vip_ip }"
+kubernetes_vip_fqdn    : "${ cluster_vip_fqdn }"
 
 # Kubernetes - In-cluster LoadBalancer address pool
 %{ if length(cluster_lb_addresses) > 0 ~}

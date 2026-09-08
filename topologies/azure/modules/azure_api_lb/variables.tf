@@ -33,6 +33,12 @@ variable "create_public_ip" {
   default     = true
 }
 
+variable "create_internal_lb" {
+  description = "Whether to create an internal LB for the API server endpoint (recommended for multi-control-plane)"
+  type        = bool
+  default     = true
+}
+
 variable "subnet_id" {
   description = "Subnet ID for the internal LB frontend (k8s subnet)"
   type        = string

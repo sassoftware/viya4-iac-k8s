@@ -101,6 +101,7 @@ module "azure_api_lb" {
   location            = var.azure_location
   api_server_port     = 6443
   create_public_ip    = true
+  create_internal_lb  = local.control_plane_node_count > 1
   subnet_id           = module.azure_network.subnet_ids["k8s"]
   internal_lb_ip      = var.cluster_api_internal_ip
 
@@ -231,7 +232,7 @@ resource "local_file" "ansible_vars" {
     cluster_vip_version        = var.cluster_vip_version
     cluster_vip_ip             = var.cluster_vip_ip != null ? var.cluster_vip_ip : ""
     cluster_vip_fqdn           = var.cluster_vip_fqdn != null ? var.cluster_vip_fqdn : ""
-    cluster_api_internal_ip    = module.azure_api_lb.api_lb_internal_ip
+    cluster_api_internal_ip    = local.kubernetes_control_plane_endpoint_ip
     kube_api_endpoint          = module.azure_api_lb.api_lb_public_ip
     # cluster_lb_type            = var.cluster_lb_type
     cluster_lb_addresses       = local.loadbalancer_addresses != null ? local.loadbalancer_addresses : []
