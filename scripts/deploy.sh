@@ -73,14 +73,23 @@ terraform_prep() {
 
 terraform_up() {
     terraform_prep
-    terraform -chdir="$TOPOLOGY_DIR" apply -parallelism=20 -state "$TFSTATE" -auto-approve -var-file "$TFVARS"
+    # Force inventory/ansible_vars into TOPOLOGY_DIR, overriding the image-wide
+    # TF_VAR_inventory/TF_VAR_ansible_vars (set to /workspace in the Dockerfile)
+    # so Ansible's group_vars/ (a sibling of TOPOLOGY_DIR/inventory) auto-loads.
+    terraform -chdir="$TOPOLOGY_DIR" apply -parallelism=20 -state "$TFSTATE" -auto-approve \
+        -var "inventory=$TOPOLOGY_DIR/inventory" \
+        -var "ansible_vars=$TOPOLOGY_DIR/ansible-vars.yaml" \
+        -var-file "$TFVARS"
     echo "Waiting 60s for basic VM boot..."
     sleep 60
 }
 
 terraform_down() {
     terraform_prep
-    terraform -chdir="$TOPOLOGY_DIR" destroy -parallelism=20 -state "$TFSTATE" -auto-approve -var-file "$TFVARS"
+    terraform -chdir="$TOPOLOGY_DIR" destroy -parallelism=20 -state "$TFSTATE" -auto-approve \
+        -var "inventory=$TOPOLOGY_DIR/inventory" \
+        -var "ansible_vars=$TOPOLOGY_DIR/ansible-vars.yaml" \
+        -var-file "$TFVARS"
 }
 
 ansible_prep() {
