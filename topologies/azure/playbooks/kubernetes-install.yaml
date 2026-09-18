@@ -276,7 +276,7 @@
     - name: Write static kubeconfig to local workspace
       ansible.builtin.copy:
         content: "{{ _patched_kubeconfig }}"
-        dest: "{{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+        dest: "{{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
         mode: '0600'
       delegate_to: localhost
       become: false
@@ -290,10 +290,10 @@
           - "============================================================"
           - "Static kubeconfig written for cluster: {{ kubernetes_cluster_name }}"
           - "Server endpoint : https://{{ kube_api_endpoint }}:6443"
-          - "Local file      : {{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+          - "Local file      : {{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
           - ""
           - "Use it with:"
-          - "  export KUBECONFIG={{ inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
+          - "  export KUBECONFIG={{ iac_inventory_dir }}/{{ kubernetes_cluster_name }}-kubeconfig.conf"
           - "  kubectl get nodes"
           - "============================================================"
       tags:
