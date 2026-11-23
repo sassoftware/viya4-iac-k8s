@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Base Layer
 # -----------------------------------------------------------------------------
-FROM ubuntu:24.04 AS baseline
+FROM ubuntu:26.04 AS baseline
 
 ENV DEBIAN_FRONTEND=noninteractive
 
